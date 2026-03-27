@@ -19,8 +19,8 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    
-     private const val BASE_URL = "https://condominio.api.diangogavidia.com/"
+
+     private const val BASE_URL = "https://condominium-api.nibs-tech.com/"
 //    private const val BASE_URL = "http://10.0.2.2:3000/" // Localhost for Android Emulator
 
     @Provides
@@ -30,7 +30,7 @@ object NetworkModule {
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
-    
+
     @Provides
     @Singleton
     fun provideGson(): Gson {
@@ -39,7 +39,7 @@ object NetworkModule {
             .setLenient()
             .create()
     }
-    
+
     @Provides
     @Singleton
     fun provideOkHttpClient(
@@ -54,7 +54,7 @@ object NetworkModule {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
-    
+
     @Provides
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
@@ -64,7 +64,7 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
-    
+
     @Provides
     @Singleton
     fun provideApiService(retrofit: Retrofit): ApiService {
