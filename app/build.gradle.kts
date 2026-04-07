@@ -13,7 +13,7 @@ kotlin {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -24,7 +24,7 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -34,7 +34,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.material.icons.extended)
-            
+
             implementation(libs.androidx.lifecycle.runtime.ktx)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
@@ -42,16 +42,17 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
             implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.androidx.navigation.compose)
 
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.room.ktx)
-            
+
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
         }
-        
+
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.ktx)

@@ -33,7 +33,7 @@ val appModule = module {
             AppDatabase::class.java,
             "condominio_db"
         )
-        .fallbackToDestructiveMigration()
+        .fallbackToDestructiveMigration(dropAllTables = true)
         .build()
     }
     
