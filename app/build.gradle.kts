@@ -1,9 +1,67 @@
 plugins {
+    alias(libs.plugins.jetbrains.kotlin.multiplatform)
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.hilt.android)
-    kotlin("kapt")
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.jetbrains.compose)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinx.serialization)
+}
+
+kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+    
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
+    
+    sourceSets {
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
+            implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.material.icons.extended)
+            
+            implementation(libs.androidx.lifecycle.runtime.ktx)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.coil.compose)
+            implementation(libs.androidx.datastore.preferences)
+            implementation(libs.androidx.navigation.compose)
+
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.room.ktx)
+            
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+        }
+        
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.okhttp.logging.interceptor)
+
+            implementation(libs.koin.android)
+            implementation(libs.koin.androidx.compose)
+        }
+    }
 }
 
 android {
@@ -18,8 +76,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
+    }
+
+    sourceSets {
+        named("main") {
+            manifest.srcFile("src/main/AndroidManifest.xml")
+            res.srcDirs("src/main/res")
+            // No need to manually add java dirs here for KMP
         }
     }
 
@@ -33,53 +96,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.hilt.android)
-    implementation(libs.androidx.material.icons.extended)
-    kapt(libs.hilt.compiler)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    kapt(libs.androidx.room.compiler)
-    implementation(libs.coil.compose)
-    implementation(libs.gson)
-    
-    // Network
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.okhttp.logging.interceptor)
-    implementation(libs.androidx.datastore.preferences)
-
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
+    // Note: KSP isn't natively supported in commonMain elegantly inside dependencies block without specific setup,
+    // so we apply it to Android here for now while you prepare the KMP transition
+    add("kspAndroid", libs.androidx.room.compiler)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-}
-
-// Allow references to generated code
-kapt {
-    correctErrorTypes = true
 }
