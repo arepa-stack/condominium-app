@@ -122,6 +122,7 @@ data class InvoiceDto(
         @SerialName("paid_amount") val paid: Double? = 0.0,
         val remaining: Double? = 0.0,
         val status: String,
+        val tag: String? = null, // New field for v2
         val description: String? = null,
         @SerialName("due_date") val dueDate: String? = null,
         @SerialName("unit_id") val unitId: String? = null

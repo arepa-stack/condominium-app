@@ -15,6 +15,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.serialization.json.JsonElement
 
 class ApiServiceImpl(private val client: HttpClient) : ApiService {
     
@@ -47,49 +48,49 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
     }
 
     override suspend fun getCurrentUser(): Response<UserProfile> = safeRequest {
-        client.get("users/me")
+        client.get("api/v1/app/users/me")
     }
 
     override suspend fun updateUser(updates: UpdateUserRequest): Response<UserProfile> = safeRequest {
-        client.patch("users/me") {
+        client.patch("api/v1/app/users/me") {
             contentType(ContentType.Application.Json)
             setBody(updates)
         }
     }
 
     override suspend fun getUserUnits(id: String): Response<List<UserUnitDto>> = safeRequest {
-        client.get("users/$id/units")
+        client.get("api/v1/app/users/$id/units")
     }
 
     override suspend fun getBuildings(): Response<List<Building>> = safeRequest {
-        client.get("buildings")
+        client.get("api/v1/app/buildings")
     }
 
     override suspend fun getBuilding(id: String): Response<Building> = safeRequest {
-        client.get("buildings/$id")
+        client.get("api/v1/app/buildings/$id")
     }
 
     override suspend fun getBuildingUnits(id: String): Response<List<UnitDto>> = safeRequest {
-        client.get("buildings/$id/units")
+        client.get("api/v1/app/buildings/$id/units")
     }
 
     override suspend fun getUnitDetails(id: String): Response<UnitDto> = safeRequest {
-        client.get("buildings/units/$id")
+        client.get("api/v1/app/buildings/units/$id")
     }
 
     override suspend fun getPaymentSummary(): Response<PaymentSummaryDto> = safeRequest {
-        client.get("payments/summary")
+        client.get("api/v1/app/payments/summary")
     }
 
     override suspend fun getPayments(unitId: String?, year: Int?): Response<List<PaymentDto>> = safeRequest {
-        client.get("payments") {
+        client.get("api/v1/app/payments") {
             unitId?.let { parameter("unit_id", it) }
             year?.let { parameter("year", it) }
         }
     }
 
     override suspend fun getPayment(id: String): Response<PaymentDto> = safeRequest {
-        client.get("payments/$id")
+        client.get("api/v1/app/payments/$id")
     }
 
     override suspend fun createPaymentMultipart(
@@ -105,7 +106,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         proofImage: ByteArray?,
         fileName: String?
     ): Response<PaymentDto> = safeRequest {
-        client.post("payments") {
+        client.post("api/v1/app/payments") {
             setBody(
                 MultiPartFormDataContent(
                     formData {
@@ -131,32 +132,36 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
     }
 
     override suspend fun createPayment(request: CreatePaymentRequest): Response<PaymentDto> = safeRequest {
-        client.post("payments") {
+        client.post("api/v1/app/payments") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
     }
 
     override suspend fun getBalance(unitId: String): Response<BalanceDto> = safeRequest {
-        client.get("billing/units/$unitId/balance")
+        client.get("api/v1/app/billing/units/$unitId/balance")
     }
 
     override suspend fun getInvoices(unitId: String, status: String?): Response<List<InvoiceDto>> = safeRequest {
-        client.get("billing/units/$unitId/invoices") {
+        client.get("api/v1/app/billing/units/$unitId/invoices") {
             status?.let { parameter("status", it) }
         }
     }
 
     override suspend fun getInvoice(id: String): Response<InvoiceDto> = safeRequest {
-        client.get("billing/invoices/$id")
+        client.get("api/v1/app/billing/invoices/$id")
     }
 
     override suspend fun getInvoicePayments(id: String): Response<List<PaymentDto>> = safeRequest {
-        client.get("billing/invoices/$id/payments")
+        client.get("api/v1/app/billing/invoices/$id/payments")
+    }
+
+    override suspend fun getCredits(unitId: String): Response<JsonElement> = safeRequest {
+        client.get("api/v1/app/billing/units/$unitId/credit")
     }
 
     override suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto> = safeRequest {
-        client.get("petty-cash/balance/$buildingId")
+        client.get("api/v1/app/petty-cash/funds/$buildingId")
     }
 
     override suspend fun getPettyCashHistory(
@@ -166,7 +171,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         page: Int,
         limit: Int
     ): Response<List<PettyCashTransactionDto>> = safeRequest {
-        client.get("petty-cash/history/$buildingId") {
+        client.get("api/v1/app/petty-cash/history/$buildingId") {
             type?.let { parameter("type", it) }
             category?.let { parameter("category", it) }
             parameter("page", page)
@@ -175,7 +180,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
     }
 
     override suspend fun registerPettyCashIncome(request: RegisterIncomeRequest): Response<PettyCashTransactionDto> = safeRequest {
-        client.post("petty-cash/income") {
+        client.post("api/v1/app/petty-cash/income") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
@@ -189,7 +194,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         evidenceImage: ByteArray?,
         fileName: String?
     ): Response<PettyCashTransactionDto> = safeRequest {
-        client.post("petty-cash/expense") {
+        client.post("api/v1/app/petty-cash/expense") {
             setBody(
                 MultiPartFormDataContent(
                     formData {

@@ -1,6 +1,7 @@
 package com.example.condominio.data.remote
 
 import com.example.condominio.data.model.*
+import kotlinx.serialization.json.JsonElement
 
 interface ApiService {
     suspend fun register(request: Map<String, String>): Response<RegisterResponse>
@@ -39,6 +40,8 @@ interface ApiService {
     suspend fun getInvoices(unitId: String, status: String? = null): Response<List<InvoiceDto>>
     suspend fun getInvoice(id: String): Response<InvoiceDto>
     suspend fun getInvoicePayments(id: String): Response<List<PaymentDto>>
+    
+    suspend fun getCredits(unitId: String): Response<JsonElement> // Temporary generic response
     
     suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto>
     suspend fun getPettyCashHistory(
