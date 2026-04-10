@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.payment
+﻿package com.example.condominio.ui.screens.payment
 
 import com.example.condominio.ui.utils.formatDate
 import com.example.condominio.ui.utils.formatCurrency
@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.data.model.PaymentMethod
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +42,7 @@ import androidx.compose.material3.TextButton
 fun CreatePaymentScreen(
     onBackClick: () -> Unit,
     onSubmitSuccess: () -> Unit,
-    viewModel: CreatePaymentViewModel = koinInject()
+    viewModel: CreatePaymentViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var isImageSelected by remember { mutableStateOf(false) }
@@ -133,7 +133,7 @@ fun CreatePaymentScreen(
 
             // Payment Method
             Text(
-                text = "Método de Pago",
+                text = "MÃ©todo de Pago",
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -145,7 +145,7 @@ fun CreatePaymentScreen(
             ) {
                 OutlinedTextField(
                     value = when(uiState.method) {
-                        PaymentMethod.PAGO_MOVIL -> "Pago Móvil"
+                        PaymentMethod.PAGO_MOVIL -> "Pago MÃ³vil"
                         PaymentMethod.TRANSFER -> "Transferencia"
                         PaymentMethod.CASH -> "Efectivo"
                     },
@@ -163,7 +163,7 @@ fun CreatePaymentScreen(
                         DropdownMenuItem(
                             text = {
                                 Text(when (method) {
-                                    PaymentMethod.PAGO_MOVIL -> "Pago Móvil"
+                                    PaymentMethod.PAGO_MOVIL -> "Pago MÃ³vil"
                                     PaymentMethod.TRANSFER -> "Transferencia"
                                     PaymentMethod.CASH -> "Efectivo"
                                 })
@@ -193,7 +193,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.phone,
                         onValueChange = viewModel::onPhoneChange,
-                        label = { Text("Número de Teléfono") },
+                        label = { Text("NÃºmero de TelÃ©fono") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
@@ -202,7 +202,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.reference,
                         onValueChange = viewModel::onReferenceChange,
-                        label = { Text("Número de Referencia") },
+                        label = { Text("NÃºmero de Referencia") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -220,7 +220,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.reference,
                         onValueChange = viewModel::onReferenceChange,
-                        label = { Text("Número de Referencia") },
+                        label = { Text("NÃºmero de Referencia") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -322,7 +322,7 @@ fun CreatePaymentScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Descripción del Pago",
+                text = "DescripciÃ³n del Pago",
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -434,3 +434,4 @@ fun CreatePaymentScreen(
         }
     }
 }
+

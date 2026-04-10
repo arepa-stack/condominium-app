@@ -59,7 +59,6 @@ val appModule = module {
     single<PettyCashRepository> { PettyCashRepositoryImpl(get(), get()) }
     
     // ViewModels
-    // ViewModels
     viewModelOf(::LoginViewModel)
     viewModelOf(::UnitSelectionViewModel)
     viewModelOf(::InvoiceDetailViewModel)

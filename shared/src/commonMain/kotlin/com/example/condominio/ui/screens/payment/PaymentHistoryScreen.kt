@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.payment
+﻿package com.example.condominio.ui.screens.payment
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.screens.dashboard.TransactionItem
@@ -31,7 +31,7 @@ import androidx.compose.runtime.DisposableEffect
 fun PaymentHistoryScreen(
     onBackClick: () -> Unit,
     onPaymentClick: (String) -> Unit,
-    viewModel: PaymentHistoryViewModel = koinInject()
+    viewModel: PaymentHistoryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -89,3 +89,4 @@ fun PaymentHistoryScreen(
         }
     }
 }
+

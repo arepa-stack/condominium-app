@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class PaymentDetailViewModel (
+class PaymentDetailViewModel(
     private val paymentRepository: PaymentRepository,
     private val pdfService: PdfService,
     savedStateHandle: SavedStateHandle
@@ -32,11 +32,11 @@ class PaymentDetailViewModel (
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val payment = paymentRepository.getPayment(paymentId)
-            _uiState.update { 
+            _uiState.update {
                 it.copy(
                     payment = payment,
                     isLoading = false
-                ) 
+                )
             }
         }
     }
@@ -44,7 +44,7 @@ class PaymentDetailViewModel (
     fun onDownloadReceiptClick() {
         val payment = _uiState.value.payment ?: return
         viewModelScope.launch {
-             _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true) }
             val file = pdfService.generateReceipt(payment)
             _uiState.update { it.copy(isLoading = false, pdfFile = file) }
         }

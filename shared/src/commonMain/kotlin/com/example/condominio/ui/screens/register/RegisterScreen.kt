@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.register
+﻿package com.example.condominio.ui.screens.register
 
 import androidx.compose.foundation.layout.*
 import com.example.condominio.data.model.UnitDto
@@ -18,14 +18,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     onLoginClick: () -> Unit,
-    viewModel: RegisterViewModel = koinInject()
+    viewModel: RegisterViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -229,3 +229,4 @@ fun RegisterScreen(
         }
     }
 }
+

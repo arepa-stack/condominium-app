@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.profile
+﻿package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,13 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     onBackClick: () -> Unit,
-    viewModel: EditProfileViewModel = koinInject()
+    viewModel: EditProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -152,3 +152,4 @@ fun EditProfileScreen(
         }
     }
 }
+

@@ -32,13 +32,13 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.condominio.data.model.PaymentStatus
 import kotlinx.datetime.*
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentDetailScreen(
     onBackClick: () -> Unit,
-    viewModel: PaymentDetailViewModel = koinInject()
+    viewModel: PaymentDetailViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val payment = uiState.payment

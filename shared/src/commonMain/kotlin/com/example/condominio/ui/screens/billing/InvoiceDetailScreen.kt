@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.billing
+﻿package com.example.condominio.ui.screens.billing
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.data.model.Payment
 import com.example.condominio.ui.utils.formatDate
 import com.example.condominio.ui.utils.formatCurrency
@@ -26,7 +26,7 @@ fun InvoiceDetailScreen(
     onSeeAllInvoicesClick: () -> Unit,
     onPayRemainderClick: (String) -> Unit,
     onPaymentClick: (String) -> Unit,
-    viewModel: InvoiceDetailViewModel = koinInject()
+    viewModel: InvoiceDetailViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -175,7 +175,7 @@ fun PaymentItem(payment: Payment, invoiceId: String?, onClick: () -> Unit) {
                 }
             }
             Text(
-                text = "Método: ${payment.method.label}",
+                text = "MÃ©todo: ${payment.method.label}",
                 style = MaterialTheme.typography.bodySmall
             )
             if (!payment.reference.isNullOrEmpty()) {
@@ -188,3 +188,4 @@ fun PaymentItem(payment: Payment, invoiceId: String?, onClick: () -> Unit) {
         }
     }
 }
+

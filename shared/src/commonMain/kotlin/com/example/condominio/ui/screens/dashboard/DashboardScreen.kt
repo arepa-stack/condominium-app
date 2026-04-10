@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.dashboard
+﻿package com.example.condominio.ui.screens.dashboard
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -31,7 +31,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentStatus
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
 
@@ -44,7 +44,7 @@ fun DashboardScreen(
         onUnitClick: () -> Unit,
         onSeeAllInvoicesClick: () -> Unit = {},
         onPettyCashClick: () -> Unit = {},
-        viewModel: DashboardViewModel = koinInject()
+        viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -185,7 +185,7 @@ fun BillingCard(
                 }
             } else {
                 Text(
-                        text = "You are up to date! 🎉",
+                        text = "You are up to date! ðŸŽ‰",
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Medium
@@ -225,7 +225,7 @@ fun HeaderSection(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                            text = "$building • Apt $apartmentUnit",
+                            text = "$building â€¢ Apt $apartmentUnit",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                             fontWeight = FontWeight.Medium
@@ -401,7 +401,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                 )
                 if (payment.status != PaymentStatus.PENDING && !payment.processorName.isNullOrEmpty()) {
                     Text(
-                            text = " • Por: ${payment.processorName}",
+                            text = " â€¢ Por: ${payment.processorName}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
@@ -414,3 +414,4 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
         )
     }
 }
+

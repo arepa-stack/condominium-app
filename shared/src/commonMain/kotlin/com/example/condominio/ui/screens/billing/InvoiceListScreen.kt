@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.billing
+﻿package com.example.condominio.ui.screens.billing
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.condominio.ui.utils.formatCurrency
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.material.icons.filled.Refresh
 import com.example.condominio.data.model.Invoice
 import com.example.condominio.data.model.InvoiceStatus
@@ -26,7 +26,7 @@ import com.example.condominio.data.model.InvoiceStatus
 fun InvoiceListScreen(
     onBackClick: () -> Unit,
     onInvoiceClick: (Invoice) -> Unit,
-    viewModel: InvoiceListViewModel = koinInject()
+    viewModel: InvoiceListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
@@ -219,3 +219,4 @@ fun InvoiceStatusBadge(status: InvoiceStatus) {
         )
     }
 }
+

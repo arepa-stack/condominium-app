@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.profile
+﻿package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +34,7 @@ fun ProfileScreen(
     onNotificationSettingsClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
     onLogoutSuccess: () -> Unit,
-    viewModel: ProfileViewModel = koinInject()
+    viewModel: ProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -304,3 +304,4 @@ private fun ProfileActionButton(
         }
     }
 }
+

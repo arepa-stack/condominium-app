@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.pettycash
+﻿package com.example.condominio.ui.screens.pettycash
 
 import androidx.compose.animation.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -29,7 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import coil3.compose.AsyncImage
 import com.example.condominio.data.model.*
 
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koinInject()) {
+fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -196,7 +196,7 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
     if (uiState.error != null) {
         AlertDialog(
                 onDismissRequest = { viewModel.clearError() },
-                title = { Text("Atención") },
+                title = { Text("AtenciÃ³n") },
                 text = { Text(uiState.error!!) },
                 confirmButton = {
                     TextButton(onClick = { viewModel.clearError() }) { Text("Entendido") }
@@ -345,7 +345,7 @@ fun TransactionItem(transaction: PettyCashTransactionDto, onEvidenceClick: () ->
                 )
                 Text(
                         text =
-                                "${transaction.category.displayName} • ${transaction.createdAt.take(10)}",
+                                "${transaction.category.displayName} â€¢ ${transaction.createdAt.take(10)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -468,7 +468,7 @@ fun MovementSheet(
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Saldo actual: $${formatCurrency(currentBalance)}. Monto del gasto: $${formatCurrency(amt)}.\nDiferencia ($${formatCurrency(amt - currentBalance)}) será facturada automáticamente a los propietarios como reposición de caja chica.",
+                                "Saldo actual: $${formatCurrency(currentBalance)}. Monto del gasto: $${formatCurrency(amt)}.\nDiferencia ($${formatCurrency(amt - currentBalance)}) serÃ¡ facturada automÃ¡ticamente a los propietarios como reposiciÃ³n de caja chica.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                             )
@@ -482,7 +482,7 @@ fun MovementSheet(
             OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descripción") },
+                    label = { Text("DescripciÃ³n") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp)
             )
@@ -495,7 +495,7 @@ fun MovementSheet(
                             value = category.displayName,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Categoría") },
+                            label = { Text("CategorÃ­a") },
                             modifier =
                                     Modifier.fillMaxWidth().clickable { showCategoryMenu = true },
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
@@ -642,7 +642,7 @@ fun SuccessFeedback(data: SuccessFeedbackData) {
 
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                        "¡Gasto Registrado!",
+                        "Â¡Gasto Registrado!",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -707,3 +707,4 @@ fun EvidenceDialog(transaction: PettyCashTransactionDto, onDismiss: () -> Unit) 
             shape = RoundedCornerShape(28.dp)
     )
 }
+

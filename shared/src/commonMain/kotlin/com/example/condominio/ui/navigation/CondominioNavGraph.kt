@@ -28,7 +28,7 @@ import com.example.condominio.ui.screens.register.RegisterScreen
 fun CondominioNavGraph(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            val viewModel: com.example.condominio.ui.screens.login.LoginViewModel = org.koin.compose.koinInject()
+            val viewModel: com.example.condominio.ui.screens.login.LoginViewModel = org.koin.compose.viewmodel.koinViewModel()
             val uiState by viewModel.uiState.collectAsState()
             
             LoginScreen(
@@ -53,7 +53,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             )
         }
         composable("unit_selection") {
-            val viewModel: com.example.condominio.ui.screens.UnitSelectionViewModel = org.koin.compose.koinInject()
+            val viewModel: com.example.condominio.ui.screens.UnitSelectionViewModel = org.koin.compose.viewmodel.koinViewModel()
             val uiState by viewModel.uiState.collectAsState()
             
             com.example.condominio.ui.screens.UnitSelectionScreen(
@@ -155,7 +155,10 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     onSubmitSuccess = { navController.popBackStack() }
             )
         }
-        composable(route = "payment_detail/{paymentId}") {
+        composable(
+                route = "payment_detail/{paymentId}",
+                arguments = listOf(navArgument("paymentId") { type = NavType.StringType })
+        ) {
             PaymentDetailScreen(onBackClick = { navController.popBackStack() })
         }
         composable("profile") {
