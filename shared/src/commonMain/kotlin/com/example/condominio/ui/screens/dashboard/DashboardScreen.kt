@@ -47,7 +47,7 @@ fun DashboardScreen(
         viewModel: DashboardViewModel = koinInject()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->

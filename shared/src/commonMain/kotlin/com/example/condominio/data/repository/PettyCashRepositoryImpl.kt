@@ -16,7 +16,7 @@ class PettyCashRepositoryImpl (
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get balance"))
+                Result.failure(Exception(response.errorBody().string()))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -41,7 +41,7 @@ class PettyCashRepositoryImpl (
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get history"))
+                Result.failure(Exception(response.errorBody().string()))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -59,7 +59,7 @@ class PettyCashRepositoryImpl (
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to register income"))
+                Result.failure(Exception(response.errorBody().string()))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -89,7 +89,7 @@ class PettyCashRepositoryImpl (
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to register expense"))
+                Result.failure(Exception(response.errorBody().string()))
             }
         } catch (e: Exception) {
             Result.failure(e)

@@ -16,6 +16,6 @@ actual fun formatDate(timestamp: Long, formatString: String): String {
 
 actual fun formatMonthYear(timestamp: Long): String {
     val date = Date(timestamp)
-    val formatter = SimpleDateFormat("MMMM", Locale("es", "ES"))
+    val formatter = SimpleDateFormat("MMMM", Locale.forLanguageTag("es-ES"))
     return formatter.format(date).replaceFirstChar { it.uppercase() }
 }

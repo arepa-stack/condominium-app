@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,7 +50,7 @@ fun ProfileScreen(
                 title = { Text("Profile", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -204,7 +206,7 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.ExitToApp,
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )

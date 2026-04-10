@@ -49,7 +49,7 @@ class RemoteAuthRepository
 
                 Result.success(user)
             } else {
-                val errorBody = response.errorBody()?.string() ?: ""
+                val errorBody = response.errorBody().string()
                 if (response.code == 401 && errorBody.contains("pending", ignoreCase = true)) {
                     println("RemoteAuthRepo: User account is pending approval")
                     Result.failure(
@@ -100,7 +100,7 @@ class RemoteAuthRepository
                 Result.success(user)
             } else {
                 val errorMsg =
-                        "Registration failed: ${response.errorBody()?.string() ?: "Unknown error"}"
+                        "Registration failed: ${response.errorBody().string()}"
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {

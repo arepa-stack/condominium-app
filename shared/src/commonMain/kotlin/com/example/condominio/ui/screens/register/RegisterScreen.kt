@@ -97,7 +97,7 @@ fun RegisterScreen(
                     label = { Text("Ap. Unit") },
                     placeholder = { Text(if (uiState.selectedBuildingId.isBlank()) "Select Building first" else "Select Unit") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     shape = RoundedCornerShape(12.dp),
                     enabled = uiState.selectedBuildingId.isNotBlank() && !uiState.isLoadingUnits
                 )
@@ -145,7 +145,7 @@ fun RegisterScreen(
                     readOnly = true,
                     label = { Text("Building/Tower") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = buildingExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     shape = RoundedCornerShape(12.dp),
                     enabled = !uiState.isLoadingBuildings
                 )

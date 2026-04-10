@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
@@ -46,7 +46,7 @@ fun InvoiceListScreen(
                 title = { Text("Mis Facturas") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
                 },
                 actions = {
@@ -149,7 +149,7 @@ fun InvoiceItem(
             
             if (invoice.paid > 0 && invoice.status != InvoiceStatus.PAID) {
                 LinearProgressIndicator(
-                    progress = progress,
+                    progress = { progress },
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(MaterialTheme.shapes.extraSmall),
                     color = Color(0xFF2E7D32),
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)

@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -70,7 +72,7 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
                         title = { Text("Caja Chica", fontWeight = FontWeight.Bold) },
                         navigationIcon = {
                             IconButton(onClick = onBackClick) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                             }
                         },
                         colors =
@@ -311,7 +313,7 @@ fun TransactionItem(transaction: PettyCashTransactionDto, onEvidenceClick: () ->
                 PettyCashCategory.EMERGENCY -> Icons.Default.Warning
                 PettyCashCategory.OFFICE -> Icons.Default.Work
                 PettyCashCategory.UTILITIES -> Icons.Default.Power
-                PettyCashCategory.OTHER -> Icons.Default.List
+                PettyCashCategory.OTHER -> Icons.AutoMirrored.Filled.List
             }
 
     Surface(
@@ -648,7 +650,7 @@ fun SuccessFeedback(data: SuccessFeedbackData) {
 
                 if (data.extra > 0) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

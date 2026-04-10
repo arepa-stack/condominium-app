@@ -121,8 +121,8 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
                         if (allocations != null) append("allocations", allocations)
                         
                         if (proofImage != null && fileName != null) {
-                            append("proof_image", proofImage, io.ktor.http.Headers.build {
-                                append(io.ktor.http.HttpHeaders.ContentDisposition, "filename=\"${fileName}\"")
+                            append("proof_image", proofImage, Headers.build {
+                                append(HttpHeaders.ContentDisposition, "filename=\"${fileName}\"")
                             })
                         }
                     }

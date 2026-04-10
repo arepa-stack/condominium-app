@@ -13,7 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -86,7 +86,7 @@ fun CreatePaymentScreen(
                 title = { Text("Registrar Pago", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Regresar")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -148,27 +148,25 @@ fun CreatePaymentScreen(
                         PaymentMethod.PAGO_MOVIL -> "Pago Móvil"
                         PaymentMethod.TRANSFER -> "Transferencia"
                         PaymentMethod.CASH -> "Efectivo"
-                        else -> uiState.method.label
                     },
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    PaymentMethod.values().forEach { method ->
+                    PaymentMethod.entries.forEach { method ->
                         DropdownMenuItem(
-                            text = { 
-                                Text(when(method) {
+                            text = {
+                                Text(when (method) {
                                     PaymentMethod.PAGO_MOVIL -> "Pago Móvil"
                                     PaymentMethod.TRANSFER -> "Transferencia"
                                     PaymentMethod.CASH -> "Efectivo"
-                                    else -> method.label
-                                }) 
+                                })
                             },
                             onClick = {
                                 viewModel.onMethodChange(method)
@@ -236,7 +234,6 @@ fun CreatePaymentScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                      )
                 }
-                else -> {}
             }
             
             Spacer(modifier = Modifier.height(24.dp))

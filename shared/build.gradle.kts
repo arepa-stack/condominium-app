@@ -36,8 +36,8 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(compose.materialIconsExtended)
 
-            implementation(libs.androidx.lifecycle.runtime)
-            implementation(libs.androidx.lifecycle.viewmodel)
+            // lifecycle runtime & viewmodel are provided transitively by Compose Multiplatform
+            // (org.jetbrains.androidx.lifecycle). Adding them directly causes KLIB duplicate warnings.
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)

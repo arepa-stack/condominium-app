@@ -64,7 +64,7 @@ class RemotePaymentRepository(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                val errorMsg = response.errorBody()?.string() ?: "Failed to get summary"
+                val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -138,7 +138,7 @@ class RemotePaymentRepository(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                val errorMsg = response.errorBody()?.string() ?: "Payment creation failed"
+                val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -162,7 +162,7 @@ class RemotePaymentRepository(
                         )
                 Result.success(balance)
             } else {
-                val errorMsg = response.errorBody()?.string() ?: "Failed to fetch balance"
+                val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -176,7 +176,7 @@ class RemotePaymentRepository(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.map { it.toDomain() })
             } else {
-                val errorMsg = response.errorBody()?.string() ?: "Failed to fetch invoices"
+                val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
