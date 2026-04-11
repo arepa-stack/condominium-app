@@ -2,6 +2,7 @@ package com.example.condominio.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.condominio.data.model.BuildingRole
 import com.example.condominio.data.model.UserUnit
 import com.example.condominio.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,15 +24,27 @@ open class UnitSelectionViewModel(
     private fun loadUnits() {
         viewModelScope.launch {
             authRepository.fetchCurrentUser().onSuccess { user ->
-                val unitItems = user.units.map { SelectionItem.UnitItem(it) }
-                val roleItems = user.buildingRoles.map { SelectionItem.RoleItem(it) }
-                
-                _uiState.update { 
+                val buildingGroups = user.units
+                    .groupBy { it.buildingId }
+                    .map { (buildingId, units) ->
+                        val role = user.buildingRoles
+                            .find { it.buildingId == buildingId }
+                            ?.role ?: "resident"
+                        val buildingName = units.first().buildingName
+                        BuildingGroup(
+                            buildingId = buildingId,
+                            buildingName = buildingName,
+                            role = role,
+                            units = units
+                        )
+                    }
+
+                _uiState.update {
                     it.copy(
-                        items = unitItems + roleItems, 
+                        buildings = buildingGroups,
                         isLoading = false,
                         userName = user.name
-                    ) 
+                    )
                 }
             }.onFailure {
                 _uiState.update { state -> state.copy(isLoading = false) }
@@ -39,34 +52,32 @@ open class UnitSelectionViewModel(
         }
     }
 
-    fun onItemSelected(item: SelectionItem) {
-        when (item) {
-            is SelectionItem.UnitItem -> {
-                authRepository.setCurrentUnit(item.unit)
-            }
-            is SelectionItem.RoleItem -> {
-                val virtualUnit = UserUnit(
-                    unitId = "ADMIN-${item.role.buildingId}",
-                    buildingId = item.role.buildingId,
-                    unitName = "Administración",
-                    buildingName = "Edificio ${item.role.buildingId.take(4)}",
-                    isPrimary = false
-                )
-                authRepository.setCurrentUnit(virtualUnit)
-            }
+    fun onBuildingSelected(group: BuildingGroup) {
+        if (group.units.size == 1) {
+            authRepository.setCurrentUnit(group.units.first())
+            _uiState.update { it.copy(unitSelected = true) }
+        } else {
+            _uiState.update { it.copy(expandedBuildingId = group.buildingId) }
         }
+    }
+
+    fun onUnitSelected(unit: UserUnit) {
+        authRepository.setCurrentUnit(unit)
         _uiState.update { it.copy(unitSelected = true) }
     }
 }
 
-sealed class SelectionItem {
-    data class UnitItem(val unit: UserUnit) : SelectionItem()
-    data class RoleItem(val role: com.example.condominio.data.model.BuildingRole) : SelectionItem()
-}
+data class BuildingGroup(
+    val buildingId: String,
+    val buildingName: String,
+    val role: String,
+    val units: List<UserUnit>
+)
 
 data class UnitSelectionUiState(
-    val items: List<SelectionItem> = emptyList(),
+    val buildings: List<BuildingGroup> = emptyList(),
     val isLoading: Boolean = true,
     val userName: String = "",
-    val unitSelected: Boolean = false
+    val unitSelected: Boolean = false,
+    val expandedBuildingId: String? = null
 )

@@ -36,12 +36,13 @@ open class LoginViewModel(
             _uiState.update { it.copy(isLoading = false) }
             
             result.onSuccess { user ->
-                val hasMultiple = user.units.size > 1
-                if (!hasMultiple && user.units.isNotEmpty()) {
+                val distinctBuildings = user.units.map { it.buildingId }.distinct()
+                val needsSelection = distinctBuildings.size > 1 || user.units.size > 1
+                if (!needsSelection && user.units.isNotEmpty()) {
                     authRepository.setCurrentUnit(user.units.first())
                 }
-                
-                _uiState.update { it.copy(isSuccess = true, hasMultipleUnits = hasMultiple) }
+
+                _uiState.update { it.copy(isSuccess = true, hasMultipleUnits = needsSelection) }
             }.onFailure { error ->
                 // Check if it's a pending exception (we'll need to move UserPendingException to common too)
                 _uiState.update { it.copy(error = error.message) }
