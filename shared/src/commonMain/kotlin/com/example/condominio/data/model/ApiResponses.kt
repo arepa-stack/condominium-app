@@ -113,7 +113,17 @@ data class BalanceDto(
         val unit: String,
         val totalDebt: Double,
         @SerialName("pendingInvoices") val pendingInvoicesCount: Int,
-        val details: List<InvoiceDto>
+        val details: List<BalanceInvoiceDto>
+)
+
+@Serializable
+data class BalanceInvoiceDto(
+        @SerialName("invoiceId") val invoiceId: String,
+        val amount: Double,
+        val paid: Double = 0.0,
+        val remaining: Double = 0.0,
+        val period: String,
+        val status: String
 )
 
 @Serializable
