@@ -218,7 +218,7 @@ class RemoteAuthRepository
         // Now enrich names
         val enrichedUnits = mutableListOf<com.example.condominio.data.model.UserUnit>()
         for (unit in currentUnits) {
-            // If we already have names (unlikely from plain DTO), skip
+            // If we already have names from the API response, skip enrichment
             var uName = unit.unitName
             var bName = unit.buildingName
             var bId = unit.buildingId
@@ -283,8 +283,8 @@ private fun UserProfile.toDomain(): User {
                 com.example.condominio.data.model.UserUnit(
                         unitId = dto.unitId,
                         buildingId = dto.buildingId,
-                        unitName = "", // Placeholder, will be enriched
-                        buildingName = "", // Placeholder
+                        unitName = dto.unitName ?: "",
+                        buildingName = dto.buildingName ?: "",
                         isPrimary = dto.isPrimary
                 )
             }
