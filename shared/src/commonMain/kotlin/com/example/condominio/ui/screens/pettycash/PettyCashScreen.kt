@@ -345,7 +345,7 @@ fun TransactionItem(transaction: PettyCashTransactionDto, onEvidenceClick: () ->
                 )
                 Text(
                         text =
-                                "${transaction.category.displayName} â€¢ ${transaction.createdAt.take(10)}",
+                                "${transaction.category.displayName} · ${transaction.createdAt.take(10)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )

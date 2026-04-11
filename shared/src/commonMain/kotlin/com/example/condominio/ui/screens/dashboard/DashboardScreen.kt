@@ -225,7 +225,7 @@ fun HeaderSection(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                            text = "$building â€¢ Apt $apartmentUnit",
+                            text = "$building · Apt $apartmentUnit",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                             fontWeight = FontWeight.Medium
@@ -401,7 +401,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                 )
                 if (payment.status != PaymentStatus.PENDING && !payment.processorName.isNullOrEmpty()) {
                     Text(
-                            text = " â€¢ Por: ${payment.processorName}",
+                            text = " · Por: ${payment.processorName}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )

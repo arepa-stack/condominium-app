@@ -59,7 +59,9 @@ data class UserProfile(
 data class UserUnitDto(
         @SerialName("unit_id") val unitId: String,
         @SerialName("building_id") val buildingId: String,
-        @SerialName("is_primary") val isPrimary: Boolean
+        @SerialName("is_primary") val isPrimary: Boolean,
+        @SerialName("unit_name") val unitName: String? = null,
+        @SerialName("building_name") val buildingName: String? = null
 )
 
 @Serializable
