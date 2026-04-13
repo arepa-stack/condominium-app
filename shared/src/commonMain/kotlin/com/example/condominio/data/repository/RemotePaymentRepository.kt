@@ -158,7 +158,26 @@ class RemotePaymentRepository(
                         com.example.condominio.data.model.Balance(
                                 unitId = dto.unit,
                                 totalDebt = dto.totalDebt,
-                                pendingInvoices = dto.details.map { it.toDomain() }
+                                pendingInvoices = dto.details.map { detail ->
+                                    com.example.condominio.data.model.Invoice(
+                                            id = detail.invoiceId,
+                                            period = detail.period,
+                                            amount = detail.amount,
+                                            paid = detail.paid,
+                                            remaining = detail.remaining,
+                                            status = try {
+                                                when (detail.status.uppercase()) {
+                                                    "PENDING" -> com.example.condominio.data.model.InvoiceStatus.PENDING
+                                                    "PAID" -> com.example.condominio.data.model.InvoiceStatus.PAID
+                                                    "OVERDUE" -> com.example.condominio.data.model.InvoiceStatus.OVERDUE
+                                                    "CANCELLED" -> com.example.condominio.data.model.InvoiceStatus.CANCELLED
+                                                    else -> com.example.condominio.data.model.InvoiceStatus.PENDING
+                                                }
+                                            } catch (e: Exception) {
+                                                com.example.condominio.data.model.InvoiceStatus.PENDING
+                                            }
+                                    )
+                                }
                         )
                 Result.success(balance)
             } else {
