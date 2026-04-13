@@ -21,13 +21,13 @@ val networkModule = module {
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
-    
+
     singleOf(::AuthInterceptor)
-    
+
     single {
         val authInterceptor = get<AuthInterceptor>()
         val loggingInterceptor = get<HttpLoggingInterceptor>()
-        
+
         HttpClient(OkHttp) {
             engine {
                 addInterceptor(authInterceptor)
@@ -46,10 +46,10 @@ val networkModule = module {
                 })
             }
             defaultRequest {
-                url("https://condominium-api.nibs-tech.com/")
+                url("http://192.168.0.155:3000")
             }
         }
     }
-    
+
     singleOf(::ApiServiceImpl) { bind<ApiService>() }
 }

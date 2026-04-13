@@ -13,8 +13,10 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.content.PartData
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.json.JsonElement
 
 class ApiServiceImpl(private val client: HttpClient) : ApiService {
@@ -106,28 +108,36 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         proofImage: ByteArray?,
         fileName: String?
     ): Response<PaymentDto> = safeRequest {
-        client.post("api/v1/app/payments") {
-            setBody(
-                MultiPartFormDataContent(
-                    formData {
-                        append("amount", amount)
-                        append("unit_id", unitId)
-                        append("method", method)
-                        append("date", date)
-                        if (buildingId != null) append("building_id", buildingId)
-                        if (notes != null) append("notes", notes)
-                        if (reference != null) append("reference", reference)
-                        if (bank != null) append("bank", bank)
-                        if (allocations != null) append("allocations", allocations)
-                        
-                        if (proofImage != null && fileName != null) {
-                            append("proof_image", proofImage, Headers.build {
-                                append(HttpHeaders.ContentDisposition, "filename=\"${fileName}\"")
-                            })
-                        }
-                    }
-                )
+        val basicParts = formData {
+            append("amount", amount)
+            append("unit_id", unitId)
+            append("method", method)
+            append("date", date)
+            if (buildingId != null) append("building_id", buildingId)
+            if (notes != null) append("notes", notes)
+            if (reference != null) append("reference", reference)
+            if (bank != null) append("bank", bank)
+            if (allocations != null) append("allocations", allocations)
+        }
+
+        val allParts = if (proofImage != null && fileName != null) {
+            basicParts + PartData.FileItem(
+                provider = { ByteReadPacket(proofImage) },
+                dispose = {},
+                partHeaders = Headers.build {
+                    append(HttpHeaders.ContentType, "image/jpeg")
+                    append(
+                        HttpHeaders.ContentDisposition,
+                        "form-data; name=\"proof_image\"; filename=\"${fileName}\""
+                    )
+                }
             )
+        } else {
+            basicParts
+        }
+
+        client.post("api/v1/app/payments") {
+            setBody(MultiPartFormDataContent(allParts))
         }
     }
 
