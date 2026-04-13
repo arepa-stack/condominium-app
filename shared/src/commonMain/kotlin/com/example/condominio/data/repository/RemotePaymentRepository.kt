@@ -168,6 +168,7 @@ class RemotePaymentRepository(
                                             status = try {
                                                 when (detail.status.uppercase()) {
                                                     "PENDING" -> com.example.condominio.data.model.InvoiceStatus.PENDING
+                                                    "PARTIAL", "PARTIALLY_PAID" -> com.example.condominio.data.model.InvoiceStatus.PARTIAL
                                                     "PAID" -> com.example.condominio.data.model.InvoiceStatus.PAID
                                                     "OVERDUE" -> com.example.condominio.data.model.InvoiceStatus.OVERDUE
                                                     "CANCELLED" -> com.example.condominio.data.model.InvoiceStatus.CANCELLED
