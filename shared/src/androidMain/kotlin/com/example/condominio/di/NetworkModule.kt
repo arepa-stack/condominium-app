@@ -46,7 +46,7 @@ val networkModule = module {
                 })
             }
             defaultRequest {
-                url("http://192.168.0.155:3000")
+                url("https://condominium-api.nibs-tech.com/")
             }
         }
     }
