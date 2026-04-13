@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.billing
+package com.example.condominio.ui.screens.billing
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +20,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.material.icons.filled.Refresh
 import com.example.condominio.data.model.Invoice
 import com.example.condominio.data.model.InvoiceStatus
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,11 @@ fun InvoiceListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Todas", "Pendientes", "Pagadas")
+    val tabs = listOf(
+        stringResource(Res.string.tab_all),
+        stringResource(Res.string.tab_pending),
+        stringResource(Res.string.tab_paid)
+    )
 
     val filteredInvoices = remember(uiState.invoices, selectedTab) {
         when (selectedTab) {
@@ -43,15 +49,15 @@ fun InvoiceListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Facturas") },
+                title = { Text(stringResource(Res.string.invoices_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Actualizar")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.refresh))
                     }
                 }
             )
@@ -74,11 +80,11 @@ fun InvoiceListScreen(
                 }
             } else if (uiState.error != null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error)
+                    Text(text = uiState.error!!.asString(), color = MaterialTheme.colorScheme.error)
                 }
             } else if (filteredInvoices.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No se encontraron facturas")
+                    Text(text = stringResource(Res.string.no_invoices_found))
                 }
             } else {
                 LazyColumn(
@@ -123,19 +129,19 @@ fun InvoiceItem(
                         if (invoice.type == com.example.condominio.data.model.InvoiceType.PETTY_CASH_REPLENISHMENT) {
                             Icon(
                                 imageVector = Icons.Default.Build, // Using Build as a proxy for maintenance/petty cash
-                                contentDescription = "Caja Chica",
+                                contentDescription = stringResource(Res.string.petty_cash_title),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp).padding(end = 4.dp)
                             )
                         }
                         Text(
-                            text = invoice.description ?: "Cuota de Condominio",
+                            text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
                     Text(
-                        text = "Periodo: ${invoice.period}",
+                        text = stringResource(Res.string.period_label, invoice.period),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -162,7 +168,7 @@ fun InvoiceItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "Total", style = MaterialTheme.typography.labelSmall)
+                    Text(text = stringResource(Res.string.total_label), style = MaterialTheme.typography.labelSmall)
                     Text(
                         text = "$${formatCurrency(invoice.amount)}",
                         style = MaterialTheme.typography.bodyMedium
@@ -170,7 +176,7 @@ fun InvoiceItem(
                 }
                 if (invoice.paid > 0) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "Pagado", style = MaterialTheme.typography.labelSmall)
+                        Text(text = stringResource(Res.string.paid_label), style = MaterialTheme.typography.labelSmall)
                         Text(
                             text = "$${formatCurrency(invoice.paid)}",
                             style = MaterialTheme.typography.bodyMedium,
@@ -179,7 +185,7 @@ fun InvoiceItem(
                     }
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(text = "Restante", style = MaterialTheme.typography.labelSmall)
+                    Text(text = stringResource(Res.string.remaining_label), style = MaterialTheme.typography.labelSmall)
                     val remainingColor = if (invoice.remaining > 0) {
                         if (invoice.status == InvoiceStatus.OVERDUE) MaterialTheme.colorScheme.error else Color(0xFFE65100)
                     } else {
@@ -200,10 +206,10 @@ fun InvoiceItem(
 @Composable
 fun InvoiceStatusBadge(status: InvoiceStatus) {
     val (text, containerColor, contentColor) = when (status) {
-        InvoiceStatus.PAID -> Triple("PAGADA", Color(0xFFE8F5E9), Color(0xFF2E7D32))
-        InvoiceStatus.OVERDUE -> Triple("VENCIDA", Color(0xFFFFEBEE), Color(0xFFC62828))
-        InvoiceStatus.CANCELLED -> Triple("CANCELADA", Color(0xFFFFEBEE), Color(0xFFC62828))
-        InvoiceStatus.PENDING -> Triple("PENDIENTE", Color(0xFFF5F5F5), Color(0xFF616161))
+        InvoiceStatus.PAID -> Triple(stringResource(Res.string.status_paid), Color(0xFFE8F5E9), Color(0xFF2E7D32))
+        InvoiceStatus.OVERDUE -> Triple(stringResource(Res.string.status_overdue), Color(0xFFFFEBEE), Color(0xFFC62828))
+        InvoiceStatus.CANCELLED -> Triple(stringResource(Res.string.status_cancelled), Color(0xFFFFEBEE), Color(0xFFC62828))
+        InvoiceStatus.PENDING -> Triple(stringResource(Res.string.status_pending), Color(0xFFF5F5F5), Color(0xFF616161))
     }
 
     Surface(

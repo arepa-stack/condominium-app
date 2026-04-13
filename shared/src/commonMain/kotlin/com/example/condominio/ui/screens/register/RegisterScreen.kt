@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.register
+package com.example.condominio.ui.screens.register
 
 import androidx.compose.foundation.layout.*
 import com.example.condominio.data.model.UnitDto
@@ -19,6 +19,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +50,7 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Create Account",
+                text = stringResource(Res.string.create_account),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -61,7 +63,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text("Full Name") },
+                label = { Text(stringResource(Res.string.full_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true
@@ -73,7 +75,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChange,
-                label = { Text("Email address") },
+                label = { Text(stringResource(Res.string.email)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -94,8 +96,8 @@ fun RegisterScreen(
                     value = uiState.unit,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Ap. Unit") },
-                    placeholder = { Text(if (uiState.selectedBuildingId.isBlank()) "Select Building first" else "Select Unit") },
+                    label = { Text(stringResource(Res.string.apartment_unit_label)) },
+                    placeholder = { Text(if (uiState.selectedBuildingId.isBlank()) stringResource(Res.string.select_building_first) else stringResource(Res.string.select_unit_placeholder)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     shape = RoundedCornerShape(12.dp),
@@ -107,12 +109,12 @@ fun RegisterScreen(
                 ) {
                     if (uiState.isLoadingUnits) {
                         DropdownMenuItem(
-                            text = { Text("Loading units...") },
+                            text = { Text(stringResource(Res.string.loading)) },
                             onClick = {}
                         )
                     } else if (uiState.units.isEmpty()) {
-                         DropdownMenuItem(
-                            text = { Text("No units found") },
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.no_units_found)) },
                             onClick = {}
                         )
                     } else {
@@ -143,7 +145,7 @@ fun RegisterScreen(
                     value = uiState.buildings.find { it.id == uiState.selectedBuildingId }?.name ?: "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Building/Tower") },
+                    label = { Text(stringResource(Res.string.building_tower)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = buildingExpanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     shape = RoundedCornerShape(12.dp),
@@ -155,7 +157,7 @@ fun RegisterScreen(
                 ) {
                     if (uiState.isLoadingBuildings) {
                         DropdownMenuItem(
-                            text = { Text("Loading...") },
+                            text = { Text(stringResource(Res.string.loading)) },
                             onClick = {}
                         )
                     } else {
@@ -179,7 +181,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
-                label = { Text("Password") },
+                label = { Text(stringResource(Res.string.password)) },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -188,7 +190,7 @@ fun RegisterScreen(
                     else Icons.Filled.VisibilityOff
 
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                        Icon(imageVector = image, contentDescription = if (passwordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password))
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
@@ -199,7 +201,7 @@ fun RegisterScreen(
             if (uiState.error != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = uiState.error!!,
+                    text = uiState.error!!.asString(),
                     color = MaterialTheme.colorScheme.error
                 )
             }
@@ -217,14 +219,14 @@ fun RegisterScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(color = Color.White)
                 } else {
-                    Text(text = "Sign Up", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(Res.string.sign_up), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
             TextButton(onClick = onLoginClick) {
-                Text("Already have an account? Sign In")
+                Text(stringResource(Res.string.already_have_account))
             }
         }
     }

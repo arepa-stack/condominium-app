@@ -15,6 +15,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import condominio.shared.generated.resources.*
 
 @Composable
 fun LoginScreen(
@@ -48,7 +50,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Welcome back",
+                text = stringResource(Res.string.welcome_back),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -60,7 +62,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = onEmailChange,
-                label = { Text("Email address") },
+                label = { Text(stringResource(Res.string.email)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true
@@ -72,7 +74,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = onPasswordChange,
-                label = { Text("Password") },
+                label = { Text(stringResource(Res.string.password)) },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -91,7 +93,7 @@ fun LoginScreen(
             if (uiState.error != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = uiState.error,
+                    text = uiState.error.asString(),
                     color = MaterialTheme.colorScheme.error
                 )
             }
@@ -109,14 +111,14 @@ fun LoginScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(color = Color.White)
                 } else {
-                    Text(text = "Sign In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(Res.string.login), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
             TextButton(onClick = onRegisterClick) {
-                Text("Don't have an account? Sign up")
+                Text(stringResource(Res.string.dont_have_account))
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -130,7 +132,7 @@ fun LoginScreen(
                 )
             ) {
                 Text(
-                    text = if (uiState.databaseCleared) "✓ Database Cleared!" else "🗑️ Clear Database (Demo)",
+                    text = if (uiState.databaseCleared) stringResource(Res.string.database_cleared) else stringResource(Res.string.clear_database_demo),
                     fontSize = 14.sp
                 )
             }

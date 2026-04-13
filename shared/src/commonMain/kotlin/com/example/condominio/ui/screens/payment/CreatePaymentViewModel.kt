@@ -12,6 +12,8 @@ import kotlinx.datetime.Clock
 
 import com.example.condominio.data.repository.AuthRepository
 import kotlinx.coroutines.flow.first
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
 import com.example.condominio.ui.utils.formatCurrency
 
 class CreatePaymentViewModel (
@@ -115,7 +117,7 @@ class CreatePaymentViewModel (
         val amount = state.amount.toDoubleOrNull()
         
         if (amount == null || amount <= 0) {
-            _uiState.update { it.copy(error = "Invalid amount") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_invalid_amount)) }
             return
         }
 
@@ -130,7 +132,7 @@ class CreatePaymentViewModel (
         if (state.selectedInvoiceIds.isEmpty() && state.pendingInvoices.isNotEmpty()) {
              // Optional: Allow proceeding without selection if valid reason?
              // Enforcing selection for better data quality
-             _uiState.update { it.copy(error = "Please select invoices to pay") }
+             _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_select_invoices)) }
              return
         }
         
@@ -142,7 +144,7 @@ class CreatePaymentViewModel (
             val unitId = user?.currentUnit?.unitId ?: user?.units?.firstOrNull()?.unitId
             
             if (unitId.isNullOrEmpty()) {
-                _uiState.update { it.copy(isLoading = false, error = "User/Unit not found.") }
+                _uiState.update { it.copy(isLoading = false, error = UiText.StringResource(Res.string.error_user_unit_not_found)) }
                 return@launch
             }
 
@@ -185,7 +187,7 @@ class CreatePaymentViewModel (
             result.onSuccess {
                 _uiState.update { it.copy(isSuccess = true) }
             }.onFailure { error ->
-                _uiState.update { it.copy(error = error.message) }
+                _uiState.update { it.copy(error = UiText.DynamicString(error.message ?: "")) }
             }
         }
     }
@@ -204,6 +206,6 @@ data class CreatePaymentUiState(
     val selectedInvoiceIds: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val isLoadingInvoices: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val isSuccess: Boolean = false
 )

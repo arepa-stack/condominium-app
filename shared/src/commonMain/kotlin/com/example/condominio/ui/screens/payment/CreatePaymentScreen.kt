@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.payment
+package com.example.condominio.ui.screens.payment
 
 import com.example.condominio.ui.utils.formatDate
 import com.example.condominio.ui.utils.formatCurrency
@@ -37,6 +37,8 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TextButton
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreatePaymentScreen(
@@ -62,10 +64,10 @@ fun CreatePaymentScreen(
                 TextButton(onClick = { 
                     datePickerState.selectedDateMillis?.let { viewModel.onDateChange(it) }
                     showDatePicker = false 
-                }) { Text("Aceptar") }
+                }) { Text(stringResource(Res.string.accept)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(Res.string.cancel)) }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -83,10 +85,10 @@ fun CreatePaymentScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registrar Pago", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(Res.string.create_payment_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -106,7 +108,7 @@ fun CreatePaymentScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Monto del Pago",
+                text = stringResource(Res.string.payment_amount_label),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -133,7 +135,7 @@ fun CreatePaymentScreen(
 
             // Payment Method
             Text(
-                text = "MÃ©todo de Pago",
+                text = stringResource(Res.string.payment_method_field),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -145,9 +147,9 @@ fun CreatePaymentScreen(
             ) {
                 OutlinedTextField(
                     value = when(uiState.method) {
-                        PaymentMethod.PAGO_MOVIL -> "Pago MÃ³vil"
-                        PaymentMethod.TRANSFER -> "Transferencia"
-                        PaymentMethod.CASH -> "Efectivo"
+                        PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
+                        PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
+                        PaymentMethod.CASH -> stringResource(Res.string.method_cash)
                     },
                     onValueChange = {},
                     readOnly = true,
@@ -163,9 +165,9 @@ fun CreatePaymentScreen(
                         DropdownMenuItem(
                             text = {
                                 Text(when (method) {
-                                    PaymentMethod.PAGO_MOVIL -> "Pago MÃ³vil"
-                                    PaymentMethod.TRANSFER -> "Transferencia"
-                                    PaymentMethod.CASH -> "Efectivo"
+                                    PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
+                                    PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
+                                    PaymentMethod.CASH -> stringResource(Res.string.method_cash)
                                 })
                             },
                             onClick = {
@@ -185,7 +187,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.bank,
                         onValueChange = viewModel::onBankChange,
-                        label = { Text("Banco Emisor") },
+                        label = { Text(stringResource(Res.string.issuing_bank_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -193,7 +195,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.phone,
                         onValueChange = viewModel::onPhoneChange,
-                        label = { Text("NÃºmero de TelÃ©fono") },
+                        label = { Text(stringResource(Res.string.phone_number_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
@@ -202,7 +204,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.reference,
                         onValueChange = viewModel::onReferenceChange,
-                        label = { Text("NÃºmero de Referencia") },
+                        label = { Text(stringResource(Res.string.reference_number_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -212,7 +214,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.bank,
                         onValueChange = viewModel::onBankChange,
-                        label = { Text("Banco Emisor") },
+                        label = { Text(stringResource(Res.string.issuing_bank_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -220,7 +222,7 @@ fun CreatePaymentScreen(
                     OutlinedTextField(
                         value = uiState.reference,
                         onValueChange = viewModel::onReferenceChange,
-                        label = { Text("NÃºmero de Referencia") },
+                        label = { Text(stringResource(Res.string.reference_number_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -228,7 +230,7 @@ fun CreatePaymentScreen(
                 }
                 PaymentMethod.CASH -> {
                      Text(
-                        text = "Para pagos en efectivo, por favor sube una foto del recibo o comprobante de entrega.",
+                        text = stringResource(Res.string.cash_payment_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -240,7 +242,7 @@ fun CreatePaymentScreen(
 
             // Invoice Selector
             Text(
-                text = "Seleccionar Facturas a Pagar",
+                text = stringResource(Res.string.select_invoices_label),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -273,21 +275,31 @@ fun CreatePaymentScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    val monthName = try {
-                                        val parts = invoice.period.split("-")
-                                        val monthNum = parts[1].toInt()
-                                        val months = listOf("", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
-                                        months.getOrElse(monthNum) { invoice.period }
-                                    } catch (e: Exception) {
-                                        invoice.period
-                                    }
+                                    val parts = invoice.period.split("-")
+                                    val monthNum = if (parts.size > 1) parts[1].toIntOrNull() ?: 1 else 1
+                                    val months = listOf(
+                                        "", 
+                                        stringResource(Res.string.month_january),
+                                        stringResource(Res.string.month_february),
+                                        stringResource(Res.string.month_march),
+                                        stringResource(Res.string.month_april),
+                                        stringResource(Res.string.month_may),
+                                        stringResource(Res.string.month_june),
+                                        stringResource(Res.string.month_july),
+                                        stringResource(Res.string.month_august),
+                                        stringResource(Res.string.month_september),
+                                        stringResource(Res.string.month_october),
+                                        stringResource(Res.string.month_november),
+                                        stringResource(Res.string.month_december)
+                                    )
+                                    val monthName = if (monthNum in 1..12) months[monthNum] else invoice.period
                                     Text(
                                         text = invoice.description ?: monthName,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "Pendiente: $${formatCurrency(invoice.remaining)}",
+                                        text = stringResource(Res.string.remaining_label) + ": $${formatCurrency(invoice.remaining)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -304,7 +316,7 @@ fun CreatePaymentScreen(
                 
                 if (uiState.selectedInvoiceIds.isNotEmpty()) {
                     Text(
-                        text = "${uiState.selectedInvoiceIds.size} facturas seleccionadas",
+                        text = stringResource(Res.string.invoices_selected_count, uiState.selectedInvoiceIds.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(top = 8.dp)
@@ -312,7 +324,7 @@ fun CreatePaymentScreen(
                 }
             } else {
                  Text(
-                    text = "No se encontraron facturas pendientes.",
+                    text = stringResource(Res.string.no_pending_invoices),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
@@ -322,7 +334,7 @@ fun CreatePaymentScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "DescripciÃ³n del Pago",
+                text = stringResource(Res.string.payment_description_label),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -331,14 +343,14 @@ fun CreatePaymentScreen(
                 value = uiState.description,
                 onValueChange = viewModel::onDescriptionChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Ej. Pago de enero") },
+                placeholder = { Text(stringResource(Res.string.payment_description_placeholder)) },
                 shape = RoundedCornerShape(12.dp)
             )
             
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Fecha del Pago",
+                text = stringResource(Res.string.payment_date_label),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -352,7 +364,7 @@ fun CreatePaymentScreen(
                     .clickable { showDatePicker = true },
                 trailingIcon = {
                     IconButton(onClick = { showDatePicker = true }) {
-                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "Seleccionar Fecha")
+                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = stringResource(Res.string.select_date))
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
@@ -367,7 +379,7 @@ fun CreatePaymentScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = if(uiState.method == PaymentMethod.CASH) "Comprobante de Pago (Requerido)" else "Subir Comprobante (Opcional)",
+                text = if(uiState.method == PaymentMethod.CASH) stringResource(Res.string.proof_of_payment_required) else stringResource(Res.string.upload_proof_optional),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp),
                 color = if(uiState.method == PaymentMethod.CASH) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
@@ -398,7 +410,7 @@ fun CreatePaymentScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = if (isImageSelected) "Imagen seleccionada" else "Toca para subir imagen",
+                        text = if (isImageSelected) stringResource(Res.string.image_selected) else stringResource(Res.string.tap_to_upload),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -409,7 +421,7 @@ fun CreatePaymentScreen(
 
             if (uiState.error != null) {
                 Text(
-                    text = uiState.error!!,
+                    text = uiState.error!!.asString(),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -426,7 +438,7 @@ fun CreatePaymentScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(color = Color.White)
                 } else {
-                    Text("Registrar Pago", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(Res.string.create_payment_title), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
             

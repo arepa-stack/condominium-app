@@ -1,0 +1,235 @@
+<resources>
+    <!-- Glossary Technical Terms -->
+    <string name="dashboard_balance">Saldo Total</string>
+    <string name="status_solvent">Solvente</string>
+    <string name="petty_cash">Caja Chica</string>
+
+    <!-- Dashboard Screen -->
+    <string name="welcome_back">Bienvenido de nuevo,</string>
+    <string name="recent_transactions">Transacciones Recientes</string>
+    <string name="see_all">Ver todo</string>
+    <string name="total_debt">Deuda Total</string>
+    <string name="pending_invoices_label">Facturas Pendientes:</string>
+    <string name="up_to_date">¡Estás al día! 🎉</string>
+    <string name="select_unit">Seleccionar Unidad</string>
+    <string name="profile">Perfil</string>
+    <string name="pay_now">Pagar Ahora</string>
+    <string name="history">Historial</string>
+    <string name="support">Soporte</string>
+    <string name="payment_item_label">Pago</string>
+
+    <!-- Login Screen -->
+    <string name="login">Iniciar Sesión</string>
+    <string name="email">Correo Electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="error_missing_fields">Por favor, completa todos los campos</string>
+    <string name="error_invalid_credentials">Credenciales inválidas</string>
+
+    <!-- Payment History -->
+    <string name="payment_history">Historial de Pagos</string>
+    <string name="unit">Unidad %1$s</string>
+
+    <!-- Common -->
+    <string name="back">Volver</string>
+    <string name="cancel">Cancelar</string>
+    <string name="accept">Aceptar</string>
+    <string name="save">Guardar</string>
+    <string name="loading">Cargando...</string>
+    <string name="error_unknown">Error desconocido</string>
+
+    <!-- Register Screen -->
+    <string name="create_account">Crear Cuenta</string>
+    <string name="full_name">Nombre Completo</string>
+    <string name="apartment_unit_label">Apartamento / Unidad</string>
+    <string name="building_tower">Edificio / Torre</string>
+    <string name="select_building_first">Seleccione Edificio primero</string>
+    <string name="select_unit_placeholder">Seleccione Unidad</string>
+    <string name="sign_up">Registrarse</string>
+    <string name="already_have_account">¿Ya tienes cuenta? Inicia Sesión</string>
+
+    <!-- Petty Cash -->
+    <string name="petty_cash_title">Caja Chica</string>
+    <string name="recent_activity">Actividad Reciente</string>
+    <string name="no_transactions">No hay movimientos registrados</string>
+    <string name="available_balance">Saldo Disponible</string>
+    <string name="register_income">Registrar Ingreso</string>
+    <string name="register_expense">Registrar Gasto</string>
+    <string name="insufficient_balance">Saldo Insuficiente</string>
+    <string name="evidence_receipt">Comprobante / Recibo</string>
+    <string name="category_repair">Reparaciones</string>
+    <string name="category_cleaning">Limpieza</string>
+    <string name="category_emergency">Emergencia</string>
+    <string name="category_office">Oficina</string>
+    <string name="category_utilities">Servicios</string>
+    <string name="category_other">Otros</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Perfil</string>
+    <string name="account_info">Información de la Cuenta</string>
+    <string name="edit_profile">Editar Perfil</string>
+    <string name="notification_settings">Configuración de Notificaciones</string>
+    <string name="change_password">Cambiar Contraseña</string>
+    <string name="logout">Cerrar Sesión</string>
+
+    <!-- Billing & Payments -->
+    <string name="my_invoices">Mis Facturas</string>
+    <string name="invoice_detail">Detalle de Factura</string>
+    <string name="pay_remainder">Pagar Restante</string>
+    <string name="register_payment">Registrar Pago</string>
+    <string name="payment_amount">Monto del Pago</string>
+    <string name="payment_method">Método de Pago</string>
+    <string name="bank_issuing">Banco Emisor</string>
+    <string name="phone_number">Número de Teléfono</string>
+    <string name="reference_number">Número de Referencia</string>
+    <string name="payment_date">Fecha del Pago</string>
+    <string name="payment_proof">Comprobante de Pago</string>
+    <string name="status_approved">Aprobado</string>
+    <string name="status_pending_approval">Pendiente de Aprobación</string>
+    <string name="status_rejected">Rechazado</string>
+
+    <!-- Unit Selection -->
+    <string name="select_property_title">Seleccionar Propiedad</string>
+    <string name="greeting_user">Hola, %1$s</string>
+    <string name="hello_user">Hola, %1$s</string>
+    <string name="select_building_instruction">Selecciona un edificio para continuar:</string>
+    <string name="role_board">Junta Directiva</string>
+    <string name="role_admin">Administrador</string>
+    <string name="role_resident">Residente</string>
+    <string name="units_count">%d unidades</string>
+    <string name="select_unit_instruction">Selecciona una unidad:</string>
+    <string name="primary_chip">Principal</string>
+
+    <!-- Errors and UI Messages -->
+    <string name="error_failed_load_buildings">Error al cargar edificios</string>
+    <string name="error_failed_load_units">Error al cargar unidades</string>
+    <string name="error_fill_all_fields">Por favor rellena todos los campos</string>
+    <string name="error_invalid_amount">Monto inválido</string>
+    <string name="error_select_invoices">Por favor selecciona facturas a pagar</string>
+    <string name="error_user_unit_not_found">Usuario o Unidad no encontrados</string>
+    <string name="error_no_building_found">No se encontró ID de edificio para el usuario</string>
+    <string name="income_item_label">Ingreso</string>
+    <string name="expense_item_label">Gasto</string>
+    <string name="attention">Atención</string>
+    <string name="understood">Entendido</string>
+    <string name="from_date_label">Desde: %1$s</string>
+    <string name="view_receipt">Ver recibo</string>
+    <string name="amount_label">Monto ($)</string>
+    <string name="description_label">Descripción</string>
+    <string name="category_label">Categoría</string>
+    <string name="evidence_ready">Comprobante listo</string>
+    <string name="upload_evidence">Subir Comprobante</string>
+    <string name="confirm_overage">Confirmar Excedente</string>
+    <string name="register">Registrar</string>
+    <string name="expense_registered_title">¡Gasto Registrado!</string>
+    <string name="excess_neighbors">Excedente (Vecinos)</string>
+    <string name="expense_evidence_title">Evidencia del Gasto</string>
+    <string name="close">Cerrar</string>
+    <string name="overage_warning_desc">Saldo actual: %1$s. Monto del gasto: %2$s.\nDiferencia (%3$s) será facturada automáticamente a los propietarios como reposición de caja chica.</string>
+    <string name="account_info_title">Información de la Cuenta</string>
+    <string name="quick_actions_title">Acciones Rápidas</string>
+    <string name="apt_label">Apt. %1$s</string>
+    <string name="invoices_title">Mis Facturas</string>
+    <string name="tab_all">Todas</string>
+    <string name="tab_pending">Pendientes</string>
+    <string name="tab_paid">Pagadas</string>
+    <string name="refresh">Actualizar</string>
+    <string name="no_invoices_found">No se encontraron facturas</string>
+    <string name="default_invoice_desc">Cuota de Condominio</string>
+    <string name="period_label">Periodo: %1$s</string>
+    <string name="total_label">Total</string>
+    <string name="paid_label">Pagado</string>
+    <string name="remaining_label">Restante</string>
+    <string name="status_paid">PAGADA</string>
+    <string name="status_overdue">VENCIDA</string>
+    <string name="status_cancelled">CANCELADA</string>
+    <string name="status_pending">PENDIENTE</string>
+    <string name="invoice_detail_title">Detalle de Factura</string>
+    <string name="pay_remainder_btn">Pagar Restante (%1$s)</string>
+    <string name="invoice_period_label">Factura %1$s</string>
+    <string name="total_amount_label">Monto Total: %1$s</string>
+    <string name="paid_amount_label">Pagado: %1$s</string>
+    <string name="payment_history_title">Historial de Pagos</string>
+    <string name="no_payments_found">No hay pagos registrados para esta factura</string>
+    <string name="view_all_payments">Ver Todos los Pagos</string>
+    <string name="view_invoices">Ver Facturas</string>
+    <string name="applied_label">Aplicado: %1$s</string>
+    <string name="payment_method_label">Método: %1$s</string>
+    <string name="create_payment_title">Registrar Pago</string>
+    <string name="payment_amount_label">Monto del Pago</string>
+    <string name="payment_method_field">Método de Pago</string>
+    <string name="method_pago_movil">Pago Móvil</string>
+    <string name="method_transfer">Transferencia</string>
+    <string name="method_cash">Efectivo</string>
+    <string name="issuing_bank_label">Banco Emisor</string>
+    <string name="phone_number_label">Número de Teléfono</string>
+    <string name="reference_number_label">Número de Referencia</string>
+    <string name="cash_payment_hint">Para pagos en efectivo, sube una foto del recibo.</string>
+    <string name="select_invoices_label">Seleccionar Facturas a Pagar</string>
+    <string name="invoices_selected_count">%d facturas seleccionadas</string>
+    <string name="no_pending_invoices">No se encontraron facturas pendientes.</string>
+    <string name="payment_description_label">Descripción del Pago</string>
+    <string name="payment_description_placeholder">Ej. Pago de enero</string>
+    <string name="payment_date_label">Fecha del Pago</string>
+    <string name="select_date">Seleccionar Fecha</string>
+    <string name="proof_of_payment_required">Comprobante de Pago (Requerido)</string>
+    <string name="upload_proof_optional">Subir Comprobante (Opcional)</string>
+    <string name="image_selected">Imagen seleccionada</string>
+    <string name="tap_to_upload">Toca para subir imagen</string>
+    <string name="month_january">Enero</string>
+    <string name="month_february">Febrero</string>
+    <string name="month_march">Marzo</string>
+    <string name="month_april">Abril</string>
+    <string name="month_may">Mayo</string>
+    <string name="month_june">Junio</string>
+    <string name="month_july">Julio</string>
+    <string name="month_august">Agosto</string>
+    <string name="month_september">Septiembre</string>
+    <string name="month_october">Octubre</string>
+    <string name="month_november">Noviembre</string>
+    <string name="month_december">Diciembre</string>
+    <string name="payment_details_title">Detalle del Pago</string>
+    <string name="download_receipt">Descargar Recibo</string>
+    <string name="contact_support">Contactar Soporte</string>
+    <string name="payment_approved">Pago Aprobado</string>
+    <string name="payment_pending_approval">Pago Pendiente de Aprobación</string>
+    <string name="payment_rejected">Pago Rechazado</string>
+    <string name="transaction_details">Detalles de la Transacción</string>
+    <string name="transaction_id">ID de Transacción</string>
+    <string name="date_label">Fecha</string>
+    <string name="reported_on">Reportado el</string>
+    <string name="method_label">Método</string>
+    <string name="paid_by_label">Pagado por</string>
+    <string name="bank_label">Banco</string>
+    <string name="reference_label">Referencia</string>
+    <string name="mobile_label">Móvil</string>
+    <string name="processed_by_label">Procesado por</string>
+    <string name="allocations_label">Asignaciones</string>
+    <string name="period_label_short">Periodo %1$s</string>
+    <string name="invoice_id_short">Fact. %1$s</string>
+    <string name="payment_receipt_label">Recibo de Pago</string>
+    <string name="view_full">Ver Completo</string>
+    <string name="payment_proof_desc">Comprobante de Pago</string>
+    <string name="no_receipt_uploaded">No se ha subido ningún recibo</string>
+    <string name="apt_unit_label">%1$s · Apt %2$s</string>
+    <string name="processed_by_short"> · Por: %1$s</string>
+    <string name="dont_have_account">¿No tienes cuenta? Registrate</string>
+    <string name="database_cleared">✓ Base de datos limpiada!</string>
+    <string name="clear_database_demo">🗑️ Limpiar Base de Datos (Demo)</string>
+    <string name="insufficient_balance_title">Saldo insuficiente</string>
+    <string name="insufficient_balance_desc">Saldo actual: $%1$s. Monto del gasto: $%2$s.\nDiferencia ($%3$s) será facturada automáticamente a los propietarios como reposición de caja chica.</string>
+    <string name="cat_repair">Reparación</string>
+    <string name="cat_cleaning">Limpieza</string>
+    <string name="cat_emergency">Emergencia</string>
+    <string name="cat_office">Oficina</string>
+    <string name="cat_utilities">Servicios</string>
+    <string name="cat_other">Otro</string>
+    <string name="no_units_found">No se encontraron unidades</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="reference_short">Ref</string>
+    <string name="select_building_hint">Selecciona un edificio para continuar:</string>
+    <string name="unit_label_short">Unidad: %1$s</string>
+    <string name="units_count_label">%1$d unidades</string>
+    <string name="select_unit_hint">Selecciona una unidad:</string>
+    <string name="primary_label">Principal</string>
+</resources>

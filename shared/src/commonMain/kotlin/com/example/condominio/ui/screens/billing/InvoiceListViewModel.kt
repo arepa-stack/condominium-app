@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
 
 class InvoiceListViewModel (
     private val authRepository: AuthRepository,
@@ -42,7 +44,7 @@ class InvoiceListViewModel (
                     _uiState.update { 
                         it.copy(
                             isLoading = false,
-                            error = e.message
+                            error = UiText.DynamicString(e.message ?: "")
                         )
                     }
                 }
@@ -50,7 +52,7 @@ class InvoiceListViewModel (
                 _uiState.update { 
                     it.copy(
                         isLoading = false,
-                        error = "No unit selected"
+                        error = UiText.StringResource(Res.string.error_user_unit_not_found)
                     )
                 }
             }
@@ -65,5 +67,5 @@ class InvoiceListViewModel (
 data class InvoiceListUiState(
     val invoices: List<Invoice> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: UiText? = null
 )

@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.pettycash
+package com.example.condominio.ui.screens.pettycash
 
 import androidx.compose.animation.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -44,6 +46,16 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
 
     var showIncomeSheet by remember { mutableStateOf(false) }
     var showExpenseSheet by remember { mutableStateOf(false) }
+
+    @Composable
+    fun PettyCashCategory.toLabel(): String = when (this) {
+        PettyCashCategory.REPAIR -> stringResource(Res.string.cat_repair)
+        PettyCashCategory.CLEANING -> stringResource(Res.string.cat_cleaning)
+        PettyCashCategory.EMERGENCY -> stringResource(Res.string.cat_emergency)
+        PettyCashCategory.OFFICE -> stringResource(Res.string.cat_office)
+        PettyCashCategory.UTILITIES -> stringResource(Res.string.cat_utilities)
+        PettyCashCategory.OTHER -> stringResource(Res.string.cat_other)
+    }
     var selectedTransactionForEvidence by remember {
         mutableStateOf<PettyCashTransactionDto?>(null)
     }
@@ -69,10 +81,10 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
     Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                        title = { Text("Caja Chica", fontWeight = FontWeight.Bold) },
+                        title = { Text(stringResource(Res.string.petty_cash_title), fontWeight = FontWeight.Bold) },
                         navigationIcon = {
                             IconButton(onClick = onBackClick) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                             }
                         },
                         colors =
@@ -97,7 +109,7 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
 
             // History Section
             Text(
-                    text = "Actividad Reciente",
+                    text = stringResource(Res.string.recent_activity),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
@@ -110,7 +122,7 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
             } else if (uiState.history.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                            "No hay movimientos registrados",
+                            stringResource(Res.string.no_transactions),
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                 }
@@ -124,6 +136,7 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
                     items(uiState.history) { transaction ->
                         TransactionItem(
                                 transaction = transaction,
+                                label = transaction.category.toLabel(),
                                 onEvidenceClick = { selectedTransactionForEvidence = transaction }
                         )
                     }
@@ -143,8 +156,9 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
     // Sheets & Dialogs
     if (showIncomeSheet) {
         MovementSheet(
-                title = "Registrar Ingreso",
+                title = stringResource(Res.string.register_income),
                 isIncome = true,
+                categoryToLabel = { it.toLabel() },
                 onDismiss = { showIncomeSheet = false },
                 onConfirm = { amount, desc, _, _ ->
                     viewModel.registerIncome(amount, desc) { showIncomeSheet = false }
@@ -155,8 +169,9 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
 
     if (showExpenseSheet) {
         MovementSheet(
-                title = "Registrar Gasto",
+                title = stringResource(Res.string.register_expense),
                 isIncome = false,
+                categoryToLabel = { it.toLabel() },
                 onDismiss = { showExpenseSheet = false },
                 onConfirm = { amount, desc, category, evidence ->
                     val currentBalance = uiState.balance?.currentBalance ?: 0.0
@@ -196,10 +211,10 @@ fun PettyCashScreen(onBackClick: () -> Unit, viewModel: PettyCashViewModel = koi
     if (uiState.error != null) {
         AlertDialog(
                 onDismissRequest = { viewModel.clearError() },
-                title = { Text("AtenciÃ³n") },
-                text = { Text(uiState.error!!) },
+                title = { Text(stringResource(Res.string.attention)) },
+                text = { Text(uiState.error!!.asString()) },
                 confirmButton = {
-                    TextButton(onClick = { viewModel.clearError() }) { Text("Entendido") }
+                    TextButton(onClick = { viewModel.clearError() }) { Text(stringResource(Res.string.understood)) }
                 },
                 shape = RoundedCornerShape(20.dp),
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -227,7 +242,7 @@ fun BalanceCard(
                 horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                    text = "Saldo Disponible",
+                    text = stringResource(Res.string.available_balance),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -243,7 +258,7 @@ fun BalanceCard(
             )
             if (balance != null) {
                 Text(
-                        text = "Desde: ${balance.updatedAt.take(10)}",
+                        text = stringResource(Res.string.from_date_label, balance.updatedAt.take(10)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
@@ -256,14 +271,14 @@ fun BalanceCard(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     ActionBtn(
-                            label = "Ingreso",
+                            label = stringResource(Res.string.income_item_label),
                             icon = Icons.Default.Add,
                             color = Color(0xFF4CAF50),
                             modifier = Modifier.weight(1f),
                             onClick = onIncomeClick
                     )
                     ActionBtn(
-                            label = "Gasto",
+                            label = stringResource(Res.string.expense_item_label),
                             icon = Icons.Default.Remove,
                             color = Color(0xFFE53935),
                             modifier = Modifier.weight(1f),
@@ -303,7 +318,7 @@ fun ActionBtn(
 }
 
 @Composable
-fun TransactionItem(transaction: PettyCashTransactionDto, onEvidenceClick: () -> Unit) {
+fun TransactionItem(transaction: PettyCashTransactionDto, label: String, onEvidenceClick: () -> Unit) {
     val isIncome = transaction.type == PettyCashTransactionType.INCOME
     val color = if (isIncome) Color(0xFF4CAF50) else Color(0xFFE53935)
     val icon =
@@ -345,7 +360,7 @@ fun TransactionItem(transaction: PettyCashTransactionDto, onEvidenceClick: () ->
                 )
                 Text(
                         text =
-                                "${transaction.category.displayName} · ${transaction.createdAt.take(10)}",
+                                "$label · ${transaction.createdAt.take(10)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -362,7 +377,7 @@ fun TransactionItem(transaction: PettyCashTransactionDto, onEvidenceClick: () ->
                 if (transaction.evidenceUrl != null) {
                     Icon(
                             Icons.Default.Receipt,
-                            contentDescription = "Ver recibo",
+                            contentDescription = stringResource(Res.string.view_receipt),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                     )
@@ -380,7 +395,8 @@ fun MovementSheet(
         onDismiss: () -> Unit,
         onConfirm: (Double, String, PettyCashCategory?, String?) -> Unit,
         isSubmitting: Boolean,
-        currentBalance: Double = 0.0
+        currentBalance: Double = 0.0,
+        categoryToLabel: @Composable (PettyCashCategory) -> String = { it.name }
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -424,7 +440,7 @@ fun MovementSheet(
                     onValueChange = {
                         if (it.isEmpty() || it.toDoubleOrNull() != null) amount = it
                     },
-                    label = { Text("Monto ($)") },
+                    label = { Text(stringResource(Res.string.amount_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(16.dp),
@@ -461,14 +477,14 @@ fun MovementSheet(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                        "Saldo insuficiente",
+                                        stringResource(Res.string.insufficient_balance_title),
                                         color = Color(0xFFFF0040),
                                         fontWeight = FontWeight.Bold
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Saldo actual: $${formatCurrency(currentBalance)}. Monto del gasto: $${formatCurrency(amt)}.\nDiferencia ($${formatCurrency(amt - currentBalance)}) serÃ¡ facturada automÃ¡ticamente a los propietarios como reposiciÃ³n de caja chica.",
+                                stringResource(Res.string.insufficient_balance_desc, formatCurrency(currentBalance), formatCurrency(amt), formatCurrency(amt - currentBalance)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                             )
@@ -482,7 +498,7 @@ fun MovementSheet(
             OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("DescripciÃ³n") },
+                    label = { Text(stringResource(Res.string.description_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp)
             )
@@ -492,10 +508,10 @@ fun MovementSheet(
 
                 Box {
                     OutlinedTextField(
-                            value = category.displayName,
+                            value = categoryToLabel(category),
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("CategorÃ­a") },
+                            label = { Text(stringResource(Res.string.category_label)) },
                             modifier =
                                     Modifier.fillMaxWidth().clickable { showCategoryMenu = true },
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
@@ -518,7 +534,7 @@ fun MovementSheet(
                     ) {
                         PettyCashCategory.values().forEach { cat ->
                             DropdownMenuItem(
-                                    text = { Text(cat.displayName) },
+                                    text = { Text(categoryToLabel(cat)) },
                                     onClick = {
                                         category = cat
                                         showCategoryMenu = false
@@ -549,7 +565,7 @@ fun MovementSheet(
                             null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (evidencePath != null) "Comprobante listo" else "Subir Comprobante")
+                    Text(if (evidencePath != null) stringResource(Res.string.evidence_ready) else stringResource(Res.string.upload_evidence))
                 }
             }
 
@@ -588,7 +604,7 @@ fun MovementSheet(
                     val amt = amount.toDoubleOrNull() ?: 0.0
                     val isOverage = !isIncome && amt > currentBalance
                     Text(
-                            if (isOverage) "Confirmar Excedente" else "Registrar",
+                            if (isOverage) stringResource(Res.string.confirm_overage) else stringResource(Res.string.register),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                     )
@@ -642,7 +658,7 @@ fun SuccessFeedback(data: SuccessFeedbackData) {
 
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                        "Â¡Gasto Registrado!",
+                        stringResource(Res.string.expense_registered_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -654,7 +670,7 @@ fun SuccessFeedback(data: SuccessFeedbackData) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Caja Chica", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(Res.string.petty_cash_title), style = MaterialTheme.typography.bodyMedium)
                         Text(
                                 "-$${formatCurrency(data.covered)}",
                                 fontWeight = FontWeight.Bold,
@@ -664,7 +680,7 @@ fun SuccessFeedback(data: SuccessFeedbackData) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(
-                                "Excedente (Vecinos)",
+                                stringResource(Res.string.excess_neighbors),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color(0xFFFF0040)
                         )
@@ -685,7 +701,7 @@ fun EvidenceDialog(transaction: PettyCashTransactionDto, onDismiss: () -> Unit) 
     AlertDialog(
             onDismissRequest = onDismiss,
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Evidencia del Gasto", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(Res.string.expense_evidence_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     AsyncImage(
@@ -702,7 +718,7 @@ fun EvidenceDialog(transaction: PettyCashTransactionDto, onDismiss: () -> Unit) 
                 }
             },
             confirmButton = {
-                TextButton(onClick = onDismiss) { Text("Cerrar", fontWeight = FontWeight.Bold) }
+                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close), fontWeight = FontWeight.Bold) }
             },
             shape = RoundedCornerShape(28.dp)
     )

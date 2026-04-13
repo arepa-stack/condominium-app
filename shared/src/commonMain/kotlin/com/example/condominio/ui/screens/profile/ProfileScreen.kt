@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.profile
+package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,10 +49,10 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(Res.string.profile_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -115,14 +117,14 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = uiState.user?.name ?: "Loading...",
+                            text = uiState.user?.name ?: stringResource(Res.string.loading),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
 
                         Text(
-                            text = "Apt. ${uiState.user?.apartmentUnit ?: "-"}",
+                            text = stringResource(Res.string.apt_label, uiState.user?.apartmentUnit ?: "-"),
                             fontSize = 16.sp,
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -134,14 +136,14 @@ fun ProfileScreen(
 
             // Account Information Section
             Text(
-                text = "Account Information",
+                text = stringResource(Res.string.account_info_title),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
             ProfileInfoCard(
                 icon = Icons.Default.Person,
-                label = "Full Name",
+                label = stringResource(Res.string.full_name),
                 value = uiState.user?.name ?: "-"
             )
 
@@ -149,7 +151,7 @@ fun ProfileScreen(
 
             ProfileInfoCard(
                 icon = Icons.Default.Email,
-                label = "Email",
+                label = stringResource(Res.string.email),
                 value = uiState.user?.email ?: "-"
             )
 
@@ -157,7 +159,7 @@ fun ProfileScreen(
 
             ProfileInfoCard(
                 icon = Icons.Default.Home,
-                label = "Apartment Unit",
+                label = stringResource(Res.string.apartment_unit_label),
                 value = uiState.user?.apartmentUnit ?: "-"
             )
 
@@ -165,14 +167,14 @@ fun ProfileScreen(
 
             // Quick Actions
             Text(
-                text = "Quick Actions",
+                text = stringResource(Res.string.quick_actions_title),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
             ProfileActionButton(
                 icon = Icons.Default.Edit,
-                text = "Edit Profile",
+                text = stringResource(Res.string.edit_profile),
                 onClick = onEditProfileClick
             )
 
@@ -180,7 +182,7 @@ fun ProfileScreen(
 
             ProfileActionButton(
                 icon = Icons.Default.Notifications,
-                text = "Notification Settings",
+                text = stringResource(Res.string.notification_settings),
                 onClick = onNotificationSettingsClick
             )
 
@@ -188,7 +190,7 @@ fun ProfileScreen(
 
             ProfileActionButton(
                 icon = Icons.Default.Lock,
-                text = "Change Password",
+                text = stringResource(Res.string.change_password),
                 onClick = onChangePasswordClick
             )
 
@@ -212,7 +214,7 @@ fun ProfileScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Logout",
+                    text = stringResource(Res.string.logout),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

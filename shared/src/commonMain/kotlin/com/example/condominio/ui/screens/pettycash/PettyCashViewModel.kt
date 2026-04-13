@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.model.*
 import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.PettyCashRepository
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -12,7 +14,7 @@ data class PettyCashUiState(
         val balance: PettyCashBalanceDto? = null,
         val history: List<PettyCashTransactionDto> = emptyList(),
         val isLoading: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val canManage: Boolean = false,
         val buildingId: String? = null,
         val isRefreshing: Boolean = false,
@@ -75,7 +77,7 @@ class PettyCashViewModel
                         history = historyResult.getOrDefault(emptyList()),
                         error =
                                 if (balanceResult.isFailure)
-                                        balanceResult.exceptionOrNull()?.message
+                                        UiText.DynamicString(balanceResult.exceptionOrNull()?.message ?: "")
                                 else null
                 )
             }
@@ -103,7 +105,7 @@ class PettyCashViewModel
                             }
                         }
                     }
-                    .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
+                    .onFailure { e -> _uiState.update { it.copy(error = UiText.DynamicString(e.message ?: "")) } }
 
             _uiState.update { it.copy(isLoading = false) }
         }
@@ -112,7 +114,7 @@ class PettyCashViewModel
     fun registerIncome(amount: Double, description: String, onSuccess: () -> Unit) {
         val bId = _uiState.value.buildingId
         if (bId.isNullOrEmpty()) {
-            _uiState.update { it.copy(error = "No building ID found for user.") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_no_building_found)) }
             return
         }
 
@@ -126,9 +128,9 @@ class PettyCashViewModel
                 onSuccess()
                 _uiState.update { it.copy(isSubmitting = false) }
             } else {
-                val error = result.exceptionOrNull()?.message
-                println("Error: `Register income failed: $error")
-                _uiState.update { it.copy(isSubmitting = false, error = error) }
+                val errorText = result.exceptionOrNull()?.message ?: ""
+                println("Error: `Register income failed: $errorText")
+                _uiState.update { it.copy(isSubmitting = false, error = UiText.DynamicString(errorText)) }
             }
         }
     }
@@ -142,7 +144,7 @@ class PettyCashViewModel
     ) {
         val bId = _uiState.value.buildingId
         if (bId.isNullOrEmpty()) {
-            _uiState.update { it.copy(error = "No building ID found for user.") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_no_building_found)) }
             return
         }
 
@@ -169,9 +171,9 @@ class PettyCashViewModel
                 onSuccess()
                 _uiState.update { it.copy(isSubmitting = false) }
             } else {
-                val error = result.exceptionOrNull()?.message
-                println("Error: `Register expense failed: $error")
-                _uiState.update { it.copy(isSubmitting = false, error = error) }
+                val errorText = result.exceptionOrNull()?.message ?: ""
+                println("Error: `Register expense failed: $errorText")
+                _uiState.update { it.copy(isSubmitting = false, error = UiText.DynamicString(errorText)) }
             }
         }
     }

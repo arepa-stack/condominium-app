@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
 
 class InvoiceDetailViewModel (
     private val paymentRepository: PaymentRepository,
@@ -36,7 +38,7 @@ class InvoiceDetailViewModel (
                     }
                     .onFailure { e ->
                         println("Error: `Error loading invoice $invoiceId: ${e.message}")
-                        _uiState.update { it.copy(error = "Error loading invoice: ${e.message}") }
+                        _uiState.update { it.copy(error = UiText.DynamicString(e.message ?: "")) }
                     }
             }
 
@@ -52,7 +54,7 @@ class InvoiceDetailViewModel (
                         }
                     }
                     .onFailure {
-                        _uiState.update { it.copy(isLoading = false, error = "Failed to load payments") }
+                        _uiState.update { it.copy(isLoading = false, error = UiText.StringResource(Res.string.error_unknown)) }
                     }
             }
         }
@@ -63,5 +65,5 @@ data class InvoiceDetailUiState(
     val invoice: com.example.condominio.data.model.Invoice? = null,
     val payments: List<Payment> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: UiText? = null
 )
