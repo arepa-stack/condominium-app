@@ -58,8 +58,9 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             
             com.example.condominio.ui.screens.UnitSelectionScreen(
                     uiState = uiState,
-                    onItemSelected = viewModel::onItemSelected,
-                    onUnitSelected = {
+                    onBuildingSelected = viewModel::onBuildingSelected,
+                    onUnitSelected = viewModel::onUnitSelected,
+                    onNavigateToDashboard = {
                         navController.navigate("dashboard") {
                             popUpTo("unit_selection") { inclusive = true }
                         }
