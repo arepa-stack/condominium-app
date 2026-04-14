@@ -101,10 +101,11 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             com.example.condominio.ui.screens.billing.InvoiceListScreen(
                     onBackClick = { navController.popBackStack() },
                     onInvoiceClick = { invoice ->
-                        if (invoice.status ==
-                                        com.example.condominio.data.model.InvoiceStatus.PAID ||
-                                        invoice.paid > 0
-                        ) {
+                        val status = invoice.status
+                        val isTerminal =
+                                status == com.example.condominio.data.model.InvoiceStatus.PAID ||
+                                        status == com.example.condominio.data.model.InvoiceStatus.CANCELLED
+                        if (isTerminal || invoice.paid > 0) {
                             navController.navigate("invoice_detail/${invoice.id}")
                         } else {
                             navController.navigate("create_payment?invoiceId=${invoice.id}")

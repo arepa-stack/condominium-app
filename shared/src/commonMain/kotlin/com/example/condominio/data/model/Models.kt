@@ -88,7 +88,7 @@ data class Invoice(
 
 @Serializable
 enum class InvoiceStatus {
-        PENDING, PAID, CANCELLED, OVERDUE
+        PENDING, PARTIAL, PAID, CANCELLED, OVERDUE
 }
 
 @Serializable

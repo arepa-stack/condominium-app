@@ -131,8 +131,7 @@ data class InvoiceDto(
         @SerialName("id") val id: String,
         val period: String,
         val amount: Double,
-        @SerialName("paid_amount") val paid: Double? = 0.0,
-        val remaining: Double? = 0.0,
+        @SerialName("paid_amount") val paid: Double? = null,
         val status: String,
         val tag: String? = null, // New field for v2
         val description: String? = null,
@@ -145,8 +144,7 @@ fun InvoiceDto.toDomain(): Invoice {
             try {
                 when (status.uppercase()) {
                     "PENDING" -> InvoiceStatus.PENDING
-                    "PARTIALLY_PAID" ->
-                            InvoiceStatus.PENDING // Backend removed this, strictly treat as PENDING
+                    "PARTIAL", "PARTIALLY_PAID" -> InvoiceStatus.PARTIAL
                     "PAID" -> InvoiceStatus.PAID
                     "CANCELLED" -> InvoiceStatus.CANCELLED
                     "OVERDUE" -> InvoiceStatus.OVERDUE
@@ -170,7 +168,7 @@ fun InvoiceDto.toDomain(): Invoice {
             period = period,
             amount = amount,
             paid = paid ?: 0.0,
-            remaining = remaining ?: (amount - (paid ?: 0.0)),
+            remaining = amount - (paid ?: 0.0),
             status = invoiceStatus,
             description = description,
             dueDate = date

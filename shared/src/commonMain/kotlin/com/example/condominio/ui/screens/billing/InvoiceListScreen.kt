@@ -201,6 +201,7 @@ fun InvoiceItem(
 fun InvoiceStatusBadge(status: InvoiceStatus) {
     val (text, containerColor, contentColor) = when (status) {
         InvoiceStatus.PAID -> Triple("PAGADA", Color(0xFFE8F5E9), Color(0xFF2E7D32))
+        InvoiceStatus.PARTIAL -> Triple("PARCIAL", Color(0xFFFFF3E0), Color(0xFFE65100))
         InvoiceStatus.OVERDUE -> Triple("VENCIDA", Color(0xFFFFEBEE), Color(0xFFC62828))
         InvoiceStatus.CANCELLED -> Triple("CANCELADA", Color(0xFFFFEBEE), Color(0xFFC62828))
         InvoiceStatus.PENDING -> Triple("PENDIENTE", Color(0xFFF5F5F5), Color(0xFF616161))

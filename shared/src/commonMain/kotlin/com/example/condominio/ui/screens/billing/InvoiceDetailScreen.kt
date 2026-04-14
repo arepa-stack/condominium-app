@@ -68,15 +68,41 @@ fun InvoiceDetailScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
+                        val inv = uiState.invoice!!
                         Text(
-                            text = uiState.invoice!!.description ?: "Factura ${uiState.invoice!!.period}",
+                            text = inv.description ?: "Factura ${inv.period}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Monto Total: $${formatCurrency(uiState.invoice!!.amount)}")
-                            Text("Pagado: $${formatCurrency(uiState.invoice!!.paid)}")
+                            Text("Monto Total", style = MaterialTheme.typography.bodySmall)
+                            Text("$${formatCurrency(inv.amount)}", fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Pagado", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "$${formatCurrency(inv.paid)}",
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF2E7D32)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Restante", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "$${formatCurrency(inv.remaining)}",
+                                fontWeight = FontWeight.Bold,
+                                color = if (inv.remaining > 0) Color(0xFFFF6D00) else Color(0xFF2E7D32)
+                            )
+                        }
+                        if (inv.amount > 0 && inv.paid > 0 && inv.remaining > 0) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            LinearProgressIndicator(
+                                progress = { (inv.paid / inv.amount).toFloat().coerceIn(0f, 1f) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }
