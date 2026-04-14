@@ -102,7 +102,8 @@ class RemotePaymentRepository(
                         // Multipart Flow
                         val bytes = fileReader.readBytes(proofUrl)
                         val fName = fileReader.getFileName(proofUrl)
-                        
+                        println("[CREATE_PAYMENT] multipart proofUrl=$proofUrl bytes.size=${bytes?.size} fileName=$fName")
+
                         apiService.createPaymentMultipart(
                                 amount = amount.toString(),
                                 unitId = unitId,

@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
+import com.example.condominio.data.utils.rememberImagePickerLauncher
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -45,11 +46,12 @@ fun CreatePaymentScreen(
     viewModel: CreatePaymentViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var isImageSelected by remember { mutableStateOf(false) }
-    
-    val imagePickerLauncher: () -> Unit = {
-        isImageSelected = true
-        viewModel.onProofUrlChange("mock_image_url")
+    val isImageSelected = uiState.proofUrl != null
+
+    val imagePickerLauncher = rememberImagePickerLauncher { uri ->
+        if (uri != null) {
+            viewModel.onProofUrlChange(uri)
+        }
     }
 
     var showDatePicker by remember { mutableStateOf(false) }

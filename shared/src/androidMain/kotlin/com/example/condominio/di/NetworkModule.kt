@@ -21,13 +21,13 @@ val networkModule = module {
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
-    
+
     singleOf(::AuthInterceptor)
-    
+
     single {
         val authInterceptor = get<AuthInterceptor>()
         val loggingInterceptor = get<HttpLoggingInterceptor>()
-        
+
         HttpClient(OkHttp) {
             engine {
                 addInterceptor(authInterceptor)
@@ -50,6 +50,6 @@ val networkModule = module {
             }
         }
     }
-    
+
     singleOf(::ApiServiceImpl) { bind<ApiService>() }
 }
