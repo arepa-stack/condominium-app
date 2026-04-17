@@ -36,8 +36,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TextButton
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreatePaymentScreen(
@@ -55,7 +59,19 @@ fun CreatePaymentScreen(
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.date)
+    val notFutureSelectableDates = remember {
+        object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                utcTimeMillis <= Clock.System.now().toEpochMilliseconds()
+
+            override fun isSelectableYear(year: Int): Boolean =
+                year <= Clock.System.todayIn(TimeZone.UTC).year
+        }
+    }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = uiState.date,
+        selectableDates = notFutureSelectableDates
+    )
 
     if (showDatePicker) {
         DatePickerDialog(
