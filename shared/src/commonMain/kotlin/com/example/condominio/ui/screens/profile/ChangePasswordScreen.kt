@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.profile
+package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,6 +21,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,10 +42,10 @@ fun ChangePasswordScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Change Password", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(Res.string.change_password), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -63,7 +65,7 @@ fun ChangePasswordScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Enter your current and new password",
+                text = stringResource(Res.string.change_password_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -73,7 +75,7 @@ fun ChangePasswordScreen(
             OutlinedTextField(
                 value = uiState.currentPassword,
                 onValueChange = viewModel::onCurrentPasswordChange,
-                label = { Text("Current Password") },
+                label = { Text(stringResource(Res.string.current_password)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -86,7 +88,7 @@ fun ChangePasswordScreen(
                         Icon(
                             imageVector = if (uiState.currentPasswordVisible) 
                                 Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle password visibility"
+                            contentDescription = if (uiState.currentPasswordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
                         )
                     }
                 }
@@ -98,7 +100,7 @@ fun ChangePasswordScreen(
             OutlinedTextField(
                 value = uiState.newPassword,
                 onValueChange = viewModel::onNewPasswordChange,
-                label = { Text("New Password") },
+                label = { Text(stringResource(Res.string.new_password)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -111,7 +113,7 @@ fun ChangePasswordScreen(
                         Icon(
                             imageVector = if (uiState.newPasswordVisible) 
                                 Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle password visibility"
+                            contentDescription = if (uiState.newPasswordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
                         )
                     }
                 }
@@ -123,7 +125,7 @@ fun ChangePasswordScreen(
             OutlinedTextField(
                 value = uiState.confirmPassword,
                 onValueChange = viewModel::onConfirmPasswordChange,
-                label = { Text("Confirm New Password") },
+                label = { Text(stringResource(Res.string.confirm_new_password)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -136,7 +138,7 @@ fun ChangePasswordScreen(
                         Icon(
                             imageVector = if (uiState.confirmPasswordVisible) 
                                 Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle password visibility"
+                            contentDescription = if (uiState.confirmPasswordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
                         )
                     }
                 }
@@ -145,7 +147,7 @@ fun ChangePasswordScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Password must be at least 6 characters",
+                text = stringResource(Res.string.password_min_length),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
@@ -154,7 +156,7 @@ fun ChangePasswordScreen(
             uiState.error?.let { error ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = error,
+                    text = error.asString(),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -178,7 +180,7 @@ fun ChangePasswordScreen(
                     )
                 } else {
                     Text(
-                        text = "Change Password",
+                        text = stringResource(Res.string.change_password),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

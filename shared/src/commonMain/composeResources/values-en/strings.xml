@@ -232,4 +232,30 @@
     <string name="units_count_label">%1$d units</string>
     <string name="select_unit_hint">Select a unit:</string>
     <string name="primary_label">Primary</string>
+    <string name="registration_pending_title">Registration Pending</string>
+    <string name="registration_pending_desc">Your registration has been received and is waiting for approval from the building administration.</string>
+    <string name="registration_pending_hint">You will be able to access the dashboard once your account is approved.</string>
+    <string name="back_to_login">Back to Login</string>
+
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="change_password_desc">Enter your current and new password to update it</string>
+    <string name="error_passwords_dont_match">Passwords do not match</string>
+    <string name="password_updated_success">Password updated successfully</string>
+
+    <string name="edit_profile_desc">Update your personal information</string>
+    <string name="email_cannot_be_changed">Email cannot be changed</string>
+    <string name="save_changes">Save Changes</string>
+
+    <string name="notification_settings_desc">Manage your notification preferences</string>
+    <string name="payment_reminders_title">Payment Reminders</string>
+    <string name="payment_reminders_desc">Get notified before payment due dates</string>
+    <string name="payment_confirmations_title">Payment Confirmations</string>
+    <string name="payment_confirmations_desc">Receive confirmation when payments are processed</string>
+    <string name="announcements_title">General Announcements</string>
+    <string name="announcements_desc">Stay updated with building news and updates</string>
+    <string name="password_min_length">Password must be at least 6 characters</string>
+    <string name="error_new_password_same">New password must be different from current password</string>
+    <string name="error_password_required">Current password is required</string>
 </resources>

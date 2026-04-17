@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.profile
+package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,10 +36,10 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Profile", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(Res.string.edit_profile), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -57,7 +59,7 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Update your personal information",
+                text = stringResource(Res.string.edit_profile_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -67,7 +69,7 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text("Full Name") },
+                label = { Text(stringResource(Res.string.full_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -80,7 +82,7 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = uiState.apartmentUnit,
                 onValueChange = viewModel::onApartmentUnitChange,
-                label = { Text("Apartment Unit") },
+                label = { Text(stringResource(Res.string.apartment_unit_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -93,7 +95,7 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = {},
-                label = { Text("Email") },
+                label = { Text(stringResource(Res.string.email)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -108,7 +110,7 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Email cannot be changed",
+                text = stringResource(Res.string.email_cannot_be_changed),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
@@ -117,7 +119,7 @@ fun EditProfileScreen(
             uiState.error?.let { error ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = error,
+                    text = error.asString(),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -141,7 +143,7 @@ fun EditProfileScreen(
                     )
                 } else {
                     Text(
-                        text = "Save Changes",
+                        text = stringResource(Res.string.save_changes),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

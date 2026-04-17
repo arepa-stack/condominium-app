@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
+
 class EditProfileViewModel (
     private val authRepository: AuthRepository
 ) : ViewModel() {
@@ -51,12 +54,12 @@ class EditProfileViewModel (
         val state = _uiState.value
 
         if (state.name.isBlank()) {
-            _uiState.update { it.copy(error = "Name is required") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_fill_all_fields)) }
             return
         }
 
         if (state.apartmentUnit.isBlank()) {
-            _uiState.update { it.copy(error = "Apartment unit is required") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_fill_all_fields)) }
             return
         }
 
@@ -75,7 +78,7 @@ class EditProfileViewModel (
                 it.copy(
                     isLoading = false,
                     isSuccess = result.isSuccess,
-                    error = result.exceptionOrNull()?.message
+                    error = result.exceptionOrNull()?.message?.let { msg -> UiText.DynamicString(msg) }
                 )
             }
         }
@@ -89,5 +92,5 @@ data class EditProfileUiState(
     val email: String = "",
     val isLoading: Boolean = true,
     val isSuccess: Boolean = false,
-    val error: String? = null
+    val error: UiText? = null
 )

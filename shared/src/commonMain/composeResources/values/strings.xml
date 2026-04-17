@@ -232,4 +232,30 @@
     <string name="units_count_label">%1$d unidades</string>
     <string name="select_unit_hint">Selecciona una unidad:</string>
     <string name="primary_label">Principal</string>
+    <string name="registration_pending_title">Registro Pendiente</string>
+    <string name="registration_pending_desc">Tu registro ha sido recibido y está a la espera de aprobación por parte de la administración del edificio.</string>
+    <string name="registration_pending_hint">Podrás acceder al panel una vez que tu cuenta sea aprobada.</string>
+    <string name="back_to_login">Volver al Inicio</string>
+
+    <string name="current_password">Contraseña Actual</string>
+    <string name="new_password">Nueva Contraseña</string>
+    <string name="confirm_new_password">Confirmar Nueva Contraseña</string>
+    <string name="change_password_desc">Ingresa tu contraseña actual y la nueva para actualizarla</string>
+    <string name="error_passwords_dont_match">Las contraseñas no coinciden</string>
+    <string name="password_updated_success">Contraseña actualizada exitosamente</string>
+
+    <string name="edit_profile_desc">Actualiza tu información personal</string>
+    <string name="email_cannot_be_changed">El correo electrónico no se puede cambiar</string>
+    <string name="save_changes">Guardar Cambios</string>
+
+    <string name="notification_settings_desc">Gestiona tus preferencias de notificación</string>
+    <string name="payment_reminders_title">Recordatorios de Pago</string>
+    <string name="payment_reminders_desc">Recibe notificaciones antes de las fechas de vencimiento</string>
+    <string name="payment_confirmations_title">Confirmaciones de Pago</string>
+    <string name="payment_confirmations_desc">Recibe una confirmación cuando se procesen tus pagos</string>
+    <string name="announcements_title">Anuncios Generales</string>
+    <string name="announcements_desc">Mantente al día con las noticias y actualizaciones del edificio</string>
+    <string name="password_min_length">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_new_password_same">La nueva contraseña debe ser diferente a la actual</string>
+    <string name="error_password_required">La contraseña actual es requerida</string>
 </resources>
