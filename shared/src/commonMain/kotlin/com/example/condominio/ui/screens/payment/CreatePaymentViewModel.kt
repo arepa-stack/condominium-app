@@ -124,6 +124,15 @@ class CreatePaymentViewModel (
             return
         }
 
+        val requiresBankInfo = state.method == PaymentMethod.TRANSFER ||
+                state.method == PaymentMethod.PAGO_MOVIL
+        if (requiresBankInfo && (state.reference.isBlank() || state.bank.isBlank())) {
+            _uiState.update {
+                it.copy(error = "Banco y número de referencia son obligatorios para transferencias y pago móvil.")
+            }
+            return
+        }
+
         /* 
         // Validation: Must select at least one invoice OR provide description?
         // Allocation logic:
