@@ -102,7 +102,8 @@ class RemotePaymentRepository(
                         // Multipart Flow
                         val bytes = fileReader.readBytes(proofUrl)
                         val fName = fileReader.getFileName(proofUrl)
-                        
+                        println("[CREATE_PAYMENT] multipart proofUrl=$proofUrl bytes.size=${bytes?.size} fileName=$fName")
+
                         apiService.createPaymentMultipart(
                                 amount = amount.toString(),
                                 unitId = unitId,
@@ -168,6 +169,7 @@ class RemotePaymentRepository(
                                             status = try {
                                                 when (detail.status.uppercase()) {
                                                     "PENDING" -> com.example.condominio.data.model.InvoiceStatus.PENDING
+                                                    "PARTIAL", "PARTIALLY_PAID" -> com.example.condominio.data.model.InvoiceStatus.PARTIAL
                                                     "PAID" -> com.example.condominio.data.model.InvoiceStatus.PAID
                                                     "OVERDUE" -> com.example.condominio.data.model.InvoiceStatus.OVERDUE
                                                     "CANCELLED" -> com.example.condominio.data.model.InvoiceStatus.CANCELLED

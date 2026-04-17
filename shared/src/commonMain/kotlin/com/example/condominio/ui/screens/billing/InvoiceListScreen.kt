@@ -210,6 +210,7 @@ fun InvoiceStatusBadge(status: InvoiceStatus) {
         InvoiceStatus.OVERDUE -> Triple(stringResource(Res.string.status_overdue), Color(0xFFFFEBEE), Color(0xFFC62828))
         InvoiceStatus.CANCELLED -> Triple(stringResource(Res.string.status_cancelled), Color(0xFFFFEBEE), Color(0xFFC62828))
         InvoiceStatus.PENDING -> Triple(stringResource(Res.string.status_pending), Color(0xFFF5F5F5), Color(0xFF616161))
+        InvoiceStatus.PARTIAL -> Triple("PARCIAL", Color(0xFFFFF3E0), Color(0xFFE65100))
     }
 
     Surface(

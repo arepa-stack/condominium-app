@@ -42,7 +42,7 @@ val appModule = module {
     
     // Services / Managers
     singleOf(::TokenManager)
-    single<PlatformFileReader> { AndroidFileReader() }
+    single<PlatformFileReader> { AndroidFileReader(androidContext()) }
     single<PdfService> { PdfServiceImpl(get()) }
     
     // DataStore Preference provider
