@@ -7,13 +7,18 @@ data class User(
         val id: String,
         val name: String,
         val email: String,
-        val role: String = "resident",
+        val appRole: String = "user",
         val status: String = "active",
         val units: List<UserUnit> = emptyList(),
         val buildingRoles: List<BuildingRole> = emptyList(),
         val currentUnit: UserUnit? = units.firstOrNull(),
         val profileBuildingId: String? = null
 ) {
+        val isAdmin: Boolean get() = appRole == "admin"
+
+        fun hasBoardRoleIn(buildingId: String): Boolean =
+                buildingRoles.any { it.buildingId == buildingId && it.role == "board" }
+
         val apartmentUnit: String
                 get() = currentUnit?.unitName ?: ""
 

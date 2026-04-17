@@ -38,6 +38,12 @@ open class LoginViewModel(
             _uiState.update { it.copy(isLoading = false) }
             
             result.onSuccess { user ->
+                if (user.isAdmin) {
+                    authRepository.logout()
+                    _uiState.update { it.copy(isAdminBlocked = true) }
+                    return@onSuccess
+                }
+
                 val distinctBuildings = user.units.map { it.buildingId }.distinct()
                 val needsSelection = distinctBuildings.size > 1 || user.units.size > 1
                 if (!needsSelection && user.units.isNotEmpty()) {
@@ -72,6 +78,7 @@ data class LoginUiState(
     val error: UiText? = null,
     val isSuccess: Boolean = false,
     val isPending: Boolean = false,
+    val isAdminBlocked: Boolean = false,
     val databaseCleared: Boolean = false,
     val hasMultipleUnits: Boolean = false
 )

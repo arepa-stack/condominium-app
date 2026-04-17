@@ -36,10 +36,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TextButton
-import condominio.shared.generated.resources.*
-import org.jetbrains.compose.resources.stringResource
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreatePaymentScreen(
@@ -57,7 +59,19 @@ fun CreatePaymentScreen(
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.date)
+    val notFutureSelectableDates = remember {
+        object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                utcTimeMillis <= Clock.System.now().toEpochMilliseconds()
+
+            override fun isSelectableYear(year: Int): Boolean =
+                year <= Clock.System.todayIn(TimeZone.UTC).year
+        }
+    }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = uiState.date,
+        selectableDates = notFutureSelectableDates
+    )
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -381,10 +395,10 @@ fun CreatePaymentScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = if(uiState.method == PaymentMethod.CASH) stringResource(Res.string.proof_of_payment_required) else stringResource(Res.string.upload_proof_optional),
+                text = "Comprobante de Pago (Requerido)",
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp),
-                color = if(uiState.method == PaymentMethod.CASH) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.error
             )
 
             Box(
@@ -396,8 +410,8 @@ fun CreatePaymentScreen(
                         RoundedCornerShape(12.dp)
                     )
                     .border(
-                        1.dp, 
-                        if(uiState.method == PaymentMethod.CASH && uiState.proofUrl == null ) MaterialTheme.colorScheme.error.copy(alpha=0.5f) else Color.Transparent, 
+                        1.dp,
+                        if (!isImageSelected) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) else Color.Transparent,
                         RoundedCornerShape(12.dp)
                     )
                     .clickable { imagePickerLauncher() },

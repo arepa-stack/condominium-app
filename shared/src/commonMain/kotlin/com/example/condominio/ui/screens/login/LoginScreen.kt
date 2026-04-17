@@ -27,13 +27,16 @@ fun LoginScreen(
     onClearDatabaseClick: () -> Unit,
     onLoginSuccess: (Boolean) -> Unit,
     onPendingApproval: () -> Unit,
+    onAdminBlocked: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
-    LaunchedEffect(uiState.isSuccess, uiState.isPending) {
+    LaunchedEffect(uiState.isSuccess, uiState.isPending, uiState.isAdminBlocked) {
         if (uiState.isSuccess) {
             onLoginSuccess(uiState.hasMultipleUnits)
         } else if (uiState.isPending) {
             onPendingApproval()
+        } else if (uiState.isAdminBlocked) {
+            onAdminBlocked()
         }
     }
 

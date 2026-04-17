@@ -334,8 +334,8 @@ private fun UserProfile.toDomain(): User {
             id = id ?: "",
             name = name ?: "Unknown",
             email = email ?: "",
-            role = role ?: "resident", // Map role from profile
-            status = status ?: "active", // Map status
+            appRole = appRole ?: "user",
+            status = status ?: "active",
             units = finalUnits,
             buildingRoles = domainBuildingRoles,
             currentUnit = finalUnits.firstOrNull(),

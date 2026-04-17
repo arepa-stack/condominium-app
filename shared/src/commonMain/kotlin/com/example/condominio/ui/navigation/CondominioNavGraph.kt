@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 // Estos imports deberán ser actualizados cuando movamos las pantallas a commonMain
+import com.example.condominio.ui.screens.auth.AdminBlockedScreen
 import com.example.condominio.ui.screens.auth.PendingApprovalScreen
 import com.example.condominio.ui.screens.billing.InvoiceDetailScreen
 import com.example.condominio.ui.screens.dashboard.DashboardScreen
@@ -49,7 +50,19 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                         }
                     },
                     onPendingApproval = { navController.navigate("pending_approval") },
+                    onAdminBlocked = {
+                        navController.navigate("admin_blocked") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
                     onRegisterClick = { navController.navigate("register") }
+            )
+        }
+        composable("admin_blocked") {
+            AdminBlockedScreen(
+                    onBackToLogin = {
+                        navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                    }
             )
         }
         composable("unit_selection") {
