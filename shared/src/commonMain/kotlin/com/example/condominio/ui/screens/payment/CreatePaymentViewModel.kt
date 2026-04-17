@@ -113,9 +113,14 @@ class CreatePaymentViewModel (
     fun onSubmitClick() {
         val state = _uiState.value
         val amount = state.amount.toDoubleOrNull()
-        
+
         if (amount == null || amount <= 0) {
             _uiState.update { it.copy(error = "Invalid amount") }
+            return
+        }
+
+        if (state.proofUrl.isNullOrEmpty()) {
+            _uiState.update { it.copy(error = "Debés adjuntar el comprobante de pago.") }
             return
         }
 

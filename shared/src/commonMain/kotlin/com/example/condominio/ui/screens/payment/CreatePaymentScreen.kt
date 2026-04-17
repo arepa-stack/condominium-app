@@ -369,10 +369,10 @@ fun CreatePaymentScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = if(uiState.method == PaymentMethod.CASH) "Comprobante de Pago (Requerido)" else "Subir Comprobante (Opcional)",
+                text = "Comprobante de Pago (Requerido)",
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp),
-                color = if(uiState.method == PaymentMethod.CASH) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.error
             )
 
             Box(
@@ -384,8 +384,8 @@ fun CreatePaymentScreen(
                         RoundedCornerShape(12.dp)
                     )
                     .border(
-                        1.dp, 
-                        if(uiState.method == PaymentMethod.CASH && uiState.proofUrl == null ) MaterialTheme.colorScheme.error.copy(alpha=0.5f) else Color.Transparent, 
+                        1.dp,
+                        if (!isImageSelected) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) else Color.Transparent,
                         RoundedCornerShape(12.dp)
                     )
                     .clickable { imagePickerLauncher() },
