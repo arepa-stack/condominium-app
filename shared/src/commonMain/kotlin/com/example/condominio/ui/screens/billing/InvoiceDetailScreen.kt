@@ -78,25 +78,23 @@ fun InvoiceDetailScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(stringResource(Res.string.total_amount_label, formatCurrency(uiState.invoice!!.amount)))
-                            Text(stringResource(Res.string.paid_amount_label, formatCurrency(uiState.invoice!!.paid)))
-                            Text("Monto Total", style = MaterialTheme.typography.bodySmall)
-                            Text("$${formatCurrency(inv.amount)}", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(Res.string.total_label), style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(Res.string.currency_amount, formatCurrency(inv.amount)), fontWeight = FontWeight.SemiBold)
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Pagado", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(Res.string.paid_label), style = MaterialTheme.typography.bodySmall)
                             Text(
-                                "$${formatCurrency(inv.paid)}",
+                                stringResource(Res.string.currency_amount, formatCurrency(inv.paid)),
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF2E7D32)
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Restante", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(Res.string.remaining_label), style = MaterialTheme.typography.bodySmall)
                             Text(
-                                "$${formatCurrency(inv.remaining)}",
+                                stringResource(Res.string.currency_amount, formatCurrency(inv.remaining)),
                                 fontWeight = FontWeight.Bold,
                                 color = if (inv.remaining > 0) Color(0xFFFF6D00) else Color(0xFF2E7D32)
                             )
@@ -195,8 +193,8 @@ fun PaymentItem(payment: Payment, invoiceId: String?, onClick: () -> Unit) {
                             )
                         }
                     } else {
-                         Text(
-                            text = "$${formatCurrency(payment.amount)}",
+                        Text(
+                            text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2E7D32)
@@ -204,8 +202,13 @@ fun PaymentItem(payment: Payment, invoiceId: String?, onClick: () -> Unit) {
                     }
                 }
             }
+            val methodLabel = when (payment.method) {
+                com.example.condominio.data.model.PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
+                com.example.condominio.data.model.PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
+                com.example.condominio.data.model.PaymentMethod.CASH -> stringResource(Res.string.method_cash)
+            }
             Text(
-                text = stringResource(Res.string.payment_method_label, payment.method.label),
+                text = stringResource(Res.string.payment_method_label, methodLabel),
                 style = MaterialTheme.typography.bodySmall
             )
             if (!payment.reference.isNullOrEmpty()) {

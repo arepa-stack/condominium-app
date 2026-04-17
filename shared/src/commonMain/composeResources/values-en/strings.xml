@@ -106,6 +106,8 @@
     <string name="error_invalid_amount">Invalid amount</string>
     <string name="error_select_invoices">Please select invoices to pay</string>
     <string name="error_user_unit_not_found">User or Unit not found</string>
+    <string name="error_proof_required">You must attach the payment proof.</string>
+    <string name="error_bank_info_required">Bank and reference number are required for transfers and mobile payments.</string>
     <string name="error_no_building_found">No building ID found for user</string>
     <string name="income_item_label">Income</string>
     <string name="expense_item_label">Expense</string>
@@ -142,7 +144,6 @@
     <string name="status_paid">PAID</string>
     <string name="status_overdue">OVERDUE</string>
     <string name="status_cancelled">CANCELLED</string>
-    <string name="status_pending">PENDING</string>
     <string name="invoice_detail_title">Invoice Detail</string>
     <string name="pay_remainder_btn">Pay Remainder (%1$s)</string>
     <string name="invoice_period_label">Invoice %1$s</string>
@@ -207,6 +208,14 @@
     <string name="period_label_short">Period %1$s</string>
     <string name="invoice_id_short">Inv. %1$s</string>
     <string name="payment_receipt_label">Payment Receipt</string>
+    <string name="status_pending">PENDING</string>
+    <string name="status_partial">PARTIAL</string>
+    <string name="status_approved_upper">APPROVED</string>
+    <string name="status_rejected_upper">REJECTED</string>
+    <string name="solvency_solvent">Up to date</string>
+    <string name="solvency_pending">Pending Payments</string>
+    <string name="currency_symbol">$</string>
+    <string name="currency_amount">$%1$s</string>
     <string name="view_full">View Full</string>
     <string name="payment_proof_desc">Payment Proof</string>
     <string name="no_receipt_uploaded">No receipt uploaded</string>
@@ -236,6 +245,10 @@
     <string name="registration_pending_desc">Your registration has been received and is waiting for approval from the building administration.</string>
     <string name="registration_pending_hint">You will be able to access the dashboard once your account is approved.</string>
     <string name="back_to_login">Back to Login</string>
+
+    <!-- Admin Blocked Screen -->
+    <string name="admin_blocked_title">Web Access Only</string>
+    <string name="admin_blocked_desc">Administrators manage the condominium from the web panel. This app is intended for residents and board members.</string>
 
     <string name="current_password">Current Password</string>
     <string name="new_password">New Password</string>

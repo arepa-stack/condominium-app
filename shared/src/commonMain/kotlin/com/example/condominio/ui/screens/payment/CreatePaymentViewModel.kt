@@ -122,7 +122,7 @@ class CreatePaymentViewModel (
         }
 
         if (state.proofUrl.isNullOrEmpty()) {
-            _uiState.update { it.copy(error = "Debés adjuntar el comprobante de pago.") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_proof_required)) }
             return
         }
 
@@ -130,7 +130,7 @@ class CreatePaymentViewModel (
                 state.method == PaymentMethod.PAGO_MOVIL
         if (requiresBankInfo && (state.reference.isBlank() || state.bank.isBlank())) {
             _uiState.update {
-                it.copy(error = "Banco y número de referencia son obligatorios para transferencias y pago móvil.")
+                it.copy(error = UiText.StringResource(Res.string.error_bank_info_required))
             }
             return
         }

@@ -165,7 +165,7 @@ fun PaymentDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "$${formatCurrency(payment.amount)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                     style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold)
                 )
                 
@@ -200,7 +200,12 @@ fun PaymentDetailScreen(
                         payment.createdAt?.let { 
                             DetailRow(stringResource(Res.string.reported_on), formatTimestamp(it))
                         }
-                        DetailRow(stringResource(Res.string.method_label), payment.method.label)
+                        val methodLabel = when (payment.method) {
+                            com.example.condominio.data.model.PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
+                            com.example.condominio.data.model.PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
+                            com.example.condominio.data.model.PaymentMethod.CASH -> stringResource(Res.string.method_cash)
+                        }
+                        DetailRow(stringResource(Res.string.method_label), methodLabel)
                         payment.userName?.let { DetailRow(stringResource(Res.string.paid_by_label), it) }
                         
                         // New Details
@@ -230,7 +235,7 @@ fun PaymentDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "$${formatCurrency(allocation.amount)}",
+                                        text = stringResource(Res.string.currency_amount, formatCurrency(allocation.amount)),
                                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                         color = MaterialTheme.colorScheme.onSurface
                                     )

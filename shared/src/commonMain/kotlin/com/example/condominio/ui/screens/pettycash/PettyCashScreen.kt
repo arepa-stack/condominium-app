@@ -249,7 +249,7 @@ fun BalanceCard(
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                     text =
-                            "${balance?.currency ?: "$"} ${formatCurrency(balance?.currentBalance ?: 0.0)}",
+                            stringResource(Res.string.currency_amount, formatCurrency(balance?.currentBalance ?: 0.0)),
                     style =
                             MaterialTheme.typography.displayMedium.copy(
                                     fontWeight = FontWeight.ExtraBold,
@@ -369,7 +369,7 @@ fun TransactionItem(transaction: PettyCashTransactionDto, label: String, onEvide
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                         text =
-                                "${if (isIncome) "+" else "-"} $${formatCurrency(transaction.amount)}",
+                                "${if (isIncome) "+" else "-"} ${stringResource(Res.string.currency_amount, formatCurrency(transaction.amount))}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = color
@@ -436,19 +436,16 @@ fun MovementSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
-                    value = amount,
-                    onValueChange = {
-                        if (it.isEmpty() || it.toDoubleOrNull() != null) amount = it
-                    },
-                    label = { Text(stringResource(Res.string.amount_label)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = RoundedCornerShape(16.dp),
-                    colors =
-                            OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                            )
+                value = amount,
+                onValueChange = {
+                    if (it.isEmpty() || it.toDoubleOrNull() != null) amount = it
+                },
+                label = { Text(stringResource(Res.string.amount_label)) },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                prefix = { Text(stringResource(Res.string.currency_symbol)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(16.dp),
+                singleLine = true
             )
 
             if (!isIncome && amount.isNotEmpty()) {
@@ -672,7 +669,7 @@ fun SuccessFeedback(data: SuccessFeedbackData) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(stringResource(Res.string.petty_cash_title), style = MaterialTheme.typography.bodyMedium)
                         Text(
-                                "-$${formatCurrency(data.covered)}",
+                                "-${stringResource(Res.string.currency_amount, formatCurrency(data.covered))}",
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.error
                         )
@@ -685,7 +682,7 @@ fun SuccessFeedback(data: SuccessFeedbackData) {
                                 color = Color(0xFFFF0040)
                         )
                         Text(
-                                "-$${formatCurrency(data.extra)}",
+                                "-${stringResource(Res.string.currency_amount, formatCurrency(data.extra))}",
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFFF0040)
                         )

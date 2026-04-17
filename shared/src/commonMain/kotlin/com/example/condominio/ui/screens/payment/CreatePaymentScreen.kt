@@ -24,14 +24,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-
-import com.example.condominio.data.utils.rememberImagePickerLauncher
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.stringResource
+import condominio.shared.generated.resources.*
 import com.example.condominio.data.model.PaymentMethod
+import com.example.condominio.data.utils.rememberImagePickerLauncher
+import androidx.compose.ui.text.input.KeyboardType
+import org.koin.compose.viewmodel.koinViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.material3.DatePicker
@@ -42,6 +43,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreatePaymentScreen(
@@ -136,7 +138,7 @@ fun CreatePaymentScreen(
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
                 textStyle = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                prefix = { Text("$", style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold)) },
+                prefix = { Text(stringResource(Res.string.currency_symbol), style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -395,7 +397,7 @@ fun CreatePaymentScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Comprobante de Pago (Requerido)",
+                text = stringResource(Res.string.proof_of_payment_required),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 8.dp),
                 color = MaterialTheme.colorScheme.error

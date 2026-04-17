@@ -150,7 +150,7 @@ fun BillingCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                    text = "$${formatCurrency(totalDebt)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(totalDebt)),
                     style =
                             MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold
@@ -177,7 +177,7 @@ fun BillingCard(
                                 color = Color.White.copy(alpha = 0.9f)
                         )
                         Text(
-                                text = "$${formatCurrency(invoice.remaining)}",
+                                text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
@@ -396,8 +396,13 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                     }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val statusLabel = when (payment.status) {
+                    PaymentStatus.APPROVED -> stringResource(Res.string.status_approved_upper)
+                    PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper)
+                    PaymentStatus.PENDING -> stringResource(Res.string.status_pending)
+                }
                 Text(
-                        text = payment.status.name,
+                        text = statusLabel,
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = statusColor
                 )

@@ -106,6 +106,8 @@
     <string name="error_invalid_amount">Monto inválido</string>
     <string name="error_select_invoices">Por favor selecciona facturas a pagar</string>
     <string name="error_user_unit_not_found">Usuario o Unidad no encontrados</string>
+    <string name="error_proof_required">Debés adjuntar el comprobante de pago.</string>
+    <string name="error_bank_info_required">Banco y número de referencia son obligatorios para transferencias y pago móvil.</string>
     <string name="error_no_building_found">No se encontró ID de edificio para el usuario</string>
     <string name="income_item_label">Ingreso</string>
     <string name="expense_item_label">Gasto</string>
@@ -142,7 +144,6 @@
     <string name="status_paid">PAGADA</string>
     <string name="status_overdue">VENCIDA</string>
     <string name="status_cancelled">CANCELADA</string>
-    <string name="status_pending">PENDIENTE</string>
     <string name="invoice_detail_title">Detalle de Factura</string>
     <string name="pay_remainder_btn">Pagar Restante (%1$s)</string>
     <string name="invoice_period_label">Factura %1$s</string>
@@ -207,6 +208,14 @@
     <string name="period_label_short">Periodo %1$s</string>
     <string name="invoice_id_short">Fact. %1$s</string>
     <string name="payment_receipt_label">Recibo de Pago</string>
+    <string name="status_pending">PENDIENTE</string>
+    <string name="status_partial">PARCIAL</string>
+    <string name="status_approved_upper">APROBADO</string>
+    <string name="status_rejected_upper">RECHAZADO</string>
+    <string name="solvency_solvent">Al día</string>
+    <string name="solvency_pending">Pagos Pendientes</string>
+    <string name="currency_symbol">$</string>
+    <string name="currency_amount">$%1$s</string>
     <string name="view_full">Ver Completo</string>
     <string name="payment_proof_desc">Comprobante de Pago</string>
     <string name="no_receipt_uploaded">No se ha subido ningún recibo</string>
@@ -236,6 +245,10 @@
     <string name="registration_pending_desc">Tu registro ha sido recibido y está a la espera de aprobación por parte de la administración del edificio.</string>
     <string name="registration_pending_hint">Podrás acceder al panel una vez que tu cuenta sea aprobada.</string>
     <string name="back_to_login">Volver al Inicio</string>
+    
+    <!-- Admin Blocked Screen -->
+    <string name="admin_blocked_title">Acceso solo web</string>
+    <string name="admin_blocked_desc">Los administradores gestionan el condominio desde el panel web. Esta app está destinada a residentes y miembros de junta.</string>
 
     <string name="current_password">Contraseña Actual</string>
     <string name="new_password">Nueva Contraseña</string>

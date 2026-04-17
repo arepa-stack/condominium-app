@@ -170,7 +170,7 @@ fun InvoiceItem(
                 Column {
                     Text(text = stringResource(Res.string.total_label), style = MaterialTheme.typography.labelSmall)
                     Text(
-                        text = "$${formatCurrency(invoice.amount)}",
+                        text = stringResource(Res.string.currency_amount, formatCurrency(invoice.amount)),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -178,7 +178,7 @@ fun InvoiceItem(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = stringResource(Res.string.paid_label), style = MaterialTheme.typography.labelSmall)
                         Text(
-                            text = "$${formatCurrency(invoice.paid)}",
+                            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.paid)),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFF2E7D32)
                         )
@@ -192,7 +192,7 @@ fun InvoiceItem(
                         Color(0xFF2E7D32)
                     }
                     Text(
-                        text = "$${formatCurrency(invoice.remaining)}",
+                        text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = remainingColor
@@ -210,7 +210,7 @@ fun InvoiceStatusBadge(status: InvoiceStatus) {
         InvoiceStatus.OVERDUE -> Triple(stringResource(Res.string.status_overdue), Color(0xFFFFEBEE), Color(0xFFC62828))
         InvoiceStatus.CANCELLED -> Triple(stringResource(Res.string.status_cancelled), Color(0xFFFFEBEE), Color(0xFFC62828))
         InvoiceStatus.PENDING -> Triple(stringResource(Res.string.status_pending), Color(0xFFF5F5F5), Color(0xFF616161))
-        InvoiceStatus.PARTIAL -> Triple("PARCIAL", Color(0xFFFFF3E0), Color(0xFFE65100))
+        InvoiceStatus.PARTIAL -> Triple(stringResource(Res.string.status_partial), Color(0xFFFFF3E0), Color(0xFFE65100))
     }
 
     Surface(
