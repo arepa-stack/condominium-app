@@ -5,9 +5,41 @@ import com.example.condominio.data.remote.ApiService
 import com.example.condominio.ui.utils.formatDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import com.example.condominio.data.utils.PlatformFileReader
+
+@Serializable
+private data class PaymentErrorBody(
+    val code: String? = null,
+    val message: String? = null,
+    val error: ErrorEnvelope? = null
+) {
+    @Serializable
+    data class ErrorEnvelope(val code: String? = null, val message: String? = null)
+}
+
+private val errorJson = Json { ignoreUnknownKeys = true; isLenient = true }
+
+private fun translatePaymentError(rawBody: String): String {
+    if (rawBody.isBlank()) return "No pudimos registrar el pago. Intentá de nuevo."
+    val parsed = try {
+        errorJson.decodeFromString<PaymentErrorBody>(rawBody)
+    } catch (_: Exception) {
+        null
+    }
+    val code = parsed?.code ?: parsed?.error?.code
+    val message = parsed?.message ?: parsed?.error?.message
+
+    return when (code) {
+        "MISSING_PROOF" -> "Falta el comprobante de pago. Adjuntá una foto y volvé a intentar."
+        "MISSING_BANK_INFO" -> "Transferencias y pago móvil requieren banco y número de referencia."
+        "FUTURE_DATE" -> "La fecha del pago no puede ser futura."
+        else -> message?.takeIf { it.isNotBlank() } ?: rawBody
+    }
+}
 
 
 class RemotePaymentRepository(
@@ -139,7 +171,7 @@ class RemotePaymentRepository(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                val errorMsg = response.errorBody().string()
+                val errorMsg = translatePaymentError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
