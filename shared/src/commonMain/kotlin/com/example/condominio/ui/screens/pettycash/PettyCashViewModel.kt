@@ -44,7 +44,7 @@ class PettyCashViewModel
                         bId = user.units.first().buildingId
                     }
 
-                    val canManage = user.role == "admin" || user.role == "board"
+                    val canManage = user.isAdmin || (bId.isNotEmpty() && user.hasBoardRoleIn(bId))
                     _uiState.update { it.copy(buildingId = bId, canManage = canManage) }
 
                     if (!bId.isNullOrEmpty()) {
