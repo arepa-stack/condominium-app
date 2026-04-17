@@ -113,9 +113,23 @@ class CreatePaymentViewModel (
     fun onSubmitClick() {
         val state = _uiState.value
         val amount = state.amount.toDoubleOrNull()
-        
+
         if (amount == null || amount <= 0) {
             _uiState.update { it.copy(error = "Invalid amount") }
+            return
+        }
+
+        if (state.proofUrl.isNullOrEmpty()) {
+            _uiState.update { it.copy(error = "Debés adjuntar el comprobante de pago.") }
+            return
+        }
+
+        val requiresBankInfo = state.method == PaymentMethod.TRANSFER ||
+                state.method == PaymentMethod.PAGO_MOVIL
+        if (requiresBankInfo && (state.reference.isBlank() || state.bank.isBlank())) {
+            _uiState.update {
+                it.copy(error = "Banco y número de referencia son obligatorios para transferencias y pago móvil.")
+            }
             return
         }
 
