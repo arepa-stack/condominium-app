@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import com.example.condominio.ui.utils.UiText
+
 class DashboardViewModel (
     private val authRepository: AuthRepository,
     private val paymentRepository: com.example.condominio.data.repository.PaymentRepository,
@@ -25,7 +27,7 @@ class DashboardViewModel (
 
     private fun loadData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
             
             // Fetch currentUser to get selected unit
             val userResult = authRepository.fetchCurrentUser()
@@ -57,12 +59,10 @@ class DashboardViewModel (
                                     solvencyStatus = solvency,
                                     totalDebt = balance.totalDebt,
                                     pendingInvoices = balance.pendingInvoices,
-                                    // Use pendingInvoices to derive pending periods if needed, 
-                                    // or wait for further instructions. For now keeping balance data.
                                 )
                             }
-                        }.onFailure {
-                             // Fallback or error state
+                        }.onFailure { error ->
+                             _uiState.update { it.copy(error = error.message?.let { UiText.DynamicString(it) }) }
                         }
                     }
 
@@ -73,12 +73,11 @@ class DashboardViewModel (
                             _uiState.update { 
                                 it.copy(
                                     recentPayments = payments.take(5), // Show last 5
-                                    isLoading = false // End loading when at least this is done (or coordinate)
+                                    isLoading = false 
                                 )
                             }
                         } catch (e: Exception) {
-                            // Handle error
-                            _uiState.update { it.copy(isLoading = false) }
+                            _uiState.update { it.copy(isLoading = false, error = e.message?.let { UiText.DynamicString(it) }) }
                         }
                     }
                 } else {
@@ -92,11 +91,13 @@ class DashboardViewModel (
                                     isLoading = false
                                 )
                             }
+                        }.onFailure { error ->
+                            _uiState.update { it.copy(isLoading = false, error = error.message?.let { UiText.DynamicString(it) }) }
                         }
                      }
                 }
             } else {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(isLoading = false, error = userResult.exceptionOrNull()?.message?.let { UiText.DynamicString(it) }) }
             }
         }
     }
@@ -114,5 +115,6 @@ data class DashboardUiState(
     val recentPayments: List<Payment> = emptyList(),
     val isLoading: Boolean = false,
     val totalDebt: Double = 0.0,
-    val pendingInvoices: List<com.example.condominio.data.model.Invoice> = emptyList()
+    val pendingInvoices: List<com.example.condominio.data.model.Invoice> = emptyList(),
+    val error: UiText? = null
 )

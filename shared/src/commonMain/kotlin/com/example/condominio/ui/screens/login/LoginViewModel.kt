@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
 
 open class LoginViewModel(
     private val authRepository: AuthRepository
@@ -26,7 +28,7 @@ open class LoginViewModel(
 
     fun onLoginClick() {
         if (_uiState.value.email.isBlank() || _uiState.value.password.isBlank()) {
-            _uiState.update { it.copy(error = "Please fill in all fields") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_missing_fields)) }
             return
         }
 
@@ -50,8 +52,11 @@ open class LoginViewModel(
 
                 _uiState.update { it.copy(isSuccess = true, hasMultipleUnits = needsSelection) }
             }.onFailure { error ->
-                // Check if it's a pending exception (we'll need to move UserPendingException to common too)
-                _uiState.update { it.copy(error = error.message) }
+                // Use dynamic string for API errors if no specific key is available, 
+                // or map standard error codes as per spec.
+                val errorText = error.message?.let { UiText.DynamicString(it) } 
+                    ?: UiText.StringResource(Res.string.error_invalid_credentials)
+                _uiState.update { it.copy(error = errorText) }
             }
         }
     }
@@ -70,7 +75,7 @@ data class LoginUiState(
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val isSuccess: Boolean = false,
     val isPending: Boolean = false,
     val isAdminBlocked: Boolean = false,

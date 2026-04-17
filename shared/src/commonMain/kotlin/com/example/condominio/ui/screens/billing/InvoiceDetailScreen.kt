@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.billing
+package com.example.condominio.ui.screens.billing
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +18,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.data.model.Payment
 import com.example.condominio.ui.utils.formatDate
 import com.example.condominio.ui.utils.formatCurrency
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceDetailScreen(
@@ -33,10 +35,10 @@ fun InvoiceDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle de Factura") },
+                title = { Text(stringResource(Res.string.invoice_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 }
             )
@@ -50,7 +52,7 @@ fun InvoiceDetailScreen(
                         .padding(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6D00))
                 ) {
-                    Text("Pagar Restante ($${formatCurrency(uiState.invoice!!.remaining)})")
+                    Text(stringResource(Res.string.pay_remainder_btn, formatCurrency(uiState.invoice!!.remaining)))
                 }
             }
         }
@@ -70,29 +72,29 @@ fun InvoiceDetailScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
                         val inv = uiState.invoice!!
                         Text(
-                            text = inv.description ?: "Factura ${inv.period}",
+                            text = uiState.invoice!!.description ?: stringResource(Res.string.invoice_period_label, uiState.invoice!!.period),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Monto Total", style = MaterialTheme.typography.bodySmall)
-                            Text("$${formatCurrency(inv.amount)}", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(Res.string.total_label), style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(Res.string.currency_amount, formatCurrency(inv.amount)), fontWeight = FontWeight.SemiBold)
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Pagado", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(Res.string.paid_label), style = MaterialTheme.typography.bodySmall)
                             Text(
-                                "$${formatCurrency(inv.paid)}",
+                                stringResource(Res.string.currency_amount, formatCurrency(inv.paid)),
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF2E7D32)
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Restante", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(Res.string.remaining_label), style = MaterialTheme.typography.bodySmall)
                             Text(
-                                "$${formatCurrency(inv.remaining)}",
+                                stringResource(Res.string.currency_amount, formatCurrency(inv.remaining)),
                                 fontWeight = FontWeight.Bold,
                                 color = if (inv.remaining > 0) Color(0xFFFF6D00) else Color(0xFF2E7D32)
                             )
@@ -109,7 +111,7 @@ fun InvoiceDetailScreen(
             }
 
             Text(
-                text = "Historial de Pagos",
+                text = stringResource(Res.string.payment_history_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -121,7 +123,7 @@ fun InvoiceDetailScreen(
                 }
             } else if (uiState.payments.isEmpty()) {
                 Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                    Text("No hay pagos registrados para esta factura")
+                    Text(stringResource(Res.string.no_payments_found))
                 }
             } else {
                 LazyColumn(
@@ -142,10 +144,10 @@ fun InvoiceDetailScreen(
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 OutlinedButton(onClick = onSeeAllPaymentsClick) {
-                    Text("Ver Todos los Pagos")
+                    Text(stringResource(Res.string.view_all_payments))
                 }
                 OutlinedButton(onClick = onSeeAllInvoicesClick) {
-                    Text("Ver Facturas")
+                    Text(stringResource(Res.string.view_invoices))
                 }
             }
         }
@@ -178,21 +180,21 @@ fun PaymentItem(payment: Payment, invoiceId: String?, onClick: () -> Unit) {
                     // Show allocated amount if available and different from total
                     if (allocation != null) {
                          Text(
-                            text = "Aplicado: $${formatCurrency(allocation.amount)}",
+                            text = stringResource(Res.string.applied_label, formatCurrency(allocation.amount)),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2E7D32)
                         )
                         if (allocation.amount != payment.amount) {
                             Text(
-                                text = "Total: $${formatCurrency(payment.amount)}",
+                                text = stringResource(Res.string.total_amount_label, formatCurrency(payment.amount)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     } else {
-                         Text(
-                            text = "$${formatCurrency(payment.amount)}",
+                        Text(
+                            text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2E7D32)
@@ -200,13 +202,18 @@ fun PaymentItem(payment: Payment, invoiceId: String?, onClick: () -> Unit) {
                     }
                 }
             }
+            val methodLabel = when (payment.method) {
+                com.example.condominio.data.model.PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
+                com.example.condominio.data.model.PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
+                com.example.condominio.data.model.PaymentMethod.CASH -> stringResource(Res.string.method_cash)
+            }
             Text(
-                text = "MÃ©todo: ${payment.method.label}",
+                text = stringResource(Res.string.payment_method_label, methodLabel),
                 style = MaterialTheme.typography.bodySmall
             )
             if (!payment.reference.isNullOrEmpty()) {
                 Text(
-                    text = "Ref: ${payment.reference}",
+                    text = "${stringResource(Res.string.reference_short)}: ${payment.reference}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

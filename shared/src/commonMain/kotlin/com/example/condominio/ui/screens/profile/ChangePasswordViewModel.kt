@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
+
 class ChangePasswordViewModel (
     private val authRepository: AuthRepository
 ) : ViewModel() {
@@ -44,22 +47,22 @@ class ChangePasswordViewModel (
 
         // Validation
         if (state.currentPassword.isBlank()) {
-            _uiState.update { it.copy(error = "Current password is required") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_password_required)) }
             return
         }
 
         if (state.newPassword.length < 6) {
-            _uiState.update { it.copy(error = "New password must be at least 6 characters") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.password_min_length)) }
             return
         }
 
         if (state.newPassword != state.confirmPassword) {
-            _uiState.update { it.copy(error = "Passwords do not match") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_passwords_dont_match)) }
             return
         }
 
         if (state.currentPassword == state.newPassword) {
-            _uiState.update { it.copy(error = "New password must be different from current password") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_new_password_same)) }
             return
         }
 
@@ -75,7 +78,7 @@ class ChangePasswordViewModel (
                 it.copy(
                     isLoading = false,
                     isSuccess = result.isSuccess,
-                    error = result.exceptionOrNull()?.message
+                    error = result.exceptionOrNull()?.message?.let { msg -> UiText.DynamicString(msg) }
                 )
             }
         }
@@ -91,5 +94,5 @@ data class ChangePasswordUiState(
     val confirmPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val error: String? = null
+    val error: UiText? = null
 )

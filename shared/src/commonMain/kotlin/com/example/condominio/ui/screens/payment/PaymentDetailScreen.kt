@@ -33,6 +33,8 @@ import coil3.compose.AsyncImage
 import com.example.condominio.data.model.PaymentStatus
 import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,17 +71,17 @@ fun PaymentDetailScreen(
             TopAppBar(
                 title = { 
                     Box(modifier = Modifier.fillMaxWidth().padding(end = 48.dp), contentAlignment = Alignment.Center) {
-                        Text("Payment Details", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(stringResource(Res.string.payment_details_title), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* Share */ }) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
+                        Icon(imageVector = Icons.Default.Share, contentDescription = stringResource(Res.string.attention))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -108,7 +110,7 @@ fun PaymentDetailScreen(
                     } else {
                         Icon(imageVector = Icons.Default.Download, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Download Receipt", fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.download_receipt), fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
@@ -121,7 +123,7 @@ fun PaymentDetailScreen(
                 ) {
                     Icon(imageVector = Icons.Default.Mail, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Contact Support", fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.contact_support), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -163,15 +165,15 @@ fun PaymentDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "$${formatCurrency(payment.amount)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                     style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold)
                 )
                 
                 Text(
                     text = when (payment.status) {
-                        PaymentStatus.APPROVED -> "Payment Approved"
-                        PaymentStatus.PENDING -> "Payment Pending Approval"
-                        PaymentStatus.REJECTED -> "Payment Rejected"
+                        PaymentStatus.APPROVED -> stringResource(Res.string.payment_approved)
+                        PaymentStatus.PENDING -> stringResource(Res.string.payment_pending_approval)
+                        PaymentStatus.REJECTED -> stringResource(Res.string.payment_rejected)
                     },
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -188,31 +190,36 @@ fun PaymentDetailScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Transaction Details",
+                            text = stringResource(Res.string.transaction_details),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         
-                        DetailRow("Transaction ID", "#TXN-${payment.id.take(8)}")
-                        DetailRow("Date", formatDate(payment.date))
+                        DetailRow(stringResource(Res.string.transaction_id), "#TXN-${payment.id.take(8)}")
+                        DetailRow(stringResource(Res.string.date_label), formatDate(payment.date))
                         payment.createdAt?.let { 
-                            DetailRow("Reported on", formatTimestamp(it))
+                            DetailRow(stringResource(Res.string.reported_on), formatTimestamp(it))
                         }
-                        DetailRow("Method", payment.method.label)
-                        payment.userName?.let { DetailRow("Paid By", it) }
+                        val methodLabel = when (payment.method) {
+                            com.example.condominio.data.model.PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
+                            com.example.condominio.data.model.PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
+                            com.example.condominio.data.model.PaymentMethod.CASH -> stringResource(Res.string.method_cash)
+                        }
+                        DetailRow(stringResource(Res.string.method_label), methodLabel)
+                        payment.userName?.let { DetailRow(stringResource(Res.string.paid_by_label), it) }
                         
                         // New Details
-                        payment.bank?.let { DetailRow("Bank", it) }
-                        payment.reference?.let { DetailRow("Reference", it) }
-                        payment.phone?.let { DetailRow("Mobile", it) }
+                        payment.bank?.let { DetailRow(stringResource(Res.string.bank_label), it) }
+                        payment.reference?.let { DetailRow(stringResource(Res.string.reference_label), it) }
+                        payment.phone?.let { DetailRow(stringResource(Res.string.mobile_label), it) }
                         
                         if (payment.status != PaymentStatus.PENDING && !payment.processorName.isNullOrEmpty()) {
-                            DetailRow("Processed By", payment.processorName)
+                            DetailRow(stringResource(Res.string.processed_by_label), payment.processorName)
                         }
 
                         if (payment.allocations.isNotEmpty()) {
                             Text(
-                                text = "Allocations",
+                                text = stringResource(Res.string.allocations_label),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 modifier = Modifier.padding(top=12.dp, bottom=8.dp)
@@ -223,12 +230,12 @@ fun PaymentDetailScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (allocation.invoicePeriod != null) "Period ${allocation.invoicePeriod}" else "Inv. ...${allocation.invoiceId.takeLast(6)}", 
+                                        text = if (allocation.invoicePeriod != null) stringResource(Res.string.period_label_short, allocation.invoicePeriod) else stringResource(Res.string.invoice_id_short, allocation.invoiceId.takeLast(6)), 
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "$${formatCurrency(allocation.amount)}",
+                                        text = stringResource(Res.string.currency_amount, formatCurrency(allocation.amount)),
                                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -237,7 +244,7 @@ fun PaymentDetailScreen(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), modifier = Modifier.padding(top=8.dp))
                         }
 
-                        DetailRow("Description", payment.description)
+                        DetailRow(stringResource(Res.string.description_label), payment.description)
                     }
                 }
 
@@ -252,11 +259,11 @@ fun PaymentDetailScreen(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        text = "Payment Receipt",
+                        text = stringResource(Res.string.payment_receipt_label),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "View Full",
+                        text = stringResource(Res.string.view_full),
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable { }
@@ -274,7 +281,7 @@ fun PaymentDetailScreen(
                     if (payment.proofUrl != null) {
                         AsyncImage(
                             model = payment.proofUrl,
-                            contentDescription = "Payment Proof",
+                            contentDescription = stringResource(Res.string.payment_proof_desc),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(12.dp)),
@@ -290,7 +297,7 @@ fun PaymentDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "No receipt uploaded",
+                                text = stringResource(Res.string.no_receipt_uploaded),
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )

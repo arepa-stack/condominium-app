@@ -7,6 +7,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AdminBlockedScreen(
@@ -20,7 +22,7 @@ fun AdminBlockedScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Acceso solo web",
+            text = stringResource(Res.string.admin_blocked_title),
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
@@ -28,7 +30,7 @@ fun AdminBlockedScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Los administradores gestionan el condominio desde el panel web. Esta app está destinada a residentes y miembros de junta.",
+            text = stringResource(Res.string.admin_blocked_desc),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center
         )
@@ -39,7 +41,7 @@ fun AdminBlockedScreen(
             onClick = onBackToLogin,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Volver al inicio de sesión")
+            Text(stringResource(Res.string.back_to_login))
         }
     }
 }

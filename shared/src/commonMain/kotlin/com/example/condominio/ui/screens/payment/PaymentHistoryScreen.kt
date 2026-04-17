@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.payment
+package com.example.condominio.ui.screens.payment
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +21,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.screens.dashboard.TransactionItem
+import org.jetbrains.compose.resources.stringResource
+import condominio.shared.generated.resources.*
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -53,10 +55,10 @@ fun PaymentHistoryScreen(
             TopAppBar(
                 title = { 
                     Column {
-                        Text("Payment History", fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.payment_history), fontWeight = FontWeight.Bold)
                         if (uiState.unit.isNotEmpty()) {
                             Text(
-                                "Unit ${uiState.unit}", 
+                                stringResource(Res.string.unit, uiState.unit), 
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -65,7 +67,7 @@ fun PaymentHistoryScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

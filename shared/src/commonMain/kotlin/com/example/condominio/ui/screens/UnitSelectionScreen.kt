@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.UserUnit
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +37,7 @@ fun UnitSelectionScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Seleccionar Propiedad") })
+            TopAppBar(title = { Text(stringResource(Res.string.select_property_title)) })
         }
     ) { paddingValues ->
         Box(
@@ -48,12 +50,12 @@ fun UnitSelectionScreen(
             } else {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Hola, ${uiState.userName}",
+                        text = stringResource(Res.string.greeting_user, uiState.userName),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Text(
-                        text = "Selecciona un edificio para continuar:",
+                        text = stringResource(Res.string.select_building_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -84,9 +86,9 @@ fun BuildingCard(
     onUnitClick: (UserUnit) -> Unit
 ) {
     val roleLabel = when (group.role) {
-        "board" -> "Junta Directiva"
-        "admin" -> "Administrador"
-        else -> "Residente"
+        "board" -> stringResource(Res.string.role_board)
+        "admin" -> stringResource(Res.string.role_admin)
+        else -> stringResource(Res.string.role_resident)
     }
 
     Card(
@@ -125,13 +127,13 @@ fun BuildingCard(
                     )
                     if (group.units.size == 1) {
                         Text(
-                            text = "Unidad: ${group.units.first().unitName}",
+                            text = stringResource(Res.string.unit_label_short, group.units.first().unitName),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     } else {
                         Text(
-                            text = "${group.units.size} unidades",
+                            text = stringResource(Res.string.units_count_label, group.units.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
@@ -153,7 +155,7 @@ fun BuildingCard(
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Selecciona una unidad:",
+                        text = stringResource(Res.string.select_unit_hint),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -183,7 +185,7 @@ fun BuildingCard(
                                         onClick = {},
                                         label = {
                                             Text(
-                                                "Principal",
+                                                stringResource(Res.string.primary_label),
                                                 style = MaterialTheme.typography.labelSmall
                                             )
                                         }

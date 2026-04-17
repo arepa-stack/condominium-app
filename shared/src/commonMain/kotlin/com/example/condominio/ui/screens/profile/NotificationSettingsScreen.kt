@@ -12,7 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.koinInject
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,10 +27,10 @@ fun NotificationSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Notification Settings", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(Res.string.notification_settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -49,7 +50,7 @@ fun NotificationSettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Manage your notification preferences",
+                text = stringResource(Res.string.notification_settings_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -57,8 +58,8 @@ fun NotificationSettingsScreen(
 
             // Payment Reminders
             NotificationToggleCard(
-                title = "Payment Reminders",
-                description = "Get notified before payment due dates",
+                title = stringResource(Res.string.payment_reminders_title),
+                description = stringResource(Res.string.payment_reminders_desc),
                 checked = paymentReminders,
                 onCheckedChange = {
                     paymentReminders = it
@@ -69,8 +70,8 @@ fun NotificationSettingsScreen(
 
             // Payment Confirmations
             NotificationToggleCard(
-                title = "Payment Confirmations",
-                description = "Receive confirmation when payments are processed",
+                title = stringResource(Res.string.payment_confirmations_title),
+                description = stringResource(Res.string.payment_confirmations_desc),
                 checked = paymentConfirmations,
                 onCheckedChange = {
                     paymentConfirmations = it
@@ -81,8 +82,8 @@ fun NotificationSettingsScreen(
 
             // Announcements
             NotificationToggleCard(
-                title = "General Announcements",
-                description = "Stay updated with building news and updates",
+                title = stringResource(Res.string.announcements_title),
+                description = stringResource(Res.string.announcements_desc),
                 checked = announcements,
                 onCheckedChange = {
                     announcements = it

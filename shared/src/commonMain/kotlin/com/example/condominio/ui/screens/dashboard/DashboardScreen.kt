@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.dashboard
+package com.example.condominio.ui.screens.dashboard
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -34,6 +34,8 @@ import com.example.condominio.data.model.PaymentStatus
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
+import org.jetbrains.compose.resources.stringResource
+import condominio.shared.generated.resources.*
 
 @Composable
 fun DashboardScreen(
@@ -99,7 +101,7 @@ fun DashboardScreen(
 
             item {
                 Text(
-                        text = "Recent Transactions",
+                        text = stringResource(Res.string.recent_transactions),
                         style =
                                 MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold
@@ -137,18 +139,18 @@ fun BillingCard(
                     verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                        text = "Total Debt",
+                        text = stringResource(Res.string.total_debt),
                         style = MaterialTheme.typography.labelMedium,
                         color = Color.White.copy(alpha = 0.8f)
                 )
                 TextButton(
                         onClick = onSeeAllClick,
                         colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
-                ) { Text("See all", style = MaterialTheme.typography.labelLarge) }
+                ) { Text(stringResource(Res.string.see_all), style = MaterialTheme.typography.labelLarge) }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                    text = "$${formatCurrency(totalDebt)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(totalDebt)),
                     style =
                             MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold
@@ -159,7 +161,7 @@ fun BillingCard(
 
             if (pendingInvoices.isNotEmpty()) {
                 Text(
-                        text = "Pending Invoices:",
+                        text = stringResource(Res.string.pending_invoices_label),
                         style = MaterialTheme.typography.titleSmall,
                         color = Color.White
                 )
@@ -175,7 +177,7 @@ fun BillingCard(
                                 color = Color.White.copy(alpha = 0.9f)
                         )
                         Text(
-                                text = "$${formatCurrency(invoice.remaining)}",
+                                text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
@@ -185,7 +187,7 @@ fun BillingCard(
                 }
             } else {
                 Text(
-                        text = "You are up to date! ðŸŽ‰",
+                        text = stringResource(Res.string.up_to_date),
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Medium
@@ -210,7 +212,7 @@ fun HeaderSection(
     ) {
         Column(modifier = Modifier.clickable(onClick = onUnitClick)) {
             Text(
-                    text = "Welcome back,",
+                    text = stringResource(Res.string.welcome_back),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -225,7 +227,7 @@ fun HeaderSection(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                            text = "$building · Apt $apartmentUnit",
+                            text = stringResource(Res.string.apt_unit_label, building, apartmentUnit),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                             fontWeight = FontWeight.Medium
@@ -233,7 +235,7 @@ fun HeaderSection(
                     Icon(
                             imageVector =
                                     Icons.Default.ArrowDropDown,
-                            contentDescription = "Select Unit",
+                            contentDescription = stringResource(Res.string.select_unit),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                     )
@@ -265,7 +267,7 @@ fun HeaderSection(
                 } else {
                     Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
+                            contentDescription = stringResource(Res.string.profile),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
@@ -283,7 +285,7 @@ fun QuickActions(
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         QuickActionItem(
                 icon = Icons.Default.Payment,
-                label = "Pay Now",
+                label = stringResource(Res.string.pay_now),
                 color = Color(0xFFFF6D00), // Orange
                 onClick = onPayClick,
                 modifier = Modifier.weight(1f)
@@ -291,7 +293,7 @@ fun QuickActions(
         Spacer(modifier = Modifier.width(12.dp))
         QuickActionItem(
                 icon = Icons.Default.History,
-                label = "History",
+                label = stringResource(Res.string.history),
                 color = Color(0xFF0091EA), // Blue
                 onClick = onHistoryClick,
                 modifier = Modifier.weight(1f)
@@ -299,7 +301,7 @@ fun QuickActions(
         Spacer(modifier = Modifier.width(12.dp))
         QuickActionItem(
                 icon = Icons.Default.AccountBalanceWallet,
-                label = "Caja Chica",
+                label = stringResource(Res.string.petty_cash),
                 color = Color(0xFF00FF80), // Neon Green
                 onClick = onPettyCashClick,
                 modifier = Modifier.weight(1f)
@@ -307,7 +309,7 @@ fun QuickActions(
         Spacer(modifier = Modifier.width(12.dp))
         QuickActionItem(
                 icon = Icons.Default.Support,
-                label = "Support",
+                label = stringResource(Res.string.support),
                 color = Color(0xFF43A047), // Green
                 onClick = {},
                 modifier = Modifier.weight(1f)
@@ -377,7 +379,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                    text = payment.description.ifBlank { "Pago" },
+                    text = payment.description.ifBlank { stringResource(Res.string.payment_item_label) },
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
             )
             Text(
@@ -394,14 +396,19 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                     }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val statusLabel = when (payment.status) {
+                    PaymentStatus.APPROVED -> stringResource(Res.string.status_approved_upper)
+                    PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper)
+                    PaymentStatus.PENDING -> stringResource(Res.string.status_pending)
+                }
                 Text(
-                        text = payment.status.name,
+                        text = statusLabel,
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = statusColor
                 )
                 if (payment.status != PaymentStatus.PENDING && !payment.processorName.isNullOrEmpty()) {
                     Text(
-                            text = " · Por: ${payment.processorName}",
+                            text = stringResource(Res.string.processed_by_short, payment.processorName),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )

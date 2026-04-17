@@ -1,0 +1,274 @@
+<resources>
+    <!-- Glossary Technical Terms -->
+    <string name="dashboard_balance">Total Balance</string>
+    <string name="status_solvent">Solvent</string>
+    <string name="petty_cash">Petty Cash</string>
+
+    <!-- Dashboard Screen -->
+    <string name="welcome_back">Welcome back,</string>
+    <string name="recent_transactions">Recent Transactions</string>
+    <string name="see_all">See all</string>
+    <string name="total_debt">Total Debt</string>
+    <string name="pending_invoices_label">Pending Invoices:</string>
+    <string name="up_to_date">You are up to date! 🎉</string>
+    <string name="select_unit">Select Unit</string>
+    <string name="profile">Profile</string>
+    <string name="pay_now">Pay Now</string>
+    <string name="history">History</string>
+    <string name="support">Support</string>
+    <string name="payment_item_label">Payment</string>
+
+    <!-- Login Screen -->
+    <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="error_missing_fields">Please fill in all fields</string>
+    <string name="error_invalid_credentials">Invalid credentials</string>
+
+    <!-- Payment History -->
+    <string name="payment_history">Payment History</string>
+    <string name="unit">Unit %1$s</string>
+
+    <!-- Common -->
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="accept">Accept</string>
+    <string name="save">Save</string>
+    <string name="loading">Loading...</string>
+    <string name="error_unknown">Unknown error</string>
+
+    <!-- Register Screen -->
+    <string name="create_account">Create Account</string>
+    <string name="full_name">Full Name</string>
+    <string name="apartment_unit_label">Apartment / Unit</string>
+    <string name="building_tower">Building / Tower</string>
+    <string name="select_building_first">Select Building first</string>
+    <string name="select_unit_placeholder">Select Unit</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="already_have_account">Already have an account? Sign In</string>
+
+    <!-- Petty Cash -->
+    <string name="petty_cash_title">Petty Cash</string>
+    <string name="recent_activity">Recent Activity</string>
+    <string name="no_transactions">No transactions registered</string>
+    <string name="available_balance">Available Balance</string>
+    <string name="register_income">Register Income</string>
+    <string name="register_expense">Register Expense</string>
+    <string name="insufficient_balance">Insufficient Balance</string>
+    <string name="evidence_receipt">Evidence / Receipt</string>
+    <string name="category_repair">Repairs</string>
+    <string name="category_cleaning">Cleaning</string>
+    <string name="category_emergency">Emergency</string>
+    <string name="category_office">Office</string>
+    <string name="category_utilities">Utilities</string>
+    <string name="category_other">Other</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="account_info">Account Information</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="notification_settings">Notification Settings</string>
+    <string name="change_password">Change Password</string>
+    <string name="logout">Logout</string>
+
+    <!-- Billing & Payments -->
+    <string name="my_invoices">My Invoices</string>
+    <string name="invoice_detail">Invoice Detail</string>
+    <string name="pay_remainder">Pay Remainder</string>
+    <string name="register_payment">Register Payment</string>
+    <string name="payment_amount">Payment Amount</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="bank_issuing">Issuing Bank</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="reference_number">Reference Number</string>
+    <string name="payment_date">Payment Date</string>
+    <string name="payment_proof">Payment Proof</string>
+    <string name="status_approved">Approved</string>
+    <string name="status_pending_approval">Pending Approval</string>
+    <string name="status_rejected">Rejected</string>
+
+    <!-- Unit Selection -->
+    <string name="select_property_title">Select Property</string>
+    <string name="hello_user">Hello, %1$s</string>
+    <string name="greeting_user">Hello, %1$s</string>
+    <string name="select_building_instruction">Select a building to continue:</string>
+    <string name="role_board">Board</string>
+    <string name="role_admin">Administrator</string>
+    <string name="role_resident">Resident</string>
+    <string name="units_count">%d units</string>
+    <string name="select_unit_instruction">Select a unit:</string>
+    <string name="primary_chip">Primary</string>
+
+    <!-- Errors and UI Messages -->
+    <string name="error_failed_load_buildings">Failed to load buildings</string>
+    <string name="error_failed_load_units">Failed to load units</string>
+    <string name="error_fill_all_fields">Please fill in all fields</string>
+    <string name="error_invalid_amount">Invalid amount</string>
+    <string name="error_select_invoices">Please select invoices to pay</string>
+    <string name="error_user_unit_not_found">User or Unit not found</string>
+    <string name="error_proof_required">You must attach the payment proof.</string>
+    <string name="error_bank_info_required">Bank and reference number are required for transfers and mobile payments.</string>
+    <string name="error_no_building_found">No building ID found for user</string>
+    <string name="income_item_label">Income</string>
+    <string name="expense_item_label">Expense</string>
+    <string name="attention">Attention</string>
+    <string name="understood">Understood</string>
+    <string name="from_date_label">From: %1$s</string>
+    <string name="view_receipt">View receipt</string>
+    <string name="amount_label">Amount ($)</string>
+    <string name="description_label">Description</string>
+    <string name="category_label">Category</string>
+    <string name="evidence_ready">Receipt Ready</string>
+    <string name="upload_evidence">Upload Receipt</string>
+    <string name="confirm_overage">Confirm Overage</string>
+    <string name="register">Register</string>
+    <string name="expense_registered_title">Expense Registered!</string>
+    <string name="excess_neighbors">Excess (Neighbors)</string>
+    <string name="expense_evidence_title">Expense Evidence</string>
+    <string name="close">Close</string>
+    <string name="overage_warning_desc">Current balance: %1$s. Expense amount: %2$s.\nDifference (%3$s) will be automatically billed to owners as petty cash replenishment.</string>
+    <string name="account_info_title">Account Information</string>
+    <string name="quick_actions_title">Quick Actions</string>
+    <string name="apt_label">Apt. %1$s</string>
+    <string name="invoices_title">My Invoices</string>
+    <string name="tab_all">All</string>
+    <string name="tab_pending">Pending</string>
+    <string name="tab_paid">Paid</string>
+    <string name="refresh">Refresh</string>
+    <string name="no_invoices_found">No invoices found</string>
+    <string name="default_invoice_desc">Condo Fee</string>
+    <string name="period_label">Period: %1$s</string>
+    <string name="total_label">Total</string>
+    <string name="paid_label">Paid</string>
+    <string name="remaining_label">Remaining</string>
+    <string name="status_paid">PAID</string>
+    <string name="status_overdue">OVERDUE</string>
+    <string name="status_cancelled">CANCELLED</string>
+    <string name="invoice_detail_title">Invoice Detail</string>
+    <string name="pay_remainder_btn">Pay Remainder (%1$s)</string>
+    <string name="invoice_period_label">Invoice %1$s</string>
+    <string name="total_amount_label">Total Amount: %1$s</string>
+    <string name="paid_amount_label">Paid: %1$s</string>
+    <string name="payment_history_title">Payment History</string>
+    <string name="no_payments_found">No payments registered for this invoice</string>
+    <string name="view_all_payments">View All Payments</string>
+    <string name="view_invoices">View Invoices</string>
+    <string name="applied_label">Applied: %1$s</string>
+    <string name="payment_method_label">Method: %1$s</string>
+    <string name="create_payment_title">Register Payment</string>
+    <string name="payment_amount_label">Payment Amount</string>
+    <string name="payment_method_field">Payment Method</string>
+    <string name="method_pago_movil">Mobile Payment</string>
+    <string name="method_transfer">Transfer</string>
+    <string name="method_cash">Cash</string>
+    <string name="issuing_bank_label">Issuing Bank</string>
+    <string name="phone_number_label">Phone Number</string>
+    <string name="reference_number_label">Reference Number</string>
+    <string name="cash_payment_hint">For cash payments, please upload a photo of the receipt.</string>
+    <string name="select_invoices_label">Select Invoices to Pay</string>
+    <string name="invoices_selected_count">%d invoices selected</string>
+    <string name="no_pending_invoices">No pending invoices found.</string>
+    <string name="payment_description_label">Payment Description</string>
+    <string name="payment_description_placeholder">e.g. January payment</string>
+    <string name="payment_date_label">Payment Date</string>
+    <string name="select_date">Select Date</string>
+    <string name="proof_of_payment_required">Payment Proof (Required)</string>
+    <string name="upload_proof_optional">Upload Proof (Optional)</string>
+    <string name="image_selected">Image selected</string>
+    <string name="tap_to_upload">Tap to upload image</string>
+    <string name="month_january">January</string>
+    <string name="month_february">February</string>
+    <string name="month_march">March</string>
+    <string name="month_april">April</string>
+    <string name="month_may">May</string>
+    <string name="month_june">June</string>
+    <string name="month_july">July</string>
+    <string name="month_august">August</string>
+    <string name="month_september">September</string>
+    <string name="month_october">October</string>
+    <string name="month_november">November</string>
+    <string name="month_december">December</string>
+    <string name="payment_details_title">Payment Details</string>
+    <string name="download_receipt">Download Receipt</string>
+    <string name="contact_support">Contact Support</string>
+    <string name="payment_approved">Payment Approved</string>
+    <string name="payment_pending_approval">Payment Pending Approval</string>
+    <string name="payment_rejected">Payment Rejected</string>
+    <string name="transaction_details">Transaction Details</string>
+    <string name="transaction_id">Transaction ID</string>
+    <string name="date_label">Date</string>
+    <string name="reported_on">Reported on</string>
+    <string name="method_label">Method</string>
+    <string name="paid_by_label">Paid by</string>
+    <string name="bank_label">Bank</string>
+    <string name="reference_label">Reference</string>
+    <string name="mobile_label">Mobile</string>
+    <string name="processed_by_label">Processed by</string>
+    <string name="allocations_label">Allocations</string>
+    <string name="period_label_short">Period %1$s</string>
+    <string name="invoice_id_short">Inv. %1$s</string>
+    <string name="payment_receipt_label">Payment Receipt</string>
+    <string name="status_pending">PENDING</string>
+    <string name="status_partial">PARTIAL</string>
+    <string name="status_approved_upper">APPROVED</string>
+    <string name="status_rejected_upper">REJECTED</string>
+    <string name="solvency_solvent">Up to date</string>
+    <string name="solvency_pending">Pending Payments</string>
+    <string name="currency_symbol">$</string>
+    <string name="currency_amount">$%1$s</string>
+    <string name="view_full">View Full</string>
+    <string name="payment_proof_desc">Payment Proof</string>
+    <string name="no_receipt_uploaded">No receipt uploaded</string>
+    <string name="apt_unit_label">%1$s · Apt %2$s</string>
+    <string name="processed_by_short"> · By: %1$s</string>
+    <string name="dont_have_account">Don't have an account? Sign up</string>
+    <string name="database_cleared">✓ Database Cleared!</string>
+    <string name="clear_database_demo">🗑️ Clear Database (Demo)</string>
+    <string name="insufficient_balance_title">Insufficient Balance</string>
+    <string name="insufficient_balance_desc">Current balance: $%1$s. Expense amount: $%2$s.\nDifference ($%3$s) will be automatically billed to owners as petty cash replenishment.</string>
+    <string name="cat_repair">Repair</string>
+    <string name="cat_cleaning">Cleaning</string>
+    <string name="cat_emergency">Emergency</string>
+    <string name="cat_office">Office</string>
+    <string name="cat_utilities">Utilities</string>
+    <string name="cat_other">Other</string>
+    <string name="no_units_found">No units found</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+    <string name="reference_short">Ref</string>
+    <string name="select_building_hint">Select a building to continue:</string>
+    <string name="unit_label_short">Unit: %1$s</string>
+    <string name="units_count_label">%1$d units</string>
+    <string name="select_unit_hint">Select a unit:</string>
+    <string name="primary_label">Primary</string>
+    <string name="registration_pending_title">Registration Pending</string>
+    <string name="registration_pending_desc">Your registration has been received and is waiting for approval from the building administration.</string>
+    <string name="registration_pending_hint">You will be able to access the dashboard once your account is approved.</string>
+    <string name="back_to_login">Back to Login</string>
+
+    <!-- Admin Blocked Screen -->
+    <string name="admin_blocked_title">Web Access Only</string>
+    <string name="admin_blocked_desc">Administrators manage the condominium from the web panel. This app is intended for residents and board members.</string>
+
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="change_password_desc">Enter your current and new password to update it</string>
+    <string name="error_passwords_dont_match">Passwords do not match</string>
+    <string name="password_updated_success">Password updated successfully</string>
+
+    <string name="edit_profile_desc">Update your personal information</string>
+    <string name="email_cannot_be_changed">Email cannot be changed</string>
+    <string name="save_changes">Save Changes</string>
+
+    <string name="notification_settings_desc">Manage your notification preferences</string>
+    <string name="payment_reminders_title">Payment Reminders</string>
+    <string name="payment_reminders_desc">Get notified before payment due dates</string>
+    <string name="payment_confirmations_title">Payment Confirmations</string>
+    <string name="payment_confirmations_desc">Receive confirmation when payments are processed</string>
+    <string name="announcements_title">General Announcements</string>
+    <string name="announcements_desc">Stay updated with building news and updates</string>
+    <string name="password_min_length">Password must be at least 6 characters</string>
+    <string name="error_new_password_same">New password must be different from current password</string>
+    <string name="error_password_required">Current password is required</string>
+</resources>

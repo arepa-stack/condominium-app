@@ -6,6 +6,8 @@ import com.example.condominio.data.model.Building
 import com.example.condominio.data.model.UnitDto
 import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.BuildingRepository
+import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -38,7 +40,7 @@ class RegisterViewModel (
                 _uiState.update { 
                     it.copy(
                         isLoadingBuildings = false,
-                        error = "Failed to load buildings"
+                        error = UiText.StringResource(Res.string.error_failed_load_buildings)
                     ) 
                 }
             }
@@ -60,7 +62,7 @@ class RegisterViewModel (
                 _uiState.update { 
                     it.copy(
                         isLoadingUnits = false,
-                        error = "Failed to load units"
+                        error = UiText.StringResource(Res.string.error_failed_load_units)
                     ) 
                 }
             }
@@ -94,7 +96,7 @@ class RegisterViewModel (
         if (_uiState.value.email.isBlank() || _uiState.value.password.isBlank() || 
             _uiState.value.name.isBlank() || _uiState.value.unit.isBlank() ||
             _uiState.value.selectedBuildingId.isBlank()) {
-            _uiState.update { it.copy(error = "Please fill in all fields") }
+            _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_fill_all_fields)) }
             return
         }
 
@@ -112,7 +114,7 @@ class RegisterViewModel (
             result.onSuccess {
                 _uiState.update { it.copy(isSuccess = true) }
             }.onFailure { error ->
-                _uiState.update { it.copy(error = error.message) }
+                _uiState.update { it.copy(error = UiText.DynamicString(error.message ?: "")) }
             }
         }
     }
@@ -130,6 +132,6 @@ data class RegisterUiState(
     val isLoadingUnits: Boolean = false,
     val password: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val isSuccess: Boolean = false
 )

@@ -8,6 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
+
 @Composable
 fun PendingApprovalScreen(
     onLogout: () -> Unit
@@ -20,7 +23,7 @@ fun PendingApprovalScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Registration Pending",
+            text = stringResource(Res.string.registration_pending_title),
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
@@ -28,7 +31,7 @@ fun PendingApprovalScreen(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "Your registration has been received and is waiting for approval from the building administration.",
+            text = stringResource(Res.string.registration_pending_desc),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center
         )
@@ -36,7 +39,7 @@ fun PendingApprovalScreen(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "You will be able to access the dashboard once your account is approved.",
+            text = stringResource(Res.string.registration_pending_hint),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
@@ -47,7 +50,7 @@ fun PendingApprovalScreen(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Back to Login")
+            Text(stringResource(Res.string.back_to_login))
         }
     }
 }
