@@ -72,6 +72,7 @@ data class VoteDto(
     @SerialName("decision_id") val decisionId: String,
     val round: Int,
     @SerialName("apartment_id") val apartmentId: String,
+    @SerialName("apartment_label") val apartmentLabel: String? = null,
     @SerialName("quote_id") val quoteId: String,
     @SerialName("voted_by") val votedBy: UserRefDto? = null,
     @SerialName("created_at") val createdAt: String
@@ -111,12 +112,14 @@ data class PaginationMetadata(
     val total: Int,
     val page: Int,
     val limit: Int,
-    @SerialName("total_pages") val totalPages: Int
+    @SerialName("total_pages") val totalPages: Int,
+    @SerialName("has_next_page") val hasNextPage: Boolean = false,
+    @SerialName("has_prev_page") val hasPrevPage: Boolean = false
 )
 
 @Serializable
 data class DecisionsPageDto(
-    val items: List<DecisionDto>,
+    val data: List<DecisionDto>,
     val metadata: PaginationMetadata
 )
 
