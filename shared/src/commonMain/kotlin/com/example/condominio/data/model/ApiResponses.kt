@@ -45,12 +45,6 @@ data class UserProfile(
         val status: String? = null,
         val units: List<UserUnitDto>? = null,
         @SerialName("buildingRoles") val buildingRoles: List<BuildingRoleDto>? = null,
-        // Legacy support
-        @SerialName("unit")
-        val unit: kotlinx.serialization.json.JsonElement? = null,
-        @SerialName("unit_name") val unitName: String? = null,
-        @SerialName("building_id") val buildingId: String? = null,
-        @SerialName("building_name") val buildingName: String? = null,
         val phone: String? = null,
         val settings: Map<String, JsonElement>? = null
 )
@@ -69,44 +63,6 @@ data class BuildingRoleDto(
         @SerialName("building_id") val buildingId: String,
         val role: String
 )
-
-@Serializable
-data class PaymentSummaryDto(
-        @SerialName("solvency_status") val solvencyStatus: String,
-        @SerialName("last_payment_date") val lastPaymentDate: String?,
-        @SerialName("recent_transactions") val recentTransactions: List<PaymentDto>,
-        @SerialName("unit")
-        val unitObject: UnitDto? = null,
-        @SerialName("unit_id") val unitId: String? = null,
-        @SerialName("total_debt") val totalDebt: Double? = 0.0
-)
-
-
-fun PaymentSummaryDto.toDomain(): PaymentSummary {
-    val solvency =
-            try {
-                if (solvencyStatus == "SOLVENT") SolvencyStatus.SOLVENT else SolvencyStatus.PENDING
-            } catch (e: Exception) {
-                SolvencyStatus.PENDING
-            }
-
-    val lastPayment =
-            lastPaymentDate?.let {
-                try {
-                    LocalDate.parse(it).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
-                } catch (e: Exception) {
-                    null
-                }
-            }
-
-    return PaymentSummary(
-            solvencyStatus = solvency,
-            lastPaymentDate = lastPayment,
-            recentTransactions = recentTransactions.map { it.toDomain() },
-            unitName = unitObject?.name ?: unitObject?.id ?: unitId ?: "",
-            totalDebt = totalDebt ?: 0.0
-    )
-}
 
 @Serializable
 data class BalanceDto(
@@ -144,7 +100,7 @@ fun InvoiceDto.toDomain(): Invoice {
             try {
                 when (status.uppercase()) {
                     "PENDING" -> InvoiceStatus.PENDING
-                    "PARTIAL", "PARTIALLY_PAID" -> InvoiceStatus.PARTIAL
+                    "PARTIAL" -> InvoiceStatus.PARTIAL
                     "PAID" -> InvoiceStatus.PAID
                     "CANCELLED" -> InvoiceStatus.CANCELLED
                     "OVERDUE" -> InvoiceStatus.OVERDUE

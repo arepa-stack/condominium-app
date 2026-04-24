@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.*
 
 class RemoteAuthRepository
 (private val apiService: ApiService, private val tokenManager: TokenManager) :
@@ -189,36 +188,8 @@ class RemoteAuthRepository
     }
 
     private suspend fun enrichUserWithUnits(user: User): User {
-        // Start with existing units from the User object (mapped from Profile)
-        var currentUnits = user.units
-
-        // If no units found, fallback to fetching from API
-        if (currentUnits.isEmpty()) {
-            val unitsResponse =
-                    try {
-                        apiService.getUserUnits(user.id)
-                    } catch (e: Exception) {
-                        null
-                    }
-
-            if (unitsResponse?.isSuccessful == true && unitsResponse.body() != null) {
-                currentUnits =
-                        unitsResponse.body()!!.map { dto ->
-                            com.example.condominio.data.model.UserUnit(
-                                    unitId = dto.unitId,
-                                    buildingId = dto.buildingId,
-                                    unitName = "", // Needs enrichment
-                                    buildingName = "", // Needs enrichment
-                                    isPrimary = dto.isPrimary
-                            )
-                        }
-            }
-        }
-
-        // Now enrich names
         val enrichedUnits = mutableListOf<com.example.condominio.data.model.UserUnit>()
-        for (unit in currentUnits) {
-            // If we already have names from the API response, skip enrichment
+        for (unit in user.units) {
             var uName = unit.unitName
             var bName = unit.buildingName
             var bId = unit.buildingId
@@ -252,7 +223,6 @@ class RemoteAuthRepository
             enrichedUnits.add(unit.copy(unitName = uName, buildingName = bName, buildingId = bId))
         }
 
-        // Determine current unit
         val current = _currentUser.value?.currentUnit
         val newCurrent =
                 if (current != null && enrichedUnits.any { it.unitId == current.unitId }) {
@@ -261,23 +231,11 @@ class RemoteAuthRepository
                     enrichedUnits.find { it.isPrimary } ?: enrichedUnits.firstOrNull()
                 }
 
-        // If still no units, try legacy enrichment (for backward compatibility or odd data shapes)
-        if (enrichedUnits.isEmpty()) {
-            return enrichUserWithLegacyUnit(user)
-        }
-
         return user.copy(units = enrichedUnits, currentUnit = newCurrent)
-    }
-
-    private suspend fun enrichUserWithLegacyUnit(user: User): User {
-        // Minimal fallback logic, kept simple
-        return user
     }
 }
 
-// Extension function to convert API UserProfile to domain User
 private fun UserProfile.toDomain(): User {
-    // 1. Map new 'units' list if available
     val domainUnits =
             units?.map { dto ->
                 com.example.condominio.data.model.UserUnit(
@@ -299,46 +257,14 @@ private fun UserProfile.toDomain(): User {
             }
                     ?: emptyList()
 
-    // 2. Legacy fallback logic (try to extract from 'unit' field if list is empty)
-    var finalUnits = domainUnits
-    if (finalUnits.isEmpty()) {
-        // Attempt to extract unit ID and name from legacy 'unit' field
-        var unitId = ""
-        var unitName = this.unitName ?: ""
-
-        if (unit != null) {
-            if (unit is JsonPrimitive) {
-                val s = unit.content
-                // If it looks like UUID, it's ID. Else name.
-                if (s.length == 36 && s.contains("-")) unitId = s else unitName = s
-            } else if (unit is JsonObject) {
-                unitId = unit["id"]?.jsonPrimitive?.content ?: ""
-                unitName = unit["name"]?.jsonPrimitive?.content ?: unitName
-            }
-        }
-
-        if (unitId.isNotEmpty()) {
-            val legacyUnit =
-                    com.example.condominio.data.model.UserUnit(
-                            unitId = unitId,
-                            buildingId = buildingId ?: "",
-                            unitName = unitName.ifEmpty { "Unit" },
-                            buildingName = buildingName ?: "Building",
-                            isPrimary = true
-                    )
-            finalUnits = listOf(legacyUnit)
-        }
-    }
-
     return User(
             id = id ?: "",
             name = name ?: "Unknown",
             email = email ?: "",
             appRole = appRole ?: "user",
             status = status ?: "active",
-            units = finalUnits,
+            units = domainUnits,
             buildingRoles = domainBuildingRoles,
-            currentUnit = finalUnits.firstOrNull(),
-            profileBuildingId = buildingId
+            currentUnit = domainUnits.firstOrNull()
     )
 }

@@ -3,19 +3,21 @@ package com.example.condominio.ui.screens.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.model.Payment
+import com.example.condominio.data.model.PettyCashBalanceDto
 import com.example.condominio.data.model.SolvencyStatus
 import com.example.condominio.data.repository.AuthRepository
+import com.example.condominio.data.repository.PettyCashRepository
+import com.example.condominio.ui.utils.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-import com.example.condominio.ui.utils.UiText
-
-class DashboardViewModel (
+class DashboardViewModel(
     private val authRepository: AuthRepository,
     private val paymentRepository: com.example.condominio.data.repository.PaymentRepository,
-    private val buildingRepository: com.example.condominio.data.repository.BuildingRepository
+    private val buildingRepository: com.example.condominio.data.repository.BuildingRepository,
+    private val pettyCashRepository: PettyCashRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -28,28 +30,25 @@ class DashboardViewModel (
     private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            
-            // Fetch currentUser to get selected unit
+
             val userResult = authRepository.fetchCurrentUser()
-            
+
             if (userResult.isSuccess) {
                 val user = userResult.getOrNull()
                 val currentUnit = user?.currentUnit
-                
+
                 _uiState.update { state ->
                     state.copy(
                         userName = user?.name ?: "",
-                        userBuilding = currentUnit?.buildingName ?: user?.building ?: "",
-                        userApartment = currentUnit?.unitName ?: user?.apartmentUnit ?: ""
+                        userBuilding = currentUnit?.buildingName ?: "",
+                        userApartment = currentUnit?.unitName ?: ""
                     )
                 }
 
-                // If we have a unit ID, fetch balance
-                // Fallback to legacy getPaymentSummary if no unit ID (shouldn't happen in Pro)
-                val unitId = currentUnit?.unitId ?: user?.units?.firstOrNull()?.unitId
-                
+                val unitId = currentUnit?.unitId
+                val buildingId = currentUnit?.buildingId
+
                 if (!unitId.isNullOrEmpty()) {
-                    // Fetch Balance
                     launch {
                         val result = paymentRepository.getBalance(unitId)
                         result.onSuccess { balance ->
@@ -62,18 +61,17 @@ class DashboardViewModel (
                                 )
                             }
                         }.onFailure { error ->
-                             _uiState.update { it.copy(error = error.message?.let { UiText.DynamicString(it) }) }
+                            _uiState.update { it.copy(error = error.message?.let { UiText.DynamicString(it) }) }
                         }
                     }
 
-                    // Fetch Recent Transactions
                     launch {
                         try {
                             val payments = paymentRepository.getPayments(unitId)
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
-                                    recentPayments = payments.take(5), // Show last 5
-                                    isLoading = false 
+                                    recentPayments = payments.take(5),
+                                    isLoading = false
                                 )
                             }
                         } catch (e: Exception) {
@@ -81,27 +79,23 @@ class DashboardViewModel (
                         }
                     }
                 } else {
-                     // Legacy fallback
-                     launch {
-                        paymentRepository.getPaymentSummary().onSuccess { summary ->
-                            _uiState.update {
-                                it.copy(
-                                    solvencyStatus = summary.solvencyStatus,
-                                    recentPayments = summary.recentTransactions,
-                                    isLoading = false
-                                )
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+
+                if (!buildingId.isNullOrEmpty()) {
+                    launch {
+                        pettyCashRepository.getBalance(buildingId)
+                            .onSuccess { balance ->
+                                _uiState.update { it.copy(pettyCashBalance = balance) }
                             }
-                        }.onFailure { error ->
-                            _uiState.update { it.copy(isLoading = false, error = error.message?.let { UiText.DynamicString(it) }) }
-                        }
-                     }
+                    }
                 }
             } else {
                 _uiState.update { it.copy(isLoading = false, error = userResult.exceptionOrNull()?.message?.let { UiText.DynamicString(it) }) }
             }
         }
     }
-    
+
     fun refresh() {
         loadData()
     }
@@ -116,5 +110,6 @@ data class DashboardUiState(
     val isLoading: Boolean = false,
     val totalDebt: Double = 0.0,
     val pendingInvoices: List<com.example.condominio.data.model.Invoice> = emptyList(),
+    val pettyCashBalance: PettyCashBalanceDto? = null,
     val error: UiText? = null
 )

@@ -2,16 +2,10 @@ package com.example.condominio.data.repository
 
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
-import com.example.condominio.data.model.PaymentStatus
-import com.example.condominio.data.model.PaymentSummary
-import com.example.condominio.data.model.SolvencyStatus
-import kotlinx.coroutines.delay
 
 interface PaymentRepository {
     suspend fun getPayments(unitId: String? = null): List<Payment>
     suspend fun getPayment(id: String): Payment?
-// New method
-    suspend fun getPaymentSummary(): Result<PaymentSummary>
 
     suspend fun createPayment(
         amount: Double, 

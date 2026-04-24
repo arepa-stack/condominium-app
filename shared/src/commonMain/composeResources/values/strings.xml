@@ -49,19 +49,7 @@
 
     <!-- Petty Cash -->
     <string name="petty_cash_title">Caja Chica</string>
-    <string name="recent_activity">Actividad Reciente</string>
-    <string name="no_transactions">No hay movimientos registrados</string>
     <string name="available_balance">Saldo Disponible</string>
-    <string name="register_income">Registrar Ingreso</string>
-    <string name="register_expense">Registrar Gasto</string>
-    <string name="insufficient_balance">Saldo Insuficiente</string>
-    <string name="evidence_receipt">Comprobante / Recibo</string>
-    <string name="category_repair">Reparaciones</string>
-    <string name="category_cleaning">Limpieza</string>
-    <string name="category_emergency">Emergencia</string>
-    <string name="category_office">Oficina</string>
-    <string name="category_utilities">Servicios</string>
-    <string name="category_other">Otros</string>
 
     <!-- Profile -->
     <string name="profile_title">Perfil</string>
@@ -108,25 +96,9 @@
     <string name="error_user_unit_not_found">Usuario o Unidad no encontrados</string>
     <string name="error_proof_required">Debés adjuntar el comprobante de pago.</string>
     <string name="error_bank_info_required">Banco y número de referencia son obligatorios para transferencias y pago móvil.</string>
-    <string name="error_no_building_found">No se encontró ID de edificio para el usuario</string>
-    <string name="income_item_label">Ingreso</string>
-    <string name="expense_item_label">Gasto</string>
     <string name="attention">Atención</string>
-    <string name="understood">Entendido</string>
-    <string name="from_date_label">Desde: %1$s</string>
-    <string name="view_receipt">Ver recibo</string>
-    <string name="amount_label">Monto ($)</string>
     <string name="description_label">Descripción</string>
-    <string name="category_label">Categoría</string>
-    <string name="evidence_ready">Comprobante listo</string>
-    <string name="upload_evidence">Subir Comprobante</string>
-    <string name="confirm_overage">Confirmar Excedente</string>
-    <string name="register">Registrar</string>
-    <string name="expense_registered_title">¡Gasto Registrado!</string>
-    <string name="excess_neighbors">Excedente (Vecinos)</string>
-    <string name="expense_evidence_title">Evidencia del Gasto</string>
     <string name="close">Cerrar</string>
-    <string name="overage_warning_desc">Saldo actual: %1$s. Monto del gasto: %2$s.\nDiferencia (%3$s) será facturada automáticamente a los propietarios como reposición de caja chica.</string>
     <string name="account_info_title">Información de la Cuenta</string>
     <string name="quick_actions_title">Acciones Rápidas</string>
     <string name="apt_label">Apt. %1$s</string>
@@ -224,14 +196,6 @@
     <string name="dont_have_account">¿No tienes cuenta? Registrate</string>
     <string name="database_cleared">✓ Base de datos limpiada!</string>
     <string name="clear_database_demo">🗑️ Limpiar Base de Datos (Demo)</string>
-    <string name="insufficient_balance_title">Saldo insuficiente</string>
-    <string name="insufficient_balance_desc">Saldo actual: $%1$s. Monto del gasto: $%2$s.\nDiferencia ($%3$s) será facturada automáticamente a los propietarios como reposición de caja chica.</string>
-    <string name="cat_repair">Reparación</string>
-    <string name="cat_cleaning">Limpieza</string>
-    <string name="cat_emergency">Emergencia</string>
-    <string name="cat_office">Oficina</string>
-    <string name="cat_utilities">Servicios</string>
-    <string name="cat_other">Otro</string>
     <string name="no_units_found">No se encontraron unidades</string>
     <string name="show_password">Mostrar contraseña</string>
     <string name="hide_password">Ocultar contraseña</string>

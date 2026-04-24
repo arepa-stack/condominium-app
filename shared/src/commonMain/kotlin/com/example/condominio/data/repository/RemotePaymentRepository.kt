@@ -89,22 +89,6 @@ class RemotePaymentRepository(
         }
     }
 
-    override suspend fun getPaymentSummary():
-            Result<com.example.condominio.data.model.PaymentSummary> {
-        return try {
-            val response = apiService.getPaymentSummary()
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.toDomain())
-            } else {
-                val errorMsg = response.errorBody().string()
-                Result.failure(Exception(errorMsg))
-            }
-        } catch (e: Exception) {
-            println("Error fetching summary: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
     override suspend fun createPayment(
             amount: Double,
             date: Long,
@@ -201,7 +185,7 @@ class RemotePaymentRepository(
                                             status = try {
                                                 when (detail.status.uppercase()) {
                                                     "PENDING" -> com.example.condominio.data.model.InvoiceStatus.PENDING
-                                                    "PARTIAL", "PARTIALLY_PAID" -> com.example.condominio.data.model.InvoiceStatus.PARTIAL
+                                                    "PARTIAL" -> com.example.condominio.data.model.InvoiceStatus.PARTIAL
                                                     "PAID" -> com.example.condominio.data.model.InvoiceStatus.PAID
                                                     "OVERDUE" -> com.example.condominio.data.model.InvoiceStatus.OVERDUE
                                                     "CANCELLED" -> com.example.condominio.data.model.InvoiceStatus.CANCELLED

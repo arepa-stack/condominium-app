@@ -60,10 +60,6 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         }
     }
 
-    override suspend fun getUserUnits(id: String): Response<List<UserUnitDto>> = safeRequest {
-        client.get("api/v1/app/users/$id/units")
-    }
-
     override suspend fun getBuildings(): Response<List<Building>> = safeRequest {
         client.get("api/v1/app/buildings")
     }
@@ -78,10 +74,6 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
 
     override suspend fun getUnitDetails(id: String): Response<UnitDto> = safeRequest {
         client.get("api/v1/app/buildings/units/$id")
-    }
-
-    override suspend fun getPaymentSummary(): Response<PaymentSummaryDto> = safeRequest {
-        client.get("api/v1/app/payments/summary")
     }
 
     override suspend fun getPayments(unitId: String?, year: Int?): Response<List<PaymentDto>> = safeRequest {
@@ -172,54 +164,5 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
 
     override suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto> = safeRequest {
         client.get("api/v1/app/petty-cash/funds/$buildingId")
-    }
-
-    override suspend fun getPettyCashHistory(
-        buildingId: String,
-        type: String?,
-        category: String?,
-        page: Int,
-        limit: Int
-    ): Response<List<PettyCashTransactionDto>> = safeRequest {
-        client.get("api/v1/app/petty-cash/history/$buildingId") {
-            type?.let { parameter("type", it) }
-            category?.let { parameter("category", it) }
-            parameter("page", page)
-            parameter("limit", limit)
-        }
-    }
-
-    override suspend fun registerPettyCashIncome(request: RegisterIncomeRequest): Response<PettyCashTransactionDto> = safeRequest {
-        client.post("api/v1/app/petty-cash/income") {
-            contentType(ContentType.Application.Json)
-            setBody(request)
-        }
-    }
-
-    override suspend fun registerPettyCashExpense(
-        buildingId: String,
-        amount: String,
-        description: String,
-        category: String,
-        evidenceImage: ByteArray?,
-        fileName: String?
-    ): Response<PettyCashTransactionDto> = safeRequest {
-        client.post("api/v1/app/petty-cash/expense") {
-            setBody(
-                MultiPartFormDataContent(
-                    formData {
-                        append("building_id", buildingId)
-                        append("amount", amount)
-                        append("description", description)
-                        append("category", category)
-                        if (evidenceImage != null && fileName != null) {
-                            append("evidence_image", evidenceImage, Headers.build {
-                                append(HttpHeaders.ContentDisposition, "filename=\"${fileName}\"")
-                            })
-                        }
-                    }
-                )
-            )
-        }
     }
 }
