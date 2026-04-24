@@ -61,3 +61,6 @@ google-services.json
 # MacOS
 .DS_Store
 /.kotlin/
+
+# Agent Teams Lite / SDD orchestrator (locally generated)
+.atl/
