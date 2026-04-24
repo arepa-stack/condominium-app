@@ -67,14 +67,14 @@ data class BuildingRoleDto(
 @Serializable
 data class BalanceDto(
         val unit: String,
-        val totalDebt: Double,
-        @SerialName("pendingInvoices") val pendingInvoicesCount: Int,
+        @SerialName("total_debt") val totalDebt: Double,
+        @SerialName("pending_invoices") val pendingInvoicesCount: Int,
         val details: List<BalanceInvoiceDto>
 )
 
 @Serializable
 data class BalanceInvoiceDto(
-        @SerialName("invoiceId") val invoiceId: String,
+        @SerialName("invoice_id") val invoiceId: String,
         val amount: Double,
         val paid: Double = 0.0,
         val remaining: Double = 0.0,
