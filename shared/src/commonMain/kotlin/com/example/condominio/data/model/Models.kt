@@ -11,8 +11,7 @@ data class User(
         val status: String = "active",
         val units: List<UserUnit> = emptyList(),
         val buildingRoles: List<BuildingRole> = emptyList(),
-        val currentUnit: UserUnit? = units.firstOrNull(),
-        val profileBuildingId: String? = null
+        val currentUnit: UserUnit? = units.firstOrNull()
 ) {
         val isAdmin: Boolean get() = appRole == "admin"
 
@@ -22,11 +21,8 @@ data class User(
         val apartmentUnit: String
                 get() = currentUnit?.unitName ?: ""
 
-        val building: String
-                get() = currentUnit?.buildingName ?: ""
-
         val buildingId: String
-                get() = currentUnit?.buildingId ?: profileBuildingId ?: ""
+                get() = currentUnit?.buildingId ?: ""
 }
 
 @Serializable
@@ -125,14 +121,5 @@ enum class PaymentMethod(val label: String) {
 enum class PaymentStatus {
         PENDING, APPROVED, REJECTED
 }
-
-@Serializable
-data class PaymentSummary(
-        val solvencyStatus: SolvencyStatus,
-        val lastPaymentDate: Long?,
-        val recentTransactions: List<Payment>,
-        val unitName: String = "",
-        val totalDebt: Double = 0.0
-)
 
 class UserPendingException(message: String) : Exception(message)

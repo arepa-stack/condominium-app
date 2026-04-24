@@ -18,7 +18,6 @@ import com.example.condominio.ui.screens.login.LoginScreen
 import com.example.condominio.ui.screens.payment.CreatePaymentScreen
 import com.example.condominio.ui.screens.payment.PaymentDetailScreen
 import com.example.condominio.ui.screens.payment.PaymentHistoryScreen
-import com.example.condominio.ui.screens.pettycash.PettyCashScreen
 import com.example.condominio.ui.screens.profile.ChangePasswordScreen
 import com.example.condominio.ui.screens.profile.EditProfileScreen
 import com.example.condominio.ui.screens.profile.NotificationSettingsScreen
@@ -106,8 +105,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     },
                     onProfileClick = { navController.navigate("profile") },
                     onUnitClick = { navController.navigate("unit_selection") },
-                    onSeeAllInvoicesClick = { navController.navigate("invoice_list") },
-                    onPettyCashClick = { navController.navigate("petty_cash") }
+                    onSeeAllInvoicesClick = { navController.navigate("invoice_list") }
             )
         }
         composable("invoice_list") {
@@ -198,6 +196,5 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
         composable("change_password") {
             ChangePasswordScreen(onBackClick = { navController.popBackStack() })
         }
-        composable("petty_cash") { PettyCashScreen(onBackClick = { navController.popBackStack() }) }
     }
 }

@@ -17,7 +17,6 @@ import com.example.condominio.ui.screens.billing.*
 import com.example.condominio.ui.screens.dashboard.*
 import com.example.condominio.ui.screens.login.*
 import com.example.condominio.ui.screens.payment.*
-import com.example.condominio.ui.screens.pettycash.*
 import com.example.condominio.ui.screens.profile.*
 import com.example.condominio.ui.screens.register.*
 import okio.Path.Companion.toPath
@@ -56,7 +55,7 @@ val appModule = module {
     single<AuthRepository> { RemoteAuthRepository(get(), get()) }
     single<PaymentRepository> { RemotePaymentRepository(get(), get()) }
     single<BuildingRepository> { RemoteBuildingRepository(get()) }
-    single<PettyCashRepository> { PettyCashRepositoryImpl(get(), get()) }
+    single<PettyCashRepository> { PettyCashRepositoryImpl(get()) }
     
     // ViewModels
     viewModelOf(::LoginViewModel)
@@ -67,7 +66,6 @@ val appModule = module {
     viewModelOf(::CreatePaymentViewModel)
     viewModelOf(::PaymentDetailViewModel)
     viewModelOf(::PaymentHistoryViewModel)
-    viewModelOf(::PettyCashViewModel)
     viewModelOf(::ChangePasswordViewModel)
     viewModelOf(::EditProfileViewModel)
     viewModelOf(::ProfileViewModel)

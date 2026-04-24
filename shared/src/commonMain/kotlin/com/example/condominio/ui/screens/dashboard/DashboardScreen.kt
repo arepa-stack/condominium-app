@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Support
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -45,7 +46,6 @@ fun DashboardScreen(
         onProfileClick: () -> Unit,
         onUnitClick: () -> Unit,
         onSeeAllInvoicesClick: () -> Unit = {},
-        onPettyCashClick: () -> Unit = {},
         viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -87,14 +87,23 @@ fun DashboardScreen(
                         pendingInvoices = uiState.pendingInvoices,
                         onSeeAllClick = onSeeAllInvoicesClick
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            uiState.pettyCashBalance?.let { balance ->
+                item {
+                    PettyCashBalanceCard(
+                            amount = balance.currentBalance,
+                            currency = balance.currency
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
 
             item {
                 QuickActions(
                         onPayClick = onPayClick,
-                        onHistoryClick = onHistoryClick,
-                        onPettyCashClick = onPettyCashClick
+                        onHistoryClick = onHistoryClick
                 )
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -279,8 +288,7 @@ fun HeaderSection(
 @Composable
 fun QuickActions(
         onPayClick: () -> Unit,
-        onHistoryClick: () -> Unit,
-        onPettyCashClick: () -> Unit = {}
+        onHistoryClick: () -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         QuickActionItem(
@@ -300,21 +308,68 @@ fun QuickActions(
         )
         Spacer(modifier = Modifier.width(12.dp))
         QuickActionItem(
-                icon = Icons.Default.AccountBalanceWallet,
-                label = stringResource(Res.string.petty_cash),
-                color = Color(0xFF00FF80), // Neon Green
-                onClick = onPettyCashClick,
-                modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        QuickActionItem(
                 icon = Icons.Default.Support,
                 label = stringResource(Res.string.support),
                 color = Color(0xFF43A047), // Green
                 onClick = {},
                 modifier = Modifier.weight(1f)
         )
-        // Profile removed as requested
+    }
+}
+
+@Composable
+fun PettyCashBalanceCard(amount: Double, currency: String) {
+    val isNegative = amount < 0
+    val accent = if (isNegative) Color(0xFFD32F2F) else Color(0xFF00BFA5)
+
+    Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.25f)),
+            modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                    modifier = Modifier
+                            .size(44.dp)
+                            .background(accent.copy(alpha = 0.12f), CircleShape),
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        imageVector = Icons.Default.Savings,
+                        contentDescription = null,
+                        tint = accent
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                        text = stringResource(Res.string.petty_cash),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                        text = stringResource(Res.string.available_balance),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                        text = stringResource(Res.string.currency_amount, formatCurrency(amount)),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = accent
+                )
+                Text(
+                        text = currency,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+        }
     }
 }
 

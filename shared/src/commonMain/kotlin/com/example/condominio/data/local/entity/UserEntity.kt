@@ -27,6 +27,6 @@ fun User.toEntity() = UserEntity(
     name = name,
     email = email,
     apartmentUnit = apartmentUnit,
-    building = building,
+    building = currentUnit?.buildingName ?: "",
     buildingId = buildingId
 )
