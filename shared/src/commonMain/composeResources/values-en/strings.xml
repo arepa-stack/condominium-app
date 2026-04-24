@@ -316,6 +316,11 @@
     <string name="decisions_tally_votes_pct">%1$d votes (%2$s%%)</string>
     <string name="decisions_tally_tie_hint">Technical tie</string>
     <string name="decisions_tally_participation">%1$d/%2$d apartments (%3$s%%)</string>
+    <string name="decisions_tally_participation_label">Participation</string>
+    <string name="decisions_tally_participation_count">%1$d of %2$d units</string>
+    <string name="decisions_quote_rank_leading">Leading</string>
+    <string name="decisions_quote_rank_winner">WINNER</string>
+    <string name="decisions_deadline_urgent">Closing soon!</string>
     <string name="decisions_upload_title">Upload quote</string>
     <string name="decisions_upload_provider_label">Provider</string>
     <string name="decisions_upload_amount_label">Amount ($)</string>

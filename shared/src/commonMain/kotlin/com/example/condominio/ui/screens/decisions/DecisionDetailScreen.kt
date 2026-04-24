@@ -1,21 +1,32 @@
 package com.example.condominio.ui.screens.decisions
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.HowToVote
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -27,6 +38,7 @@ import com.example.condominio.data.model.ResultingType
 import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
 import com.example.condominio.ui.utils.formatCurrency
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -106,6 +118,16 @@ fun DecisionDetailScreen(
             }
 
             detail != null -> {
+                val rankByQuoteId: Map<String, Int> = remember(detail.tally) {
+                    detail.tally.tallies
+                        .sortedByDescending { it.votes }
+                        .mapIndexedNotNull { index, t ->
+                            if (t.votes > 0) t.quoteId to (index + 1) else null
+                        }
+                        .toMap()
+                }
+                val showRank = detail.decision.status == DecisionStatus.VOTING ||
+                        detail.decision.status == DecisionStatus.TIEBREAK_PENDING
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -130,10 +152,15 @@ fun DecisionDetailScreen(
                     item { Spacer(Modifier.height(8.dp)) }
 
                     items(detail.quotes) { quote ->
+                        val isWinner = detail.decision.winnerQuoteId == quote.id &&
+                                detail.decision.status == DecisionStatus.RESOLVED
+                        val rank = if (showRank) rankByQuoteId[quote.id] else null
                         QuoteItem(
                             quote = quote,
                             currentUserId = uiState.currentUserId,
                             status = detail.decision.status,
+                            rank = rank,
+                            isWinner = isWinner,
                             onDelete = { viewModel.deleteOwnQuote(quote.id) }
                         )
                         Spacer(Modifier.height(8.dp))
@@ -201,6 +228,12 @@ private fun HeaderSection(decision: DecisionDto) {
         val votingUntilFmt = stringResource(Res.string.decisions_voting_until)
         val resolvedLabel = stringResource(Res.string.decisions_status_resolved)
         val cancelledLabel = stringResource(Res.string.decisions_status_cancelled)
+        val activeIso = when (decision.status) {
+            DecisionStatus.RECEPTION -> decision.receptionDeadline
+            DecisionStatus.VOTING, DecisionStatus.TIEBREAK_PENDING -> decision.votingDeadline
+            else -> null
+        }
+        val hoursLeft = activeIso?.let { hoursUntilDeadline(it) }
         val deadlineLabel = when (decision.status) {
             DecisionStatus.RECEPTION ->
                 receptionUntilFmt.format(formatIsoDeadline(decision.receptionDeadline))
@@ -210,11 +243,26 @@ private fun HeaderSection(decision: DecisionDto) {
             DecisionStatus.RESOLVED -> resolvedLabel
             DecisionStatus.CANCELLED -> cancelledLabel
         }
+        val deadlineColor = when {
+            hoursLeft == null -> MaterialTheme.colorScheme.onSurfaceVariant
+            hoursLeft <= 24L -> MaterialTheme.colorScheme.error
+            hoursLeft <= 72L -> Color(0xFFE65100)
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
         Text(
             text = deadlineLabel,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = deadlineColor,
+            fontWeight = if (hoursLeft != null && hoursLeft <= 72L) FontWeight.SemiBold else FontWeight.Normal
         )
+        if (hoursLeft != null && hoursLeft in 0L..24L) {
+            Text(
+                text = stringResource(Res.string.decisions_deadline_urgent),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
         // Status badge — duplicated from DecisionsListScreen.kt
         // TODO: move StatusBadge to a common file shared between screens
@@ -287,18 +335,71 @@ private fun QuoteItem(
     quote: QuoteDto,
     currentUserId: String?,
     status: DecisionStatus,
+    rank: Int? = null,
+    isWinner: Boolean = false,
     onDelete: () -> Unit
 ) {
     val externalViewer = rememberExternalViewerLauncher()
     val isMine = quote.uploader?.id == currentUserId && currentUserId != null
     val canDelete = isMine && status == DecisionStatus.RECEPTION && quote.deletedAt == null
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    val accent = when {
+        isWinner -> Color(0xFF2E7D32)
+        rank != null && rank <= rankPalette.size -> rankPalette[rank - 1]
+        else -> null
+    }
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isWinner) {
+                Color(0xFF2E7D32).copy(alpha = 0.08f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
+        border = if (accent != null) {
+            BorderStroke(if (isWinner) 2.dp else 1.dp, accent.copy(alpha = if (isWinner) 1f else 0.5f))
+        } else null
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
+            if (isWinner) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        tint = Color(0xFF2E7D32),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(Res.string.decisions_quote_rank_winner),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2E7D32)
+                    )
+                }
+            } else if (rank != null && accent != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    RankBadge(rank = rank, tint = accent)
+                    if (rank == 1) {
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            stringResource(Res.string.decisions_quote_rank_leading),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = accent
+                        )
+                    }
+                }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -449,29 +550,56 @@ private fun VoteSectionByState(
 
                 DecisionStatus.RESOLVED -> {
                     val winner = detail.quotes.find { it.id == detail.decision.winnerQuoteId }
-                    Text(
-                        stringResource(Res.string.decisions_resolved_winner_title),
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2E7D32)
-                    )
-                    if (winner != null) {
-                        Text(winner.providerName)
-                        Text(
-                            "$" + formatCurrency(winner.amount),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    val winnerGreen = Color(0xFF2E7D32)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(winnerGreen.copy(alpha = 0.15f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = winnerGreen,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                stringResource(Res.string.decisions_resolved_winner_title),
+                                fontWeight = FontWeight.Bold,
+                                color = winnerGreen
+                            )
+                            if (winner != null) {
+                                Text(
+                                    winner.providerName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "$" + formatCurrency(winner.amount),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                     if (detail.decision.resultingType != null) {
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(12.dp))
                         val typeLabel = when (detail.decision.resultingType) {
                             ResultingType.INVOICE -> stringResource(Res.string.decisions_resolved_charge_invoice)
                             ResultingType.ASSESSMENT -> stringResource(Res.string.decisions_resolved_charge_assessment)
                         }
                         Text(
                             stringResource(Res.string.decisions_resolved_charge_label, typeLabel),
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Spacer(Modifier.height(12.dp))
+                    TallyBreakdown(detail.tally)
                 }
 
                 DecisionStatus.CANCELLED -> {
@@ -494,46 +622,213 @@ private fun VoteSectionByState(
 }
 
 // ---------------------------------------------------------------------------
-// TallyBreakdown — private helper (part of task 4.5)
+// TallyBreakdown — rich viz: animated bars + participation donut
 // ---------------------------------------------------------------------------
+
+private val rankPalette = listOf(
+    Color(0xFFFFC107), // gold
+    Color(0xFFB0BEC5), // silver
+    Color(0xFFCD7F32)  // bronze
+)
+private val neutralBar = Color(0xFF90A4AE)
 
 @Composable
 private fun TallyBreakdown(tally: TallyDto) {
     Column {
         if (tally.totalVotes == 0) {
-            Text(
-                stringResource(Res.string.decisions_tally_waiting),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.HowToVote,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(Res.string.decisions_tally_waiting),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         } else {
-            val votesPctFmt = stringResource(Res.string.decisions_tally_votes_pct)
-            tally.tallies.sortedByDescending { it.votes }.forEach { item ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(item.providerName, modifier = Modifier.weight(1f))
+            val sorted = tally.tallies.sortedByDescending { it.votes }
+            val maxPct = (sorted.firstOrNull()?.pct ?: 0.0).coerceAtLeast(1.0)
+            sorted.forEachIndexed { index, item ->
+                TallyBar(
+                    rank = index + 1,
+                    providerName = item.providerName,
+                    votes = item.votes,
+                    pct = item.pct,
+                    relativeFill = (item.pct / maxPct).toFloat().coerceIn(0f, 1f),
+                    barColor = if (index < rankPalette.size) rankPalette[index] else neutralBar
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+            if (tally.isTied) {
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(MaterialTheme.colorScheme.tertiary, CircleShape)
+                    )
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        votesPctFmt.format(item.votes, item.pct),
-                        style = MaterialTheme.typography.bodySmall
+                        stringResource(Res.string.decisions_tally_tie_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
-            if (tally.isTied && tally.totalVotes > 0) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    stringResource(Res.string.decisions_tally_tie_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            }
+        }
+        Spacer(Modifier.height(16.dp))
+        ParticipationDonut(
+            totalVotes = tally.totalVotes,
+            totalApartments = tally.totalApartments,
+            participationPct = tally.participationPct
+        )
+    }
+}
+
+@Composable
+private fun TallyBar(
+    rank: Int,
+    providerName: String,
+    votes: Int,
+    pct: Double,
+    relativeFill: Float,
+    barColor: Color
+) {
+    val animatedFill by animateFloatAsState(
+        targetValue = relativeFill,
+        animationSpec = tween(durationMillis = 700),
+        label = "tally-bar-$rank"
+    )
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RankBadge(rank = rank, tint = barColor)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                providerName,
+                modifier = Modifier.weight(1f),
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                stringResource(Res.string.decisions_tally_votes_pct).format(votes, pct),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
         Spacer(Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(5.dp))
+                .background(barColor.copy(alpha = 0.15f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(animatedFill)
+                    .height(10.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(barColor.copy(alpha = 0.75f), barColor)
+                        )
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun RankBadge(rank: Int, tint: Color) {
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .background(tint.copy(alpha = 0.2f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
         Text(
-            stringResource(Res.string.decisions_tally_participation, tally.totalVotes, tally.totalApartments, tally.participationPct.toString()),
-            style = MaterialTheme.typography.bodySmall
+            "#$rank",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = tint
         )
+    }
+}
+
+@Composable
+private fun ParticipationDonut(
+    totalVotes: Int,
+    totalApartments: Int,
+    participationPct: Double
+) {
+    val target = (participationPct / 100.0).toFloat().coerceIn(0f, 1f)
+    val animated by animateFloatAsState(
+        targetValue = target,
+        animationSpec = tween(durationMillis = 900),
+        label = "participation-donut"
+    )
+    val ringColor = when {
+        participationPct >= 75.0 -> Color(0xFF2E7D32)
+        participationPct >= 50.0 -> Color(0xFFE65100)
+        else -> MaterialTheme.colorScheme.primary
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier.size(64.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            val trackColor = ringColor.copy(alpha = 0.15f)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val stroke = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+                drawArc(
+                    color = trackColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    style = stroke
+                )
+                drawArc(
+                    color = ringColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f * animated,
+                    useCenter = false,
+                    style = stroke
+                )
+            }
+            Text(
+                "${participationPct.toInt()}%",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = ringColor
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(
+                stringResource(Res.string.decisions_tally_participation_label),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                stringResource(
+                    Res.string.decisions_tally_participation_count,
+                    totalVotes,
+                    totalApartments
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        }
     }
 }
 
@@ -552,5 +847,15 @@ private fun formatIsoDeadline(iso: String): String {
         "$day/$month $hour:$minute"
     } catch (e: Exception) {
         iso
+    }
+}
+
+private fun hoursUntilDeadline(iso: String): Long? {
+    return try {
+        val target = Instant.parse(iso)
+        val now = Clock.System.now()
+        (target - now).inWholeHours
+    } catch (e: Exception) {
+        null
     }
 }
