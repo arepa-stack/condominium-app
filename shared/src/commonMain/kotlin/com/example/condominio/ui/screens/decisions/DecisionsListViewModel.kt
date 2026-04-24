@@ -49,7 +49,7 @@ class DecisionsListViewModel(
             _uiState.update { state ->
                 state.copy(
                     isLoading = false,
-                    decisions = result.getOrNull()?.items ?: emptyList(),
+                    decisions = result.getOrNull()?.data ?: emptyList(),
                     error = result.exceptionOrNull()?.message?.let { UiText.DynamicString(it) }
                 )
             }
