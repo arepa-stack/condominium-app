@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.Support
+import androidx.compose.material.icons.filled.HowToVote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
@@ -46,6 +46,7 @@ fun DashboardScreen(
         onProfileClick: () -> Unit,
         onUnitClick: () -> Unit,
         onSeeAllInvoicesClick: () -> Unit = {},
+        onDecisionsClick: () -> Unit = {},
         viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -103,7 +104,8 @@ fun DashboardScreen(
             item {
                 QuickActions(
                         onPayClick = onPayClick,
-                        onHistoryClick = onHistoryClick
+                        onHistoryClick = onHistoryClick,
+                        onDecisionsClick = onDecisionsClick
                 )
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -288,7 +290,8 @@ fun HeaderSection(
 @Composable
 fun QuickActions(
         onPayClick: () -> Unit,
-        onHistoryClick: () -> Unit
+        onHistoryClick: () -> Unit,
+        onDecisionsClick: () -> Unit = {}
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         QuickActionItem(
@@ -308,10 +311,10 @@ fun QuickActions(
         )
         Spacer(modifier = Modifier.width(12.dp))
         QuickActionItem(
-                icon = Icons.Default.Support,
-                label = stringResource(Res.string.support),
-                color = Color(0xFF43A047), // Green
-                onClick = {},
+                icon = Icons.Default.HowToVote,
+                label = "Decisiones", // TODO: i18n
+                color = Color(0xFF8E24AA), // Purple
+                onClick = onDecisionsClick,
                 modifier = Modifier.weight(1f)
         )
     }

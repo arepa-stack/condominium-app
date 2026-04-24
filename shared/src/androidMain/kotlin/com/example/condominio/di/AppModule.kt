@@ -19,6 +19,10 @@ import com.example.condominio.ui.screens.login.*
 import com.example.condominio.ui.screens.payment.*
 import com.example.condominio.ui.screens.profile.*
 import com.example.condominio.ui.screens.register.*
+import com.example.condominio.data.repository.DecisionsRepository
+import com.example.condominio.data.repository.RemoteDecisionsRepositoryImpl
+import com.example.condominio.ui.screens.decisions.DecisionsListViewModel
+import com.example.condominio.ui.screens.decisions.DecisionDetailViewModel
 import okio.Path.Companion.toPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.*
@@ -56,7 +60,8 @@ val appModule = module {
     single<PaymentRepository> { RemotePaymentRepository(get(), get()) }
     single<BuildingRepository> { RemoteBuildingRepository(get()) }
     single<PettyCashRepository> { PettyCashRepositoryImpl(get()) }
-    
+    single<DecisionsRepository> { RemoteDecisionsRepositoryImpl(get(), get()) }
+
     // ViewModels
     viewModelOf(::LoginViewModel)
     viewModelOf(::UnitSelectionViewModel)
@@ -70,4 +75,6 @@ val appModule = module {
     viewModelOf(::EditProfileViewModel)
     viewModelOf(::ProfileViewModel)
     viewModelOf(::RegisterViewModel)
+    viewModelOf(::DecisionsListViewModel)
+    viewModelOf(::DecisionDetailViewModel)
 }

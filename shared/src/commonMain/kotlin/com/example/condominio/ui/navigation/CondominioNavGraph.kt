@@ -22,6 +22,8 @@ import com.example.condominio.ui.screens.profile.ChangePasswordScreen
 import com.example.condominio.ui.screens.profile.EditProfileScreen
 import com.example.condominio.ui.screens.profile.NotificationSettingsScreen
 import com.example.condominio.ui.screens.profile.ProfileScreen
+import com.example.condominio.ui.screens.decisions.DecisionsListScreen
+import com.example.condominio.ui.screens.decisions.DecisionDetailScreen
 import com.example.condominio.ui.screens.register.RegisterScreen
 
 @Composable
@@ -105,7 +107,8 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     },
                     onProfileClick = { navController.navigate("profile") },
                     onUnitClick = { navController.navigate("unit_selection") },
-                    onSeeAllInvoicesClick = { navController.navigate("invoice_list") }
+                    onSeeAllInvoicesClick = { navController.navigate("invoice_list") },
+                    onDecisionsClick = { navController.navigate("decisions_list") }
             )
         }
         composable("invoice_list") {
@@ -195,6 +198,22 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
         }
         composable("change_password") {
             ChangePasswordScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable("decisions_list") {
+            DecisionsListScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onDecisionClick = { id -> navController.navigate("decision_detail/$id") }
+            )
+        }
+        composable(
+                route = "decision_detail/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            DecisionDetailScreen(
+                    decisionId = id,
+                    onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }

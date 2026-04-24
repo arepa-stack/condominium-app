@@ -42,4 +42,31 @@ interface ApiService {
     suspend fun getCredits(unitId: String): Response<JsonElement> // Temporary generic response
     
     suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto>
+
+    suspend fun listDecisions(
+        buildingId: String? = null,
+        status: String? = null,
+        search: String? = null,
+        page: Int? = null,
+        limit: Int? = null
+    ): Response<DecisionsPageDto>
+
+    suspend fun getDecisionDetail(id: String): Response<DecisionDetailDto>
+
+    suspend fun uploadDecisionQuote(
+        decisionId: String,
+        unitId: String,
+        providerName: String,
+        amount: String,
+        notes: String?,
+        fileBytes: ByteArray,
+        fileName: String,
+        mimeType: String
+    ): Response<QuoteDto>
+
+    suspend fun deleteDecisionQuote(decisionId: String, quoteId: String): Response<QuoteDto>
+
+    suspend fun castVote(decisionId: String, apartmentId: String, quoteId: String): Response<VoteDto>
+
+    suspend fun getDecisionResults(id: String, round: Int? = null): Response<TallyDto>
 }

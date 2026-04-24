@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
@@ -164,5 +165,71 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
 
     override suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto> = safeRequest {
         client.get("api/v1/app/petty-cash/funds/$buildingId")
+    }
+
+    override suspend fun listDecisions(
+        buildingId: String?,
+        status: String?,
+        search: String?,
+        page: Int?,
+        limit: Int?
+    ): Response<DecisionsPageDto> = safeRequest {
+        client.get("api/v1/app/decisions/decisions") {
+            buildingId?.let { parameter("building_id", it) }
+            status?.let { parameter("status", it) }
+            search?.let { parameter("search", it) }
+            page?.let { parameter("page", it) }
+            limit?.let { parameter("limit", it) }
+        }
+    }
+
+    override suspend fun getDecisionDetail(id: String): Response<DecisionDetailDto> = safeRequest {
+        client.get("api/v1/app/decisions/decisions/$id")
+    }
+
+    override suspend fun uploadDecisionQuote(
+        decisionId: String,
+        unitId: String,
+        providerName: String,
+        amount: String,
+        notes: String?,
+        fileBytes: ByteArray,
+        fileName: String,
+        mimeType: String
+    ): Response<QuoteDto> = safeRequest {
+        val parts = formData {
+            append("unit_id", unitId)
+            append("provider_name", providerName)
+            append("amount", amount)
+            if (notes != null) append("notes", notes)
+            append(
+                "file",
+                fileBytes,
+                Headers.build {
+                    append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                    append(HttpHeaders.ContentType, mimeType)
+                }
+            )
+        }
+        client.post("api/v1/app/decisions/decisions/$decisionId/quotes") {
+            setBody(MultiPartFormDataContent(parts))
+        }
+    }
+
+    override suspend fun deleteDecisionQuote(decisionId: String, quoteId: String): Response<QuoteDto> = safeRequest {
+        client.delete("api/v1/app/decisions/decisions/$decisionId/quotes/$quoteId")
+    }
+
+    override suspend fun castVote(decisionId: String, apartmentId: String, quoteId: String): Response<VoteDto> = safeRequest {
+        client.post("api/v1/app/decisions/decisions/$decisionId/votes") {
+            contentType(ContentType.Application.Json)
+            setBody(CastVoteRequest(apartmentId = apartmentId, quoteId = quoteId))
+        }
+    }
+
+    override suspend fun getDecisionResults(id: String, round: Int?): Response<TallyDto> = safeRequest {
+        client.get("api/v1/app/decisions/decisions/$id/results") {
+            round?.let { parameter("round", it) }
+        }
     }
 }
