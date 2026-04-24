@@ -280,6 +280,11 @@
     <string name="decisions_tally_votes_pct">%1$d votos (%2$s%%)</string>
     <string name="decisions_tally_tie_hint">Empate técnico</string>
     <string name="decisions_tally_participation">%1$d/%2$d apartamentos (%3$s%%)</string>
+    <string name="decisions_tally_participation_label">Participación</string>
+    <string name="decisions_tally_participation_count">%1$d de %2$d unidades</string>
+    <string name="decisions_quote_rank_leading">Liderando</string>
+    <string name="decisions_quote_rank_winner">GANADOR</string>
+    <string name="decisions_deadline_urgent">¡Cierra pronto!</string>
     <string name="decisions_upload_title">Subir presupuesto</string>
     <string name="decisions_upload_provider_label">Proveedor</string>
     <string name="decisions_upload_amount_label">Monto ($)</string>
