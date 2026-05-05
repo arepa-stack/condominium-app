@@ -14,9 +14,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.HowToVote
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,7 +31,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.condominio.data.model.DecisionDetailDto
 import com.example.condominio.data.model.DecisionDto
@@ -79,14 +84,31 @@ fun DecisionDetailScreen(
                 }
             )
         },
-        floatingActionButton = {
+        bottomBar = {
             val status = uiState.detail?.decision?.status
             if (status == DecisionStatus.RECEPTION) {
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.openUploadSheet() },
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    text = { Text(stringResource(Res.string.decisions_upload_quote_btn)) }
-                )
+                Surface(tonalElevation = 3.dp) {
+                    Button(
+                        onClick = { viewModel.openUploadSheet() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(Res.string.decisions_upload_quote_btn),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
             }
         }
     ) { paddingValues ->
@@ -127,7 +149,8 @@ fun DecisionDetailScreen(
                         .toMap()
                 }
                 val showRank = detail.decision.status == DecisionStatus.VOTING ||
-                        detail.decision.status == DecisionStatus.TIEBREAK_PENDING
+                        detail.decision.status == DecisionStatus.TIEBREAK_PENDING ||
+                        detail.decision.status == DecisionStatus.RESOLVED
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -135,7 +158,36 @@ fun DecisionDetailScreen(
                         .padding(16.dp)
                 ) {
                     item { HeaderSection(detail.decision) }
-                    item { Spacer(Modifier.height(16.dp)) }
+                    item { Spacer(Modifier.height(12.dp)) }
+
+                    if (detail.decision.status == DecisionStatus.RESOLVED) {
+                        val winnerQuote = detail.quotes.find { it.id == detail.decision.winnerQuoteId }
+                        if (winnerQuote != null) {
+                            item {
+                                WinnerHeroCard(
+                                    decision = detail.decision,
+                                    winner = winnerQuote,
+                                    tally = detail.tally
+                                )
+                            }
+                            item { Spacer(Modifier.height(16.dp)) }
+                        }
+                    }
+
+                    val showDeadline = detail.decision.status == DecisionStatus.RECEPTION ||
+                            detail.decision.status == DecisionStatus.VOTING ||
+                            detail.decision.status == DecisionStatus.TIEBREAK_PENDING
+                    if (showDeadline) {
+                        item { DeadlineCard(detail.decision) }
+                        item { Spacer(Modifier.height(12.dp)) }
+                    }
+
+                    if (detail.decision.status == DecisionStatus.RECEPTION ||
+                        detail.decision.status == DecisionStatus.VOTING
+                    ) {
+                        item { PhaseInfoCard(detail.decision.status) }
+                        item { Spacer(Modifier.height(16.dp)) }
+                    }
 
                     if (!detail.decision.photoUrl.isNullOrEmpty()) {
                         item { PhotoSection(detail.decision.photoUrl!!) }
@@ -151,19 +203,23 @@ fun DecisionDetailScreen(
                     }
                     item { Spacer(Modifier.height(8.dp)) }
 
-                    items(detail.quotes) { quote ->
-                        val isWinner = detail.decision.winnerQuoteId == quote.id &&
-                                detail.decision.status == DecisionStatus.RESOLVED
-                        val rank = if (showRank) rankByQuoteId[quote.id] else null
-                        QuoteItem(
-                            quote = quote,
-                            currentUserId = uiState.currentUserId,
-                            status = detail.decision.status,
-                            rank = rank,
-                            isWinner = isWinner,
-                            onDelete = { viewModel.deleteOwnQuote(quote.id) }
-                        )
-                        Spacer(Modifier.height(8.dp))
+                    if (detail.quotes.isEmpty()) {
+                        item { QuotesEmptyState() }
+                    } else {
+                        items(detail.quotes) { quote ->
+                            val isWinner = detail.decision.winnerQuoteId == quote.id &&
+                                    detail.decision.status == DecisionStatus.RESOLVED
+                            val rank = if (showRank) rankByQuoteId[quote.id] else null
+                            QuoteItem(
+                                quote = quote,
+                                currentUserId = uiState.currentUserId,
+                                status = detail.decision.status,
+                                rank = rank,
+                                isWinner = isWinner,
+                                onDelete = { viewModel.deleteOwnQuote(quote.id) }
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
                     }
 
                     item { Spacer(Modifier.height(24.dp)) }
@@ -175,7 +231,7 @@ fun DecisionDetailScreen(
                         )
                     }
 
-                    item { Spacer(Modifier.height(80.dp)) } // FAB breathing room
+                    item { Spacer(Modifier.height(16.dp)) }
                 }
             }
         }
@@ -210,6 +266,8 @@ fun DecisionDetailScreen(
 @Composable
 private fun HeaderSection(decision: DecisionDto) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        DetailStatusBadge(status = decision.status)
+
         Text(
             text = decision.title,
             style = MaterialTheme.typography.headlineSmall,
@@ -223,50 +281,202 @@ private fun HeaderSection(decision: DecisionDto) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
 
-        val receptionUntilFmt = stringResource(Res.string.decisions_reception_until)
-        val votingUntilFmt = stringResource(Res.string.decisions_voting_until)
-        val resolvedLabel = stringResource(Res.string.decisions_status_resolved)
-        val cancelledLabel = stringResource(Res.string.decisions_status_cancelled)
-        val activeIso = when (decision.status) {
-            DecisionStatus.RECEPTION -> decision.receptionDeadline
-            DecisionStatus.VOTING, DecisionStatus.TIEBREAK_PENDING -> decision.votingDeadline
-            else -> null
+// ---------------------------------------------------------------------------
+// DeadlineCard — visual countdown with icon + urgency badge
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun DeadlineCard(decision: DecisionDto) {
+    val activeIso = when (decision.status) {
+        DecisionStatus.RECEPTION -> decision.receptionDeadline
+        DecisionStatus.VOTING, DecisionStatus.TIEBREAK_PENDING -> decision.votingDeadline
+        else -> null
+    } ?: return
+
+    val hoursLeft = hoursUntilDeadline(activeIso)
+    val color = when {
+        hoursLeft == null -> MaterialTheme.colorScheme.primary
+        hoursLeft < 0L -> MaterialTheme.colorScheme.error
+        hoursLeft <= 24L -> MaterialTheme.colorScheme.error
+        hoursLeft <= 72L -> Color(0xFFE65100)
+        else -> MaterialTheme.colorScheme.primary
+    }
+    val urgent = hoursLeft != null && hoursLeft in 0L..24L
+    val timeText = when {
+        hoursLeft == null -> "—"
+        hoursLeft < 0L -> stringResource(Res.string.decisions_deadline_passed)
+        hoursLeft < 48L -> stringResource(Res.string.decisions_deadline_hours, hoursLeft.toInt())
+        else -> stringResource(Res.string.decisions_deadline_days, (hoursLeft / 24L).toInt())
+    }
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.10f)),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(color.copy(alpha = 0.18f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Schedule,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(Res.string.decisions_deadline_card_title),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    timeText,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+                Text(
+                    formatIsoDeadline(activeIso),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (urgent) {
+                Box(
+                    modifier = Modifier
+                        .background(color, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        stringResource(Res.string.decisions_deadline_urgent),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
         }
-        val hoursLeft = activeIso?.let { hoursUntilDeadline(it) }
-        val deadlineLabel = when (decision.status) {
-            DecisionStatus.RECEPTION ->
-                receptionUntilFmt.format(formatIsoDeadline(decision.receptionDeadline))
-            DecisionStatus.VOTING,
-            DecisionStatus.TIEBREAK_PENDING ->
-                votingUntilFmt.format(formatIsoDeadline(decision.votingDeadline))
-            DecisionStatus.RESOLVED -> resolvedLabel
-            DecisionStatus.CANCELLED -> cancelledLabel
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PhaseInfoCard — contextual explainer for active phase
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun PhaseInfoCard(status: DecisionStatus) {
+    val title: String
+    val body: String
+    val accent: Color
+    when (status) {
+        DecisionStatus.RECEPTION -> {
+            title = stringResource(Res.string.decisions_phase_reception_title)
+            body = stringResource(Res.string.decisions_phase_reception_body)
+            accent = Color(0xFF1565C0)
         }
-        val deadlineColor = when {
-            hoursLeft == null -> MaterialTheme.colorScheme.onSurfaceVariant
-            hoursLeft <= 24L -> MaterialTheme.colorScheme.error
-            hoursLeft <= 72L -> Color(0xFFE65100)
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        DecisionStatus.VOTING -> {
+            title = stringResource(Res.string.decisions_phase_voting_title)
+            body = stringResource(Res.string.decisions_phase_voting_body)
+            accent = Color(0xFFE65100)
         }
-        Text(
-            text = deadlineLabel,
-            style = MaterialTheme.typography.bodySmall,
-            color = deadlineColor,
-            fontWeight = if (hoursLeft != null && hoursLeft <= 72L) FontWeight.SemiBold else FontWeight.Normal
+        else -> return
+    }
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.08f))
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Icon(
+                Icons.Default.Info,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = accent
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    body,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// QuotesEmptyState — visual empty state when no quotes uploaded yet
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun QuotesEmptyState() {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         )
-        if (hoursLeft != null && hoursLeft in 0L..24L) {
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Description,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
             Text(
-                text = stringResource(Res.string.decisions_deadline_urgent),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error,
-                fontWeight = FontWeight.Bold
+                stringResource(Res.string.decisions_quotes_empty_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                stringResource(Res.string.decisions_quotes_empty_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
         }
-
-        // Status badge — duplicated from DecisionsListScreen.kt
-        // TODO: move StatusBadge to a common file shared between screens
-        DetailStatusBadge(status = decision.status)
     }
 }
 
@@ -549,43 +759,12 @@ private fun VoteSectionByState(
                 }
 
                 DecisionStatus.RESOLVED -> {
-                    val winner = detail.quotes.find { it.id == detail.decision.winnerQuoteId }
-                    val winnerGreen = Color(0xFF2E7D32)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .background(winnerGreen.copy(alpha = 0.15f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = winnerGreen,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(Res.string.decisions_resolved_winner_title),
-                                fontWeight = FontWeight.Bold,
-                                color = winnerGreen
-                            )
-                            if (winner != null) {
-                                Text(
-                                    winner.providerName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    "$" + formatCurrency(winner.amount),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        stringResource(Res.string.decisions_resolved_results_title),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    TallyBreakdown(detail.tally)
                     if (detail.decision.resultingType != null) {
                         Spacer(Modifier.height(12.dp))
                         val typeLabel = when (detail.decision.resultingType) {
@@ -598,8 +777,6 @@ private fun VoteSectionByState(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Spacer(Modifier.height(12.dp))
-                    TallyBreakdown(detail.tally)
                 }
 
                 DecisionStatus.CANCELLED -> {
@@ -828,6 +1005,118 @@ private fun ParticipationDonut(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// WinnerHeroCard — celebratory top card for RESOLVED state
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun WinnerHeroCard(
+    decision: DecisionDto,
+    winner: QuoteDto,
+    tally: TallyDto
+) {
+    val gold = Color(0xFFFFC107)
+    val green = Color(0xFF2E7D32)
+    val winnerVotes = tally.tallies.find { it.quoteId == winner.id }
+    val votes = winnerVotes?.votes ?: 0
+    val pct = winnerVotes?.pct ?: 0.0
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = green.copy(alpha = 0.10f)),
+        border = BorderStroke(2.dp, green.copy(alpha = 0.6f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            gold.copy(alpha = 0.18f),
+                            Color.Transparent
+                        )
+                    )
+                )
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .background(
+                        Brush.radialGradient(
+                            listOf(gold.copy(alpha = 0.55f), gold.copy(alpha = 0.15f))
+                        ),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.EmojiEvents,
+                    contentDescription = null,
+                    tint = Color(0xFFB8860B),
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Box(
+                modifier = Modifier
+                    .background(green, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    stringResource(Res.string.decisions_resolved_hero_eyebrow),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                winner.providerName,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                "$" + formatCurrency(winner.amount),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                stringResource(Res.string.decisions_resolved_winner_votes, votes, pct.toInt().toString()),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            decision.finalizedAt?.let { iso ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    stringResource(
+                        Res.string.decisions_resolved_finalized_at,
+                        formatIsoDeadline(iso)
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

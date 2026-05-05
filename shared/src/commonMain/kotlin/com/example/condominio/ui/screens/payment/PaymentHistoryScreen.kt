@@ -77,16 +77,45 @@ fun PaymentHistoryScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            items(uiState.payments) { payment ->
-                TransactionItem(payment = payment, onClick = { onPaymentClick(payment.id) })
-                Spacer(modifier = Modifier.height(12.dp))
+            when {
+                uiState.isLoading && uiState.payments.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                uiState.payments.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.no_payments_found),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        contentPadding = PaddingValues(vertical = 16.dp)
+                    ) {
+                        items(uiState.payments) { payment ->
+                            TransactionItem(payment = payment, onClick = { onPaymentClick(payment.id) })
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
+                }
             }
         }
     }

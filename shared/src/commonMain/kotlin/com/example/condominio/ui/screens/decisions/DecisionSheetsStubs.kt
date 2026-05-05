@@ -1,20 +1,33 @@
 package com.example.condominio.ui.screens.decisions
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -30,9 +43,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.QuoteDto
 import com.example.condominio.data.utils.PlatformFileReader
 import com.example.condominio.data.utils.rememberDocumentPickerLauncher
@@ -99,21 +118,43 @@ fun UploadQuoteSheet(
         fileMime != null &&
         !isSubmitting
 
+    val focusManager = LocalFocusManager.current
+    val amountFocus = remember { FocusRequester() }
+    val notesFocus = remember { FocusRequester() }
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState()
+        sheetState = sheetState
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.decisions_upload_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Header: title + close
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(Res.string.decisions_upload_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(Res.string.cancel)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -122,7 +163,10 @@ fun UploadQuoteSheet(
                 onValueChange = { provider = it },
                 label = { Text(stringResource(Res.string.decisions_upload_provider_label)) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { amountFocus.requestFocus() })
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -131,8 +175,15 @@ fun UploadQuoteSheet(
                 value = amountText,
                 onValueChange = { amountText = it },
                 label = { Text(stringResource(Res.string.decisions_upload_amount_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(amountFocus),
+                shape = RoundedCornerShape(12.dp),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(onNext = { notesFocus.requestFocus() }),
                 singleLine = true
             )
 
@@ -142,41 +193,76 @@ fun UploadQuoteSheet(
                 value = notes,
                 onValueChange = { notes = it },
                 label = { Text(stringResource(Res.string.decisions_upload_notes_label)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(notesFocus),
+                shape = RoundedCornerShape(12.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 maxLines = 3
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // File picker section
-            if (fileUri == null) {
-                Button(
-                    onClick = pickFile,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(Res.string.decisions_upload_select_file_btn))
-                }
-            } else {
-                val sizeMb = fileSizeBytes / (1024.0 * 1024.0)
-                val sizeLabel = "%.2f MB".format(sizeMb)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "${fileName ?: "archivo"} · $sizeLabel",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.weight(1f)
+            // File picker — app-canonical pattern (CreatePaymentScreen)
+            val fileSelected = fileUri != null
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(
+                        color = if (fileSelected) MaterialTheme.colorScheme.primaryContainer
+                                else Color.Gray.copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(12.dp)
                     )
-                    TextButton(onClick = pickFile) {
-                        Text(stringResource(Res.string.decisions_upload_change_file_btn))
+                    .border(
+                        width = 1.dp,
+                        color = if (fileSelected) Color.Transparent
+                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .clickable {
+                        focusManager.clearFocus()
+                        pickFile()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = if (fileSelected) Icons.Default.CheckCircle
+                                      else Icons.Default.CloudUpload,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (fileSelected) {
+                        val sizeMb = fileSizeBytes / (1024.0 * 1024.0)
+                        Text(
+                            text = fileName ?: "archivo",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        Text(
+                            text = "%.2f MB · ${stringResource(Res.string.decisions_upload_change_file_btn)}".format(sizeMb),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(Res.string.decisions_upload_select_file_btn),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     }
                 }
             }
 
             if (fileError != null) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = fileError!!,
                     color = MaterialTheme.colorScheme.error,
@@ -193,41 +279,38 @@ fun UploadQuoteSheet(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
+            Button(
+                onClick = {
+                    onSubmit(
+                        provider.trim(),
+                        amount!!,
+                        notes.takeIf { it.isNotBlank() },
+                        fileUri!!,
+                        fileMime!!
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                enabled = canSubmit
             ) {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.cancel))
-                }
-                Button(
-                    onClick = {
-                        onSubmit(
-                            provider.trim(),
-                            amount!!,
-                            notes.takeIf { it.isNotBlank() },
-                            fileUri!!,
-                            fileMime!!
-                        )
-                    },
-                    enabled = canSubmit
-                ) {
-                    if (isSubmitting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text(stringResource(Res.string.decisions_upload_submit_btn))
-                    }
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                } else {
+                    Text(
+                        text = stringResource(Res.string.decisions_upload_submit_btn),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

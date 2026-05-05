@@ -334,4 +334,18 @@
     <string name="decisions_vote_sheet_title">Cast vote</string>
     <string name="decisions_vote_final_warning">⚠️ Your vote is FINAL. You cannot change it.</string>
     <string name="decisions_vote_confirm_btn">Confirm</string>
+    <string name="decisions_deadline_card_title">Closes in</string>
+    <string name="decisions_deadline_hours">%1$d h</string>
+    <string name="decisions_deadline_days">%1$d days</string>
+    <string name="decisions_deadline_passed">Deadline passed</string>
+    <string name="decisions_phase_reception_title">Reception phase</string>
+    <string name="decisions_phase_reception_body">Any resident can upload quotes until the deadline. After that, voting starts.</string>
+    <string name="decisions_phase_voting_title">Voting phase</string>
+    <string name="decisions_phase_voting_body">Cast your vote before the deadline. Each apartment votes once.</string>
+    <string name="decisions_quotes_empty_title">No quotes yet</string>
+    <string name="decisions_quotes_empty_body">Upload the first quote so your neighbors can evaluate it.</string>
+    <string name="decisions_resolved_hero_eyebrow">DECISION RESOLVED</string>
+    <string name="decisions_resolved_finalized_at">Resolved on %1$s</string>
+    <string name="decisions_resolved_winner_votes">%1$d votes · %2$s%% of total</string>
+    <string name="decisions_resolved_results_title">Voting results</string>
 </resources>
