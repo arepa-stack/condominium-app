@@ -197,22 +197,25 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         fileName: String,
         mimeType: String
     ): Response<QuoteDto> = safeRequest {
-        val parts = formData {
+        val basicParts = formData {
             append("unit_id", unitId)
             append("provider_name", providerName)
             append("amount", amount)
             if (notes != null) append("notes", notes)
-            append(
-                "file",
-                fileBytes,
-                Headers.build {
-                    append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
-                    append(HttpHeaders.ContentType, mimeType)
-                }
-            )
         }
+        val allParts = basicParts + PartData.FileItem(
+            provider = { ByteReadPacket(fileBytes) },
+            dispose = {},
+            partHeaders = Headers.build {
+                append(HttpHeaders.ContentType, mimeType)
+                append(
+                    HttpHeaders.ContentDisposition,
+                    "form-data; name=\"file\"; filename=\"$fileName\""
+                )
+            }
+        )
         client.post("api/v1/app/decisions/decisions/$decisionId/quotes") {
-            setBody(MultiPartFormDataContent(parts))
+            setBody(MultiPartFormDataContent(allParts))
         }
     }
 
