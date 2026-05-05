@@ -298,4 +298,18 @@
     <string name="decisions_vote_sheet_title">Emitir voto</string>
     <string name="decisions_vote_final_warning">⚠️ Tu voto es FINAL. No podrás cambiarlo.</string>
     <string name="decisions_vote_confirm_btn">Confirmar</string>
+    <string name="decisions_deadline_card_title">Cierra en</string>
+    <string name="decisions_deadline_hours">%1$d h</string>
+    <string name="decisions_deadline_days">%1$d días</string>
+    <string name="decisions_deadline_passed">Plazo vencido</string>
+    <string name="decisions_phase_reception_title">Fase de recepción</string>
+    <string name="decisions_phase_reception_body">Cualquier residente puede subir presupuestos hasta el cierre. Después arranca la votación.</string>
+    <string name="decisions_phase_voting_title">Fase de votación</string>
+    <string name="decisions_phase_voting_body">Emití tu voto antes del cierre. Cada apartamento vota una sola vez.</string>
+    <string name="decisions_quotes_empty_title">Sin presupuestos todavía</string>
+    <string name="decisions_quotes_empty_body">Subí el primer presupuesto para que tus vecinos lo puedan evaluar.</string>
+    <string name="decisions_resolved_hero_eyebrow">DECISIÓN RESUELTA</string>
+    <string name="decisions_resolved_finalized_at">Resuelta el %1$s</string>
+    <string name="decisions_resolved_winner_votes">%1$d votos · %2$s%% del total</string>
+    <string name="decisions_resolved_results_title">Resultados de la votación</string>
 </resources>
