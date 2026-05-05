@@ -66,6 +66,15 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
+        if (uiState.isLoading && uiState.userName.isEmpty()) {
+            Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
         LazyColumn(
                 modifier =
                         Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp),
