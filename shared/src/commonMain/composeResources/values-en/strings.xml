@@ -348,4 +348,18 @@
     <string name="decisions_resolved_finalized_at">Resolved on %1$s</string>
     <string name="decisions_resolved_winner_votes">%1$d votes · %2$s%% of total</string>
     <string name="decisions_resolved_results_title">Voting results</string>
+
+    <!-- Billboard -->
+    <string name="billboard_title">Billboard</string>
+    <string name="billboard_empty">No announcements published</string>
+    <string name="billboard_filter_all">All</string>
+    <string name="billboard_pinned">Pinned</string>
+    <string name="billboard_read">Read</string>
+    <string name="billboard_understood_count">%1$d understood</string>
+    <string name="billboard_reads_count">%1$d read(s)</string>
+    <string name="billboard_attachment">View attachment</string>
+    <string name="billboard_attachment_pdf">View PDF</string>
+    <string name="billboard_attachment_image">Attached image</string>
+    <string name="billboard_attachment_open">Open</string>
+    <string name="billboard_retry">Retry</string>
 </resources>
