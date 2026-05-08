@@ -235,4 +235,38 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
             round?.let { parameter("round", it) }
         }
     }
+
+    // --- Information Center: Announcements ---
+
+    override suspend fun listAnnouncements(
+        buildingId: String?,
+        category: String?,
+        search: String?,
+        isPinned: Boolean?,
+        readStatus: String?,
+        page: Int?,
+        limit: Int?,
+    ): Response<AnnouncementsPageDto> = safeRequest {
+        client.get("api/v1/app/information-center/announcements") {
+            buildingId?.let { parameter("building_id", it) }
+            category?.let { parameter("category", it) }
+            search?.let { parameter("search", it) }
+            isPinned?.let { parameter("is_pinned", it) }
+            readStatus?.let { parameter("read_status", it) }
+            page?.let { parameter("page", it) }
+            limit?.let { parameter("limit", it) }
+        }
+    }
+
+    override suspend fun getAnnouncementDetail(id: String): Response<AnnouncementDto> = safeRequest {
+        client.get("api/v1/app/information-center/announcements/$id")
+    }
+
+    override suspend fun markAnnouncementRead(id: String): Response<SuccessDto> = safeRequest {
+        client.post("api/v1/app/information-center/announcements/$id/read")
+    }
+
+    override suspend fun toggleAnnouncementReaction(id: String): Response<ToggleReactionResponseDto> = safeRequest {
+        client.post("api/v1/app/information-center/announcements/$id/reaction")
+    }
 }

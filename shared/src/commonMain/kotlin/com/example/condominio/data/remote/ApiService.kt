@@ -69,4 +69,21 @@ interface ApiService {
     suspend fun castVote(decisionId: String, apartmentId: String, quoteId: String): Response<VoteDto>
 
     suspend fun getDecisionResults(id: String, round: Int? = null): Response<TallyDto>
+
+    // --- Information Center: Announcements ---
+    suspend fun listAnnouncements(
+        buildingId: String? = null,
+        category: String? = null,
+        search: String? = null,
+        isPinned: Boolean? = null,
+        readStatus: String? = null,
+        page: Int? = null,
+        limit: Int? = null,
+    ): Response<AnnouncementsPageDto>
+
+    suspend fun getAnnouncementDetail(id: String): Response<AnnouncementDto>
+
+    suspend fun markAnnouncementRead(id: String): Response<SuccessDto>
+
+    suspend fun toggleAnnouncementReaction(id: String): Response<ToggleReactionResponseDto>
 }
