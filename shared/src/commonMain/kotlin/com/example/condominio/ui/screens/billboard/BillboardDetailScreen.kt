@@ -1,7 +1,6 @@
 package com.example.condominio.ui.screens.billboard
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -200,12 +199,9 @@ fun BillboardDetailScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
                     Spacer(Modifier.height(20.dp))
 
-                    // ---- Inline image attachment (renders above content) ----
+                    // ---- Inline image attachment (shows in-app, no external intent) ----
                     if (attachmentUrl != null && isImage(attachmentUrl)) {
-                        InlineImageAttachment(
-                            url = attachmentUrl,
-                            onClick = { uriHandler.openUri(attachmentUrl) },
-                        )
+                        InlineImageAttachment(url = attachmentUrl)
                         Spacer(Modifier.height(20.dp))
                     }
 
@@ -310,64 +306,38 @@ fun BillboardDetailScreen(
 }
 
 // ---------------------------------------------------------------------------
-// Inline image component (Coil AsyncImage)
+// Inline image component — shows in-app like PaymentDetailScreen receipt
 // ---------------------------------------------------------------------------
 
 @Composable
 private fun InlineImageAttachment(
     url: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalPlatformContext.current
 
-    Card(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Box {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(url)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = stringResource(Res.string.billboard_attachment_image),
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 160.dp, max = 320.dp),
+            .aspectRatio(0.75f)
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                RoundedCornerShape(12.dp),
             )
-            // Tap-to-expand hint overlay
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(8.dp),
-                shape = RoundedCornerShape(6.dp),
-                color = Color.Black.copy(alpha = 0.55f),
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.OpenInNew,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(12.dp),
-                    )
-                    Text(
-                        text = stringResource(Res.string.billboard_attachment_open),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                    )
-                }
-            }
-        }
+            .clip(RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(url)
+                .crossfade(true)
+                .build(),
+            contentDescription = stringResource(Res.string.billboard_attachment_image),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp)),
+        )
     }
 }
 
