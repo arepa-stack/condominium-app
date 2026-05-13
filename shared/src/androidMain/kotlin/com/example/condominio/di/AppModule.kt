@@ -27,6 +27,7 @@ import com.example.condominio.ui.screens.decisions.DecisionsListViewModel
 import com.example.condominio.ui.screens.decisions.DecisionDetailViewModel
 import com.example.condominio.ui.screens.billboard.BillboardListViewModel
 import com.example.condominio.ui.screens.billboard.BillboardDetailViewModel
+import com.example.condominio.domain.usecase.billboard.GetUnreadAnnouncementsCountUseCase
 import okio.Path.Companion.toPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.*
@@ -66,6 +67,7 @@ val appModule = module {
     single<PettyCashRepository> { PettyCashRepositoryImpl(get()) }
     single<DecisionsRepository> { RemoteDecisionsRepositoryImpl(get(), get()) }
     single<AnnouncementsRepository> { RemoteAnnouncementsRepositoryImpl(get()) }
+    factory { GetUnreadAnnouncementsCountUseCase(get()) }
 
     // ViewModels
     viewModelOf(::LoginViewModel)

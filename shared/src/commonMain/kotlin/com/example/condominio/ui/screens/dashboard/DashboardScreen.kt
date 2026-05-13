@@ -117,7 +117,8 @@ fun DashboardScreen(
                         onPayClick = onPayClick,
                         onHistoryClick = onHistoryClick,
                         onDecisionsClick = onDecisionsClick,
-                        onBillboardClick = onBillboardClick
+                        onBillboardClick = onBillboardClick,
+                        unreadAnnouncementsCount = uiState.unreadAnnouncementsCount
                 )
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -304,7 +305,8 @@ fun QuickActions(
         onPayClick: () -> Unit,
         onHistoryClick: () -> Unit,
         onDecisionsClick: () -> Unit = {},
-        onBillboardClick: () -> Unit = {}
+        onBillboardClick: () -> Unit = {},
+        unreadAnnouncementsCount: Int = 0,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         QuickActionItem(
@@ -336,7 +338,8 @@ fun QuickActions(
                 label = "Cartelera",
                 color = Color(0xFF00897B), // Teal
                 onClick = onBillboardClick,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                badgeCount = unreadAnnouncementsCount
         )
     }
 }
@@ -403,19 +406,34 @@ fun QuickActionItem(
         label: String,
         color: Color,
         onClick: () -> Unit,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        badgeCount: Int = 0,
 ) {
     Column(
             modifier = modifier.clickable(onClick = onClick),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-                modifier =
-                        Modifier.size(56.dp)
-                                .background(color.copy(alpha = 0.1f), CircleShape)
-                                .border(1.dp, color.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-        ) { Icon(imageVector = icon, contentDescription = label, tint = color) }
+        BadgedBox(
+                badge = {
+                    if (badgeCount > 0) {
+                        Badge(containerColor = MaterialTheme.colorScheme.error) {
+                            Text(
+                                    text = if (badgeCount > 99) "99+" else badgeCount.toString(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onError
+                            )
+                        }
+                    }
+                }
+        ) {
+            Box(
+                    modifier =
+                            Modifier.size(56.dp)
+                                    .background(color.copy(alpha = 0.1f), CircleShape)
+                                    .border(1.dp, color.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+            ) { Icon(imageVector = icon, contentDescription = label, tint = color) }
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
                 text = label,
