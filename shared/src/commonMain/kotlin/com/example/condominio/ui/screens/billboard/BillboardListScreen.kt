@@ -208,111 +208,159 @@ fun AnnouncementCard(
     modifier: Modifier = Modifier,
 ) {
     val accent = categoryColor(announcement.category)
+    val isUnread = !announcement.readByCurrentUser
+
+    // Unread: slightly tinted surface + elevated shadow; Read: plain surface
+    val cardColor = if (isUnread)
+        MaterialTheme.colorScheme.surface
+    else
+        MaterialTheme.colorScheme.surface
 
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isUnread) 4.dp else 1.dp
+        ),
+        border = if (isUnread)
+            androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = accent.copy(alpha = 0.35f),
+            )
+        else null,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Category badge
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = accent.copy(alpha = 0.12f),
-                ) {
-                    Text(
-                        text = categoryLabel(announcement.category),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = accent,
-                    )
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    // Pinned indicator
-                    if (announcement.isPinned) {
-                        Icon(
-                            imageVector = Icons.Default.PushPin,
-                            contentDescription = stringResource(Res.string.billboard_pinned),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    }
-                    // Read indicator
-                    if (!announcement.readByCurrentUser) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(accent, CircleShape),
-                        )
-                    }
-                }
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // Left accent bar for unread
+            if (isUnread) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .fillMaxHeight()
+                        .background(accent, RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
+                )
+            } else {
+                Spacer(modifier = Modifier.width(4.dp))
             }
 
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = announcement.title,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            Text(
-                text = announcement.contentPreview,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-
-            Spacer(Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Metrics
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp).fillMaxWidth()) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    MetricChip(
-                        icon = Icons.Default.Visibility,
-                        count = announcement.metrics.readsCount,
-                    )
-                    MetricChip(
-                        icon = Icons.Default.ThumbUp,
-                        count = announcement.metrics.reactionsCount,
-                    )
+                    // Category badge
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = accent.copy(alpha = 0.12f),
+                    ) {
+                        Text(
+                            text = categoryLabel(announcement.category),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = accent,
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // "NUEVO" chip for unread
+                        if (isUnread) {
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = accent,
+                            ) {
+                                Text(
+                                    text = "NUEVO",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        letterSpacing = androidx.compose.ui.unit.TextUnit(
+                                            0.8f,
+                                            androidx.compose.ui.unit.TextUnitType.Sp
+                                        ),
+                                    ),
+                                    color = Color.White,
+                                )
+                            }
+                        }
+                        // Pinned indicator
+                        if (announcement.isPinned) {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = stringResource(Res.string.billboard_pinned),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    }
                 }
-                // Attachment indicator
-                if (announcement.attachmentUrl != null) {
-                    Icon(
-                        imageVector = Icons.Default.AttachFile,
-                        contentDescription = stringResource(Res.string.billboard_attachment),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-                        modifier = Modifier.size(16.dp),
-                    )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = announcement.title,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = if (isUnread) FontWeight.ExtraBold else FontWeight.SemiBold,
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (isUnread)
+                        MaterialTheme.colorScheme.onSurface
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = announcement.contentPreview,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isUnread) 0.75f else 0.55f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // Metrics
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        MetricChip(
+                            icon = Icons.Default.Visibility,
+                            count = announcement.metrics.readsCount,
+                        )
+                        MetricChip(
+                            icon = Icons.Default.ThumbUp,
+                            count = announcement.metrics.reactionsCount,
+                        )
+                    }
+                    // Attachment indicator
+                    if (announcement.attachmentUrl != null) {
+                        Icon(
+                            imageVector = Icons.Default.AttachFile,
+                            contentDescription = stringResource(Res.string.billboard_attachment),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 private fun MetricChip(
