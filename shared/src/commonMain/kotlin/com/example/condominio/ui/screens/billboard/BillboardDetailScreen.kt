@@ -28,6 +28,7 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.ui.components.FullScreenImageDialog
+import com.example.condominio.ui.components.shimmerEffect
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -380,7 +381,7 @@ private fun InlineImageAttachment(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(12.dp)),
             loading = {
-                Box(modifier = Modifier.fillMaxSize().com.example.condominio.ui.components.shimmerEffect())
+                Box(modifier = Modifier.fillMaxSize().shimmerEffect())
             }
         )
     }

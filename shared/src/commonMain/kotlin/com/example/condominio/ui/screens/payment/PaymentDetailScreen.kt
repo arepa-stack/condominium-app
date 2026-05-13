@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import com.example.condominio.data.model.PaymentStatus
+import com.example.condominio.ui.components.shimmerEffect
 import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
@@ -297,7 +298,7 @@ fun PaymentDetailScreen(
                                 .clip(RoundedCornerShape(12.dp)),
                             contentScale = ContentScale.Crop,
                             loading = {
-                                Box(modifier = Modifier.fillMaxSize().com.example.condominio.ui.components.shimmerEffect())
+                                Box(modifier = Modifier.fillMaxSize().shimmerEffect())
                             }
                         )
                     } else {
