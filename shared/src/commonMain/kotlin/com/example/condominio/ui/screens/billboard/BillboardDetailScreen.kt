@@ -1,6 +1,7 @@
 package com.example.condominio.ui.screens.billboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,7 @@ import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.example.condominio.data.model.AnnouncementCategory
+import com.example.condominio.ui.components.FullScreenImageDialog
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -38,10 +40,17 @@ private val IMAGE_EXTENSIONS = setOf("jpg", "jpeg", "png", "gif", "webp", "bmp")
 private val PDF_EXTENSIONS = setOf("pdf")
 
 private fun attachmentExtension(url: String): String {
-    return url.substringAfterLast('.').lowercase().substringBefore('?')
+    val path = url.substringBefore('?')
+    val filename = path.substringAfterLast('/')
+    if (!filename.contains('.')) return ""
+    return filename.substringAfterLast('.').lowercase()
 }
 
-private fun isImage(url: String) = attachmentExtension(url) in IMAGE_EXTENSIONS
+private fun isImage(url: String): Boolean {
+    val ext = attachmentExtension(url)
+    // Asumimos que si no hay extensión explícita (ej. UUID en storage), es probable que sea una imagen (cámara/galería)
+    return ext.isEmpty() || ext in IMAGE_EXTENSIONS
+}
 private fun isPdf(url: String) = attachmentExtension(url) in PDF_EXTENSIONS
 
 // ---------------------------------------------------------------------------
@@ -57,6 +66,7 @@ fun BillboardDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val uriHandler = LocalUriHandler.current
+    var showFullImage by remember { mutableStateOf(false) }
 
     LaunchedEffect(announcementId) {
         viewModel.loadAnnouncement(announcementId)
@@ -201,7 +211,28 @@ fun BillboardDetailScreen(
 
                     // ---- Inline image attachment (shows in-app, no external intent) ----
                     if (attachmentUrl != null && isImage(attachmentUrl)) {
-                        InlineImageAttachment(url = attachmentUrl)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Bottom,
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.billboard_attachment_image),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            )
+                            Text(
+                                text = stringResource(Res.string.view_full),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable { showFullImage = true },
+                            )
+                        }
+                        InlineImageAttachment(
+                            url = attachmentUrl,
+                            onClick = { showFullImage = true },
+                        )
                         Spacer(Modifier.height(20.dp))
                     }
 
@@ -287,6 +318,15 @@ fun BillboardDetailScreen(
                     // Bottom spacing for reaction bar
                     Spacer(Modifier.height(80.dp))
                 }
+
+                // Full-screen image viewer
+                val attachmentUrlForViewer = uiState.announcement?.attachmentUrl
+                if (showFullImage && attachmentUrlForViewer != null && isImage(attachmentUrlForViewer)) {
+                    FullScreenImageDialog(
+                        imageUrl = attachmentUrlForViewer,
+                        onDismiss = { showFullImage = false },
+                    )
+                }
             }
 
             else -> {
@@ -313,6 +353,7 @@ fun BillboardDetailScreen(
 private fun InlineImageAttachment(
     url: String,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
 ) {
     val context = LocalPlatformContext.current
 
@@ -324,10 +365,11 @@ private fun InlineImageAttachment(
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 RoundedCornerShape(12.dp),
             )
-            .clip(RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        AsyncImage(
+        coil3.compose.SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
                 .data(url)
                 .crossfade(true)
@@ -337,6 +379,9 @@ private fun InlineImageAttachment(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(12.dp)),
+            loading = {
+                Box(modifier = Modifier.fillMaxSize().com.example.condominio.ui.components.shimmerEffect())
+            }
         )
     }
 }
