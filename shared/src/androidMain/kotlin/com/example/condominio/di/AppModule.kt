@@ -21,8 +21,13 @@ import com.example.condominio.ui.screens.profile.*
 import com.example.condominio.ui.screens.register.*
 import com.example.condominio.data.repository.DecisionsRepository
 import com.example.condominio.data.repository.RemoteDecisionsRepositoryImpl
+import com.example.condominio.data.repository.AnnouncementsRepository
+import com.example.condominio.data.repository.RemoteAnnouncementsRepositoryImpl
 import com.example.condominio.ui.screens.decisions.DecisionsListViewModel
 import com.example.condominio.ui.screens.decisions.DecisionDetailViewModel
+import com.example.condominio.ui.screens.billboard.BillboardListViewModel
+import com.example.condominio.ui.screens.billboard.BillboardDetailViewModel
+import com.example.condominio.domain.usecase.billboard.GetUnreadAnnouncementsCountUseCase
 import okio.Path.Companion.toPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.*
@@ -61,6 +66,8 @@ val appModule = module {
     single<BuildingRepository> { RemoteBuildingRepository(get()) }
     single<PettyCashRepository> { PettyCashRepositoryImpl(get()) }
     single<DecisionsRepository> { RemoteDecisionsRepositoryImpl(get(), get()) }
+    single<AnnouncementsRepository> { RemoteAnnouncementsRepositoryImpl(get()) }
+    factory { GetUnreadAnnouncementsCountUseCase(get()) }
 
     // ViewModels
     viewModelOf(::LoginViewModel)
@@ -77,4 +84,6 @@ val appModule = module {
     viewModelOf(::RegisterViewModel)
     viewModelOf(::DecisionsListViewModel)
     viewModelOf(::DecisionDetailViewModel)
+    viewModelOf(::BillboardListViewModel)
+    viewModelOf(::BillboardDetailViewModel)
 }

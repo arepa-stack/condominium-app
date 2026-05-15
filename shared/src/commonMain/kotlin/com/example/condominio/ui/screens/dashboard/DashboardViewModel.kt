@@ -7,6 +7,7 @@ import com.example.condominio.data.model.PettyCashBalanceDto
 import com.example.condominio.data.model.SolvencyStatus
 import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.PettyCashRepository
+import com.example.condominio.domain.usecase.billboard.GetUnreadAnnouncementsCountUseCase
 import com.example.condominio.ui.utils.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +18,8 @@ class DashboardViewModel(
     private val authRepository: AuthRepository,
     private val paymentRepository: com.example.condominio.data.repository.PaymentRepository,
     private val buildingRepository: com.example.condominio.data.repository.BuildingRepository,
-    private val pettyCashRepository: PettyCashRepository
+    private val pettyCashRepository: PettyCashRepository,
+    private val getUnreadAnnouncementsCount: GetUnreadAnnouncementsCountUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -89,6 +91,10 @@ class DashboardViewModel(
                                 _uiState.update { it.copy(pettyCashBalance = balance) }
                             }
                     }
+                    launch {
+                        val count = getUnreadAnnouncementsCount(buildingId)
+                        _uiState.update { it.copy(unreadAnnouncementsCount = count) }
+                    }
                 }
             } else {
                 _uiState.update { it.copy(isLoading = false, error = userResult.exceptionOrNull()?.message?.let { UiText.DynamicString(it) }) }
@@ -111,5 +117,7 @@ data class DashboardUiState(
     val totalDebt: Double = 0.0,
     val pendingInvoices: List<com.example.condominio.data.model.Invoice> = emptyList(),
     val pettyCashBalance: PettyCashBalanceDto? = null,
+    val unreadAnnouncementsCount: Int = 0,
     val error: UiText? = null
 )
+

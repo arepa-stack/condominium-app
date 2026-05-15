@@ -1,6 +1,7 @@
 package com.example.condominio.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
+// TODO: Descomentar cuando se habilite dark mode
+// import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -32,7 +33,9 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun CondominioTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    // TODO: Para habilitar dark mode en el futuro, cambiar el valor por defecto a:
+    //  darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

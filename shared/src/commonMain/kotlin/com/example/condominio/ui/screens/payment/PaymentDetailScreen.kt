@@ -20,17 +20,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import com.example.condominio.ui.components.FullScreenImageDialog
 import com.example.condominio.ui.utils.formatCurrency
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import com.example.condominio.data.model.PaymentStatus
+import com.example.condominio.ui.components.shimmerEffect
 import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
@@ -44,6 +50,7 @@ fun PaymentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val payment = uiState.payment
+    var showFullImage by remember { mutableStateOf(false) }
 
     // Simple KMP-friendly date formatter replacement
     fun formatDate(timestamp: Long): String {
@@ -266,7 +273,9 @@ fun PaymentDetailScreen(
                         text = stringResource(Res.string.view_full),
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable { }
+                        modifier = Modifier.clickable {
+                            if (payment?.proofUrl != null) showFullImage = true
+                        },
                     )
                 }
 
@@ -275,17 +284,22 @@ fun PaymentDetailScreen(
                         .fillMaxWidth()
                         .aspectRatio(0.75f)
                         .background(Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { if (payment?.proofUrl != null) showFullImage = true },
                     contentAlignment = Alignment.Center
                 ) {
                     if (payment.proofUrl != null) {
-                        AsyncImage(
+                        SubcomposeAsyncImage(
                             model = payment.proofUrl,
                             contentDescription = stringResource(Res.string.payment_proof_desc),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(12.dp)),
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
+                            loading = {
+                                Box(modifier = Modifier.fillMaxSize().shimmerEffect())
+                            }
                         )
                     } else {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -306,6 +320,14 @@ fun PaymentDetailScreen(
                 }
                 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Full-screen image viewer
+            if (showFullImage && payment?.proofUrl != null) {
+                FullScreenImageDialog(
+                    imageUrl = payment.proofUrl,
+                    onDismiss = { showFullImage = false },
+                )
             }
         } else if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -24,6 +24,8 @@ import com.example.condominio.ui.screens.profile.NotificationSettingsScreen
 import com.example.condominio.ui.screens.profile.ProfileScreen
 import com.example.condominio.ui.screens.decisions.DecisionsListScreen
 import com.example.condominio.ui.screens.decisions.DecisionDetailScreen
+import com.example.condominio.ui.screens.billboard.BillboardListScreen
+import com.example.condominio.ui.screens.billboard.BillboardDetailScreen
 import com.example.condominio.ui.screens.register.RegisterScreen
 
 @Composable
@@ -108,7 +110,8 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     onProfileClick = { navController.navigate("profile") },
                     onUnitClick = { navController.navigate("unit_selection") },
                     onSeeAllInvoicesClick = { navController.navigate("invoice_list") },
-                    onDecisionsClick = { navController.navigate("decisions_list") }
+                    onDecisionsClick = { navController.navigate("decisions_list") },
+                    onBillboardClick = { navController.navigate("billboard_list") }
             )
         }
         composable("invoice_list") {
@@ -212,6 +215,22 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             val id = backStackEntry.arguments?.getString("id") ?: ""
             DecisionDetailScreen(
                     decisionId = id,
+                    onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable("billboard_list") {
+            BillboardListScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onAnnouncementClick = { id -> navController.navigate("billboard_detail/$id") }
+            )
+        }
+        composable(
+                route = "billboard_detail/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            BillboardDetailScreen(
+                    announcementId = id,
                     onBackClick = { navController.popBackStack() }
             )
         }

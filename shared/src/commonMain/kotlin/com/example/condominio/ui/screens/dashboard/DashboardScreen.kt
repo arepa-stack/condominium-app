@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
@@ -47,6 +48,7 @@ fun DashboardScreen(
         onUnitClick: () -> Unit,
         onSeeAllInvoicesClick: () -> Unit = {},
         onDecisionsClick: () -> Unit = {},
+        onBillboardClick: () -> Unit = {},
         viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -114,7 +116,9 @@ fun DashboardScreen(
                 QuickActions(
                         onPayClick = onPayClick,
                         onHistoryClick = onHistoryClick,
-                        onDecisionsClick = onDecisionsClick
+                        onDecisionsClick = onDecisionsClick,
+                        onBillboardClick = onBillboardClick,
+                        unreadAnnouncementsCount = uiState.unreadAnnouncementsCount
                 )
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -300,7 +304,9 @@ fun HeaderSection(
 fun QuickActions(
         onPayClick: () -> Unit,
         onHistoryClick: () -> Unit,
-        onDecisionsClick: () -> Unit = {}
+        onDecisionsClick: () -> Unit = {},
+        onBillboardClick: () -> Unit = {},
+        unreadAnnouncementsCount: Int = 0,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         QuickActionItem(
@@ -310,7 +316,7 @@ fun QuickActions(
                 onClick = onPayClick,
                 modifier = Modifier.weight(1f)
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(8.dp))
         QuickActionItem(
                 icon = Icons.Default.History,
                 label = stringResource(Res.string.history),
@@ -318,13 +324,22 @@ fun QuickActions(
                 onClick = onHistoryClick,
                 modifier = Modifier.weight(1f)
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(8.dp))
         QuickActionItem(
                 icon = Icons.Default.HowToVote,
                 label = "Decisiones", // TODO: i18n
                 color = Color(0xFF8E24AA), // Purple
                 onClick = onDecisionsClick,
                 modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        QuickActionItem(
+                icon = Icons.Default.Campaign,
+                label = "Cartelera",
+                color = Color(0xFF00897B), // Teal
+                onClick = onBillboardClick,
+                modifier = Modifier.weight(1f),
+                badgeCount = unreadAnnouncementsCount
         )
     }
 }
@@ -391,19 +406,34 @@ fun QuickActionItem(
         label: String,
         color: Color,
         onClick: () -> Unit,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        badgeCount: Int = 0,
 ) {
     Column(
             modifier = modifier.clickable(onClick = onClick),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-                modifier =
-                        Modifier.size(56.dp)
-                                .background(color.copy(alpha = 0.1f), CircleShape)
-                                .border(1.dp, color.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-        ) { Icon(imageVector = icon, contentDescription = label, tint = color) }
+        BadgedBox(
+                badge = {
+                    if (badgeCount > 0) {
+                        Badge(containerColor = MaterialTheme.colorScheme.error) {
+                            Text(
+                                    text = if (badgeCount > 99) "99+" else badgeCount.toString(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onError
+                            )
+                        }
+                    }
+                }
+        ) {
+            Box(
+                    modifier =
+                            Modifier.size(56.dp)
+                                    .background(color.copy(alpha = 0.1f), CircleShape)
+                                    .border(1.dp, color.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+            ) { Icon(imageVector = icon, contentDescription = label, tint = color) }
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
                 text = label,

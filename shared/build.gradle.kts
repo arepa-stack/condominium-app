@@ -45,6 +45,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
+            implementation(libs.mikepenz.markdown.m3)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.androidx.navigation.compose)
 
