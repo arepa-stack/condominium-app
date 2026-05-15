@@ -148,6 +148,10 @@ class RoomAuthRepository (
         // For now, we'll keep the user in the database
     }
 
+    override suspend fun hasValidSession(): Boolean {
+        return userDao.getUser().firstOrNull() != null
+    }
+
     override suspend fun fetchCurrentUser(): Result<User> {
         val userEntity = userDao.getUser().firstOrNull()
         return if (userEntity != null) {

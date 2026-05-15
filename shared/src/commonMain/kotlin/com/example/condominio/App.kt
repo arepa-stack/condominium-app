@@ -5,6 +5,7 @@ import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.ktor2.KtorNetworkFetcherFactory
 import coil3.request.crossfade
+import com.example.condominio.ui.locale.ProvideAppLocale
 import com.example.condominio.ui.navigation.CondominioNavGraph
 import com.example.condominio.ui.theme.CondominioTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -21,7 +22,12 @@ fun App() {
             .build()
     }
 
-    CondominioTheme {
-        CondominioNavGraph()
+    // ProvideAppLocale forces the app locale (Spanish by default)
+    // and triggers recomposition when the language is changed from ProfileScreen.
+    ProvideAppLocale {
+        CondominioTheme {
+            CondominioNavGraph()
+        }
     }
 }
+

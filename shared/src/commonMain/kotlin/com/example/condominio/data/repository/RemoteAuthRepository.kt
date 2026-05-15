@@ -161,6 +161,10 @@ class RemoteAuthRepository
         _currentUser.value = null
     }
 
+    override suspend fun hasValidSession(): Boolean {
+        return tokenManager.getToken() != null
+    }
+
     override suspend fun updateUser(user: User): Result<Unit> {
         return try {
             val request =

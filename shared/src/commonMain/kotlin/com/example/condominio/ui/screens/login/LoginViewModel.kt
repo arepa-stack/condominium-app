@@ -18,12 +18,30 @@ open class LoginViewModel(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
+    init {
+        checkExistingSession()
+    }
+
+    private fun checkExistingSession() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCheckingSession = true) }
+            val hasSession = authRepository.hasValidSession()
+            if (hasSession) {
+                // Fetch user data in background to populate currentUser flow
+                authRepository.fetchCurrentUser()
+                _uiState.update { it.copy(isCheckingSession = false, isSuccess = true) }
+            } else {
+                _uiState.update { it.copy(isCheckingSession = false) }
+            }
+        }
+    }
+
     fun onEmailChange(email: String) {
-        _uiState.update { it.copy(email = email) }
+        _uiState.update { it.copy(email = email, error = null) }
     }
 
     fun onPasswordChange(password: String) {
-        _uiState.update { it.copy(password = password) }
+        _uiState.update { it.copy(password = password, error = null) }
     }
 
     fun onLoginClick() {
@@ -52,8 +70,6 @@ open class LoginViewModel(
 
                 _uiState.update { it.copy(isSuccess = true, hasMultipleUnits = needsSelection) }
             }.onFailure { error ->
-                // Use dynamic string for API errors if no specific key is available, 
-                // or map standard error codes as per spec.
                 val errorText = error.message?.let { UiText.DynamicString(it) } 
                     ?: UiText.StringResource(Res.string.error_invalid_credentials)
                 _uiState.update { it.copy(error = errorText) }
@@ -75,6 +91,7 @@ data class LoginUiState(
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
+    val isCheckingSession: Boolean = true,
     val error: UiText? = null,
     val isSuccess: Boolean = false,
     val isPending: Boolean = false,

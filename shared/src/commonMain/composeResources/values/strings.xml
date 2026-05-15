@@ -315,6 +315,7 @@
 
     <!-- Billboard / Cartelera -->
     <string name="billboard_title">Cartelera</string>
+    <string name="billboard_detail_title">Detalle de Anuncio</string>
     <string name="billboard_empty">No hay comunicados publicados</string>
     <string name="billboard_filter_all">Todas</string>
     <string name="billboard_pinned">Fijado</string>
@@ -326,4 +327,9 @@
     <string name="billboard_attachment_image">Imagen adjunta</string>
     <string name="billboard_attachment_open">Abrir</string>
     <string name="billboard_retry">Reintentar</string>
+
+    <!-- Language Settings -->
+    <string name="language_settings">Idioma</string>
+    <string name="language_dialog_title">Seleccionar Idioma</string>
+    <string name="language_current">Idioma actual: %1$s</string>
 </resources>

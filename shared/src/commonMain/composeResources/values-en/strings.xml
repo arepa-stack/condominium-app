@@ -362,4 +362,9 @@
     <string name="billboard_attachment_image">Attached image</string>
     <string name="billboard_attachment_open">Open</string>
     <string name="billboard_retry">Retry</string>
+
+    <!-- Language Settings -->
+    <string name="language_settings">Language</string>
+    <string name="language_dialog_title">Select Language</string>
+    <string name="language_current">Current language: %1$s</string>
 </resources>
