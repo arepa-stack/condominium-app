@@ -15,3 +15,11 @@ val SurfaceDark = Color(0xFF37474F)
 
 val OnBackgroundLight = Color(0xFF3E2723) // Deep Brown
 val OnBackgroundDark = Color(0xFFECEFF1)
+
+// Design system tokens
+val BrandDark    = Color(0xFF09151A)
+val BrandOrange  = Color(0xFFFF6B00)
+val SurfaceWhite = Color(0xFFFFFFFF)
+val BorderGray   = Color(0xFFE5E7EB)
+val SubtitleGray = Color(0xFF6B7280)
+val OrangeShadow = Color(0x33FF6B00)

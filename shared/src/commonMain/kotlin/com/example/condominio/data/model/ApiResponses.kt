@@ -3,11 +3,38 @@ package com.example.condominio.data.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.Instant
 import kotlinx.datetime.Clock
+
+@Serializable
+data class RegistrationRequestBody(
+    @SerialName("building_code") val buildingCode: String,
+    @SerialName("unit_id") val unitId: String,
+    val email: String,
+    @SerialName("first_name") val firstName: String,
+    @SerialName("last_name") val lastName: String,
+    @SerialName("document_id") val documentId: String,
+    val phone: String? = null
+)
+
+@Serializable
+data class RegistrationRequestResponse(
+    val id: String,
+    @SerialName("building_id") val buildingId: String,
+    @SerialName("unit_id") val unitId: String,
+    val email: String,
+    @SerialName("first_name") val firstName: String,
+    @SerialName("last_name") val lastName: String,
+    val status: String,
+    val source: String? = null,
+    @SerialName("document_id") val documentId: String? = null,
+    val phone: String? = null,
+    @SerialName("created_at") val createdAt: JsonElement? = null
+)
 
 @Serializable
 data class AuthToken(

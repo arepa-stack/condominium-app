@@ -41,6 +41,9 @@ dependencies {
     // Koin
     implementation(libs.koin.android)
     implementation(libs.koin.core)
+
+    // Splash screen
+    implementation(libs.core.splashscreen)
 }
 
 kotlin {

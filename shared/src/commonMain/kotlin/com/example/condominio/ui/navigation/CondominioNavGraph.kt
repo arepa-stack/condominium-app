@@ -26,6 +26,7 @@ import com.example.condominio.ui.screens.decisions.DecisionsListScreen
 import com.example.condominio.ui.screens.decisions.DecisionDetailScreen
 import com.example.condominio.ui.screens.billboard.BillboardListScreen
 import com.example.condominio.ui.screens.billboard.BillboardDetailScreen
+import com.example.condominio.ui.screens.register.QrScannerScreen
 import com.example.condominio.ui.screens.register.RegisterScreen
 
 @Composable
@@ -58,7 +59,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                             popUpTo("login") { inclusive = true }
                         }
                     },
-                    onRegisterClick = { navController.navigate("register") }
+                    onRegisterClick = { navController.navigate("register_scanner") }
             )
         }
         composable("admin_blocked") {
@@ -83,14 +84,29 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     }
             )
         }
-        composable("register") {
+        composable("register_scanner") {
+            QrScannerScreen(
+                onBack = { navController.popBackStack() },
+                onScanned = { buildingId ->
+                    navController.navigate("register_form/$buildingId") {
+                        popUpTo("register_scanner") { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(
+            route = "register_form/{buildingId}",
+            arguments = listOf(navArgument("buildingId") { type = NavType.StringType })
+        ) { backStack ->
+            val buildingId = backStack.arguments?.getString("buildingId") ?: ""
             RegisterScreen(
-                    onRegisterSuccess = {
-                        navController.navigate("pending_approval") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
-                    onLoginClick = { navController.popBackStack() }
+                buildingId = buildingId,
+                onRegisterSuccess = {
+                    navController.navigate("pending_approval") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onBackClick = { navController.popBackStack() }
             )
         }
         composable("pending_approval") {

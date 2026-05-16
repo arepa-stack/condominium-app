@@ -18,8 +18,36 @@
     <string name="support">Support</string>
     <string name="payment_item_label">Payment</string>
 
+    <!-- QR Scanner Screen -->
+    <string name="qr_scan_title">Scan your building\'s QR code</string>
+    <string name="qr_scan_subtitle">Align the code inside the frame to start registration.</string>
+    <string name="qr_scan_scanning">SCANNING...</string>
+    <string name="qr_enter_manually">Enter code manually</string>
+    <string name="qr_manual_dialog_title">Enter building code</string>
+    <string name="qr_manual_dialog_hint">Paste the code you were given</string>
+    <string name="qr_camera_permission_required">Camera access is needed to scan the code.</string>
+    <string name="qr_grant_permission">Grant permission</string>
+    <string name="qr_invalid_code">Invalid code or building not found.</string>
+
+    <!-- Register Form Screen -->
+    <string name="register_title">User Registration</string>
+    <string name="register_subtitle">Complete your details to access your building\'s services.</string>
+    <string name="register_building_label">BUILDING</string>
+    <string name="register_select_unit_label">SELECT YOUR UNIT</string>
+    <string name="register_first_name_label">FIRST NAME</string>
+    <string name="register_last_name_label">LAST NAME</string>
+    <string name="register_email_label">EMAIL ADDRESS</string>
+    <string name="register_first_name_hint">e.g. John</string>
+    <string name="register_last_name_hint">e.g. Smith</string>
+    <string name="register_email_hint">name@example.com</string>
+    <string name="register_document_id_label">ID / PASSPORT</string>
+    <string name="register_document_id_hint">e.g. V-12345678</string>
+    <string name="register_submit">Register</string>
+    <string name="register_terms_notice">By registering, you accept our Terms of Service and Privacy Policy.</string>
+
     <!-- Login Screen -->
     <string name="login">Login</string>
+    <string name="login_subtitle">Sign in to manage your condominium.</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="error_missing_fields">Please fill in all fields</string>
