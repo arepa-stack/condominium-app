@@ -28,10 +28,19 @@ import com.example.condominio.ui.screens.billboard.BillboardListScreen
 import com.example.condominio.ui.screens.billboard.BillboardDetailScreen
 import com.example.condominio.ui.screens.register.QrScannerScreen
 import com.example.condominio.ui.screens.register.RegisterScreen
-
+import com.example.condominio.ui.screens.splash.SplashScreen
 @Composable
 fun CondominioNavGraph(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = "login") {
+    NavHost(navController = navController, startDestination = "splash") {
+        composable("splash") {
+            SplashScreen(
+                onFinished = {
+                    navController.navigate("login") {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                }
+            )
+        }
         composable("login") {
             val viewModel: com.example.condominio.ui.screens.login.LoginViewModel = org.koin.compose.viewmodel.koinViewModel()
             val uiState by viewModel.uiState.collectAsState()

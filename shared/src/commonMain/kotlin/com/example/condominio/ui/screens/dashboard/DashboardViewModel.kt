@@ -39,11 +39,15 @@ class DashboardViewModel(
                 val user = userResult.getOrNull()
                 val currentUnit = user?.currentUnit
 
+                val distinctBuildings = user?.units?.map { it.buildingId }?.distinct() ?: emptyList()
+                val multipleUnits = distinctBuildings.size > 1 || (user?.units?.size ?: 0) > 1
+
                 _uiState.update { state ->
                     state.copy(
                         userName = user?.name ?: "",
                         userBuilding = currentUnit?.buildingName ?: "",
-                        userApartment = currentUnit?.unitName ?: ""
+                        userApartment = currentUnit?.unitName ?: "",
+                        hasMultipleUnits = multipleUnits
                     )
                 }
 
@@ -111,6 +115,7 @@ data class DashboardUiState(
     val userName: String = "",
     val userBuilding: String = "",
     val userApartment: String = "",
+    val hasMultipleUnits: Boolean = false,
     val solvencyStatus: SolvencyStatus = SolvencyStatus.PENDING,
     val recentPayments: List<Payment> = emptyList(),
     val isLoading: Boolean = false,

@@ -18,6 +18,12 @@ import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.HowToVote
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
@@ -29,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
@@ -66,7 +73,10 @@ fun DashboardScreen(
 
     Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.background
+            containerColor = Color(0xFFF7F9FB), // pro-surface
+            bottomBar = {
+                BottomNavBar(onProfileClick = onProfileClick)
+            }
     ) { paddingValues ->
         if (uiState.isLoading && uiState.userName.isEmpty()) {
             Box(
@@ -80,13 +90,14 @@ fun DashboardScreen(
         LazyColumn(
                 modifier =
                         Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
                 HeaderSection(
                         userName = uiState.userName,
                         building = uiState.userBuilding,
                         apartmentUnit = uiState.userApartment,
+                        hasMultipleUnits = uiState.hasMultipleUnits,
                         onProfileClick = onProfileClick,
                         onUnitClick = onUnitClick
                 )
@@ -124,14 +135,27 @@ fun DashboardScreen(
             }
 
             item {
-                Text(
-                        text = stringResource(Res.string.recent_transactions),
-                        style =
-                                MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold
-                                ),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                            text = stringResource(Res.string.recent_transactions),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = (-0.3).sp
+                            ),
+                            color = Color(0xFF09151A)
+                    )
+                    Text(
+                            text = stringResource(Res.string.see_all),
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color(0xFFFF6B00), // brand orange
+                            modifier = Modifier.clickable { onHistoryClick() }
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             items(uiState.recentPayments) { payment ->
@@ -149,11 +173,13 @@ fun BillingCard(
         onSeeAllClick: () -> Unit = {}
 ) {
     val isSolvent = totalDebt <= 0
-    val cardColor = if (isSolvent) Color(0xFF4CAF50) else Color(0xFFD32F2F) // Green or Red
+    val amountColor = if (isSolvent) Color(0xFF16A34A) else Color(0xFFDC2626) // pro-success or pro-danger
 
     Card(
-            colors = CardDefaults.cardColors(containerColor = cardColor),
-            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(8.dp), // pro border radius
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF3F4F6)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -163,58 +189,84 @@ fun BillingCard(
                     verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                        text = stringResource(Res.string.total_debt),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White.copy(alpha = 0.8f)
+                        text = stringResource(Res.string.total_debt).uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        ),
+                        color = Color(0xFF6B7280) // text-gray-500
                 )
-                TextButton(
-                        onClick = onSeeAllClick,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
-                ) { Text(stringResource(Res.string.see_all), style = MaterialTheme.typography.labelLarge) }
+                Text(
+                        text = stringResource(Res.string.see_all),
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                        ),
+                        color = Color(0xFF09151A), // dark text instead of blue
+                        modifier = Modifier.clickable { onSeeAllClick() }
+                )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                     text = stringResource(Res.string.currency_amount, formatCurrency(totalDebt)),
-                    style =
-                            MaterialTheme.typography.displaySmall.copy(
-                                    fontWeight = FontWeight.Bold
-                            ),
-                    color = Color.White
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-1).sp
+                    ),
+                    color = amountColor
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (totalDebt > 0) {
+                 Text(
+                        text = "¡Atención! Tienes saldo deudor pendiente.",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = Color(0xFFDC2626), // pro-danger
+                        modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (pendingInvoices.isNotEmpty()) {
-                Text(
-                        text = stringResource(Res.string.pending_invoices_label),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color(0xFFF3F4F6))
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 pendingInvoices.take(3).forEach { invoice ->
                     Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Bottom
                     ) {
-                        Text(
-                                text = invoice.description ?: invoice.period,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.9f)
-                        )
+                        Column {
+                            Text(
+                                text = stringResource(Res.string.pending_invoices_label),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF6B7280) // text-gray-500
+                            )
+                            Text(
+                                    text = invoice.description ?: invoice.period,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color(0xFF09151A)
+                            )
+                        }
                         Text(
                                 text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = Color(0xFFDC2626) // pro-danger
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             } else {
                 Text(
                         text = stringResource(Res.string.up_to_date),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                        color = Color(0xFF16A34A) // pro-success
                 )
             }
         }
@@ -226,6 +278,7 @@ fun HeaderSection(
         userName: String,
         building: String = "",
         apartmentUnit: String = "",
+        hasMultipleUnits: Boolean = false,
         onProfileClick: () -> Unit = {},
         onUnitClick: () -> Unit = {}
 ) {
@@ -234,65 +287,62 @@ fun HeaderSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.clickable(onClick = onUnitClick)) {
+        Column(
+            modifier = if (hasMultipleUnits) Modifier.clickable(onClick = onUnitClick) else Modifier
+        ) {
             Text(
                     text = stringResource(Res.string.welcome_back),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    color = Color(0xFF6B7280) // gray-500
             )
             Text(
                     text = userName,
-                    style =
-                            MaterialTheme.typography.headlineSmall.copy(
-                                    fontWeight = FontWeight.Bold
-                            )
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.5).sp
+                    ),
+                    color = Color(0xFF09151A)
             )
             if (building.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                             text = stringResource(Res.string.apt_unit_label, building, apartmentUnit),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = Color(0xFFFF6B00) // brand orange
                     )
-                    Icon(
-                            imageVector =
-                                    Icons.Default.ArrowDropDown,
-                            contentDescription = stringResource(Res.string.select_unit),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                    )
+                    if (hasMultipleUnits) {
+                        Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = stringResource(Res.string.select_unit),
+                                tint = Color(0xFFFF6B00),
+                                modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }
         // Avatar - Clickable to open profile
         Surface(
-                modifier = Modifier.size(52.dp).clickable(onClick = onProfileClick),
+                modifier = Modifier.size(48.dp).clickable(onClick = onProfileClick),
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                tonalElevation = 2.dp,
-                border =
-                        androidx.compose.foundation.BorderStroke(
-                                2.dp,
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                        )
+                color = Color(0xFFFFF7ED), // orange-100
+                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFFEDD5)) // orange-200
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (userName.isNotEmpty()) {
                     Text(
                             text = userName.take(1).uppercase(),
-                            style =
-                                    MaterialTheme.typography.titleLarge.copy(
-                                            fontWeight = FontWeight.Bold
-                                    ),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                            ),
+                            color = Color(0xFFEA580C) // orange-600
                     )
                 } else {
                     Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = stringResource(Res.string.profile),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = Color(0xFFEA580C)
                     )
                 }
             }
@@ -347,12 +397,15 @@ fun QuickActions(
 @Composable
 fun PettyCashBalanceCard(amount: Double, currency: String) {
     val isNegative = amount < 0
-    val accent = if (isNegative) Color(0xFFD32F2F) else Color(0xFF00BFA5)
+    val amountColor = if (isNegative) Color(0xFFDC2626) else Color(0xFF09151A)
+    val iconTint = Color(0xFFEC4899) // pink-500
+    val iconBg = Color(0xFFFDF2F8) // pink-50
 
     Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.25f)),
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF3F4F6)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -361,39 +414,40 @@ fun PettyCashBalanceCard(amount: Double, currency: String) {
         ) {
             Box(
                     modifier = Modifier
-                            .size(44.dp)
-                            .background(accent.copy(alpha = 0.12f), CircleShape),
+                            .size(48.dp)
+                            .background(iconBg, CircleShape),
                     contentAlignment = Alignment.Center
             ) {
                 Icon(
                         imageVector = Icons.Default.Savings,
                         contentDescription = null,
-                        tint = accent
+                        tint = iconTint,
+                        modifier = Modifier.size(24.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                         text = stringResource(Res.string.petty_cash),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFF374151) // gray-700
                 )
                 Text(
                         text = stringResource(Res.string.available_balance),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF9CA3AF) // gray-400
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                         text = stringResource(Res.string.currency_amount, formatCurrency(amount)),
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = accent
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                        color = amountColor
                 )
                 Text(
                         text = currency,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFF9CA3AF) // gray-400
                 )
             }
         }
@@ -432,28 +486,28 @@ fun QuickActionItem(
                                     .background(color.copy(alpha = 0.1f), CircleShape)
                                     .border(1.dp, color.copy(alpha = 0.2f), CircleShape),
                     contentAlignment = Alignment.Center
-            ) { Icon(imageVector = icon, contentDescription = label, tint = color) }
+            ) { Icon(imageVector = icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp)) }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, lineHeight = androidx.compose.ui.unit.TextUnit.Unspecified),
+                color = Color(0xFF4B5563), // gray-600
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
 
 @Composable
 fun TransactionItem(payment: Payment, onClick: () -> Unit) {
-
-
     Row(
             modifier =
                     Modifier.fillMaxWidth()
                             .background(
-                                    MaterialTheme.colorScheme.surface,
-                                    RoundedCornerShape(16.dp)
+                                    Color.White, // pro-container
+                                    RoundedCornerShape(8.dp) // pro border radius
                             )
+                            .border(1.dp, Color(0xFFF9FAFB), RoundedCornerShape(8.dp)) // border-gray-50
                             .clickable(onClick = onClick)
                             .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -462,60 +516,195 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                 modifier =
                         Modifier.size(48.dp)
                                 .background(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                        RoundedCornerShape(12.dp)
+                                        Color(0xFFFFF7ED), // orange-50
+                                        RoundedCornerShape(8.dp)
                                 ),
                 contentAlignment = Alignment.Center
         ) {
             Icon(
                     imageVector = Icons.Default.Payment,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = Color(0xFFEA580C) // orange-600
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                     text = payment.description.ifBlank { stringResource(Res.string.payment_item_label) },
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFF09151A),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
             Text(
                     text = formatDate(payment.date),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = Color(0xFF9CA3AF) // gray-400
             )
 
-            val statusColor =
-                    when (payment.status) {
-                        PaymentStatus.APPROVED -> Color(0xFF4CAF50)
-                        PaymentStatus.PENDING -> Color(0xFFFFC107)
-                        PaymentStatus.REJECTED -> Color(0xFFF44336)
-                    }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                 val statusLabel = when (payment.status) {
                     PaymentStatus.APPROVED -> stringResource(Res.string.status_approved_upper)
                     PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper)
                     PaymentStatus.PENDING -> stringResource(Res.string.status_pending)
                 }
-                Text(
-                        text = statusLabel,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = statusColor
-                )
+                
+                val statusBg = when (payment.status) {
+                    PaymentStatus.APPROVED -> Color(0xFFF0FDF4) // green-50
+                    PaymentStatus.REJECTED -> Color(0xFFFEF2F2) // red-50
+                    PaymentStatus.PENDING -> Color(0xFFFEFCE8) // yellow-50
+                }
+                
+                val statusColor = when (payment.status) {
+                    PaymentStatus.APPROVED -> Color(0xFF16A34A) // pro-success
+                    PaymentStatus.REJECTED -> Color(0xFFDC2626) // pro-danger
+                    PaymentStatus.PENDING -> Color(0xFFD97706) // yellow-600
+                }
+
+                Box(
+                    modifier = Modifier.background(statusBg, RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                            text = statusLabel,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.ExtraBold, 
+                                fontSize = 9.sp,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = statusColor
+                    )
+                }
+                
                 if (payment.status != PaymentStatus.PENDING && !payment.processorName.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                             text = stringResource(Res.string.processed_by_short, payment.processorName),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 9.sp
+                            ),
+                            color = Color(0xFF9CA3AF),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
             }
         }
         Text(
                 text = "$${formatCurrency(payment.amount)}",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.ExtraBold),
+                color = Color(0xFF09151A)
         )
     }
 }
 
+@Composable
+fun BottomNavBar(
+    onProfileClick: () -> Unit = {},
+) {
+    val activeColor = Color(0xFFFF6B00) // brand orange
+    val inactiveColor = Color(0xFF9CA3AF) // gray-400
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.White,
+        shadowElevation = 8.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF3F4F6))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Inicio (active)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable { }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Home,
+                    contentDescription = "Inicio",
+                    tint = activeColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Inicio",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    ),
+                    color = activeColor
+                )
+            }
+
+            // Alertas
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable { }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Alertas",
+                    tint = inactiveColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Alertas",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    ),
+                    color = inactiveColor
+                )
+            }
+
+            // Perfil
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable(onClick = onProfileClick)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = "Perfil",
+                    tint = inactiveColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Perfil",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    ),
+                    color = inactiveColor
+                )
+            }
+
+            // Más
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable { }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Más",
+                    tint = inactiveColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Más",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    ),
+                    color = inactiveColor
+                )
+            }
+        }
+    }
+}
