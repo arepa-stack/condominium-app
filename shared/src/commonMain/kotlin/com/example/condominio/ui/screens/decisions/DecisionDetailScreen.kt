@@ -42,11 +42,12 @@ import com.example.condominio.data.model.QuoteDto
 import com.example.condominio.data.model.ResultingType
 import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
+import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.formatDecisionDeadline
+import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -69,32 +70,58 @@ fun DecisionDetailScreen(
     }
 
     Scaffold(
+        containerColor = AptoBackground,
         topBar = {
             TopAppBar(
-                title = { Text(uiState.detail?.decision?.title ?: stringResource(Res.string.decisions_detail_fallback_title)) },
+                title = {
+                    Text(
+                        text = uiState.detail?.decision?.title
+                            ?: stringResource(Res.string.decisions_detail_fallback_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = AptoSecondary,
+                        maxLines = 1
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.back),
+                            tint = AptoSecondary
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.refresh))
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = stringResource(Res.string.refresh),
+                            tint = AptoSecondary
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
             )
         },
         bottomBar = {
             val status = uiState.detail?.decision?.status
             if (status == DecisionStatus.RECEPTION) {
-                Surface(tonalElevation = 3.dp) {
+                Surface(
+                    color = AptoSurface,
+                    shadowElevation = 8.dp
+                ) {
                     Button(
                         onClick = { viewModel.openUploadSheet() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
-                            .height(56.dp),
-                        shape = RoundedCornerShape(12.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AptoSecondaryContainer,
+                            contentColor = AptoOnSecondary
+                        )
                     ) {
                         Icon(
                             Icons.Default.Add,
@@ -134,7 +161,7 @@ fun DecisionDetailScreen(
                 ) {
                     Text(
                         text = uiState.error!!.asString(),
-                        color = MaterialTheme.colorScheme.error
+                        color = AptoStatusError
                     )
                 }
             }
@@ -266,19 +293,20 @@ fun DecisionDetailScreen(
 @Composable
 private fun HeaderSection(decision: DecisionDto) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        DetailStatusBadge(status = decision.status)
+        DecisionStatusBadge(status = decision.status)
 
         Text(
             text = decision.title,
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = AptoOnSurface
         )
 
         if (!decision.description.isNullOrEmpty()) {
             Text(
                 text = decision.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = AptoOnSurfaceVariant
             )
         }
     }
@@ -298,11 +326,11 @@ private fun DeadlineCard(decision: DecisionDto) {
 
     val hoursLeft = hoursUntilDeadline(activeIso)
     val color = when {
-        hoursLeft == null -> MaterialTheme.colorScheme.primary
-        hoursLeft < 0L -> MaterialTheme.colorScheme.error
-        hoursLeft <= 24L -> MaterialTheme.colorScheme.error
-        hoursLeft <= 72L -> Color(0xFFE65100)
-        else -> MaterialTheme.colorScheme.primary
+        hoursLeft == null -> AptoSecondary
+        hoursLeft < 0L -> AptoStatusError
+        hoursLeft <= 24L -> AptoStatusError
+        hoursLeft <= 72L -> AptoSecondaryContainer
+        else -> AptoSecondary
     }
     val urgent = hoursLeft != null && hoursLeft in 0L..24L
     val timeText = when {
@@ -340,7 +368,7 @@ private fun DeadlineCard(decision: DecisionDto) {
                 Text(
                     stringResource(Res.string.decisions_deadline_card_title),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = AptoOnSurfaceVariant
                 )
                 Text(
                     timeText,
@@ -349,9 +377,9 @@ private fun DeadlineCard(decision: DecisionDto) {
                     color = color
                 )
                 Text(
-                    formatIsoDeadline(activeIso),
+                    formatDecisionDeadline(activeIso),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = AptoOnSurfaceVariant
                 )
             }
             if (urgent) {
@@ -421,7 +449,7 @@ private fun PhaseInfoCard(status: DecisionStatus) {
                 Text(
                     body,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = AptoOnSurfaceVariant
                 )
             }
         }
@@ -437,9 +465,8 @@ private fun QuotesEmptyState() {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-        )
+        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLow),
+        border = BorderStroke(1.dp, AptoOutlineVariant)
     ) {
         Column(
             modifier = Modifier
@@ -450,16 +477,13 @@ private fun QuotesEmptyState() {
             Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                        CircleShape
-                    ),
+                    .background(AptoPrimaryFixed, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.Description,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = AptoSecondary,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -467,54 +491,21 @@ private fun QuotesEmptyState() {
             Text(
                 stringResource(Res.string.decisions_quotes_empty_title),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = AptoOnSurface
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 stringResource(Res.string.decisions_quotes_empty_body),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = AptoOnSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// DetailStatusBadge — minimal duplicate of StatusBadge (private in list screen)
-// TODO: extract to common file in Phase 6 refactor
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun DetailStatusBadge(status: DecisionStatus) {
-    val label = when (status) {
-        DecisionStatus.RECEPTION -> stringResource(Res.string.decisions_status_reception)
-        DecisionStatus.VOTING -> stringResource(Res.string.decisions_status_voting)
-        DecisionStatus.TIEBREAK_PENDING -> stringResource(Res.string.decisions_status_tiebreak)
-        DecisionStatus.RESOLVED -> stringResource(Res.string.decisions_status_resolved)
-        DecisionStatus.CANCELLED -> stringResource(Res.string.decisions_status_cancelled)
-    }
-    val color = when (status) {
-        DecisionStatus.RECEPTION -> Color(0xFF1565C0)
-        DecisionStatus.VOTING -> Color(0xFFE65100)
-        DecisionStatus.TIEBREAK_PENDING -> Color(0xFFF9A825)
-        DecisionStatus.RESOLVED -> Color(0xFF2E7D32)
-        DecisionStatus.CANCELLED -> Color(0xFF757575)
-    }
-
-    Box(
-        modifier = Modifier
-            .background(color = color.copy(alpha = 0.15f), shape = RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
-}
+// DecisionStatusBadge is imported from com.example.condominio.ui.components
 
 // ---------------------------------------------------------------------------
 // PhotoSection — private helper
@@ -566,12 +557,14 @@ private fun QuoteItem(
             containerColor = if (isWinner) {
                 Color(0xFF2E7D32).copy(alpha = 0.08f)
             } else {
-                MaterialTheme.colorScheme.surface
+                AptoSurfaceContainerLowest
             }
         ),
         border = if (accent != null) {
             BorderStroke(if (isWinner) 2.dp else 1.dp, accent.copy(alpha = if (isWinner) 1f else 0.5f))
-        } else null
+        } else {
+            BorderStroke(1.dp, AptoOutlineVariant)
+        }
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             if (isWinner) {
@@ -616,10 +609,15 @@ private fun QuoteItem(
                 verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(quote.providerName, fontWeight = FontWeight.Bold)
+                    Text(
+                        quote.providerName,
+                        fontWeight = FontWeight.Bold,
+                        color = AptoOnSurface
+                    )
                     Text(
                         "$" + formatCurrency(quote.amount),
-                        color = MaterialTheme.colorScheme.primary
+                        color = AptoSecondary,
+                        fontWeight = FontWeight.SemiBold
                     )
                     val uploaderLabel = if (isMine) {
                         stringResource(Res.string.decisions_quote_uploaded_by_me)
@@ -629,22 +627,23 @@ private fun QuoteItem(
                     Text(
                         uploaderLabel,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = AptoOnSurfaceVariant
                     )
                 }
                 if (isMine) {
                     Box(
                         modifier = Modifier
                             .background(
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                color = AptoSecondaryFixed,
                                 shape = RoundedCornerShape(6.dp)
                             )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
                             stringResource(Res.string.decisions_quote_mine_badge),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
+                            fontWeight = FontWeight.SemiBold,
+                            color = AptoSecondary
                         )
                     }
                 }
@@ -667,7 +666,7 @@ private fun QuoteItem(
                     TextButton(
                         onClick = { showDeleteConfirm = true },
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            contentColor = AptoStatusError
                         )
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -713,33 +712,52 @@ private fun VoteSectionByState(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLowest),
+        border = BorderStroke(1.dp, AptoOutlineVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             when (status) {
                 DecisionStatus.RECEPTION -> {
-                    Text(stringResource(Res.string.decisions_vote_section_title), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(Res.string.decisions_vote_section_title),
+                        fontWeight = FontWeight.Bold,
+                        color = AptoOnSurface
+                    )
                     Text(
                         stringResource(Res.string.decisions_vote_opens_soon),
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AptoOnSurfaceVariant
                     )
                 }
 
                 DecisionStatus.VOTING -> {
-                    Text(stringResource(Res.string.decisions_vote_in_progress_title), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(Res.string.decisions_vote_in_progress_title),
+                        fontWeight = FontWeight.Bold,
+                        color = AptoOnSurface
+                    )
                     if (myVote == null) {
                         Text(
                             stringResource(Res.string.decisions_vote_not_cast_yet),
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = AptoOnSurfaceVariant
                         )
-                        Button(onClick = onVoteClick) {
+                        Button(
+                            onClick = onVoteClick,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = AptoSecondaryContainer,
+                                contentColor = AptoOnSecondary
+                            )
+                        ) {
                             Text(stringResource(Res.string.decisions_vote_btn))
                         }
                     } else {
                         val provider = detail.quotes.find { it.id == myVote.quoteId }?.providerName ?: "—"
                         Text(
                             stringResource(Res.string.decisions_my_vote_label, provider),
-                            color = MaterialTheme.colorScheme.primary
+                            color = AptoSecondaryContainer,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                     Spacer(Modifier.height(12.dp))
@@ -750,18 +768,20 @@ private fun VoteSectionByState(
                     Text(
                         stringResource(Res.string.decisions_tiebreak_title),
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = AptoStatusWarning
                     )
                     Text(
                         stringResource(Res.string.decisions_tiebreak_body),
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AptoOnSurfaceVariant
                     )
                 }
 
                 DecisionStatus.RESOLVED -> {
                     Text(
                         stringResource(Res.string.decisions_resolved_results_title),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = AptoOnSurface
                     )
                     Spacer(Modifier.height(8.dp))
                     TallyBreakdown(detail.tally)
@@ -774,7 +794,7 @@ private fun VoteSectionByState(
                         Text(
                             stringResource(Res.string.decisions_resolved_charge_label, typeLabel),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = AptoOnSurfaceVariant
                         )
                     }
                 }
@@ -783,13 +803,14 @@ private fun VoteSectionByState(
                     Text(
                         stringResource(Res.string.decisions_cancelled_title),
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error
+                        color = AptoStatusError
                     )
                     detail.decision.cancelReason?.let {
                         Spacer(Modifier.height(4.dp))
                         Text(
                             stringResource(Res.string.decisions_cancelled_reason_label, it),
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AptoOnSurfaceVariant
                         )
                     }
                 }
@@ -817,14 +838,14 @@ private fun TallyBreakdown(tally: TallyDto) {
                 Icon(
                     Icons.Default.HowToVote,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    tint = AptoOutline,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     stringResource(Res.string.decisions_tally_waiting),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = AptoOnSurfaceVariant
                 )
             }
         } else {
@@ -847,13 +868,13 @@ private fun TallyBreakdown(tally: TallyDto) {
                     Box(
                         modifier = Modifier
                             .size(8.dp)
-                            .background(MaterialTheme.colorScheme.tertiary, CircleShape)
+                            .background(AptoStatusWarning, CircleShape)
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
                         stringResource(Res.string.decisions_tally_tie_hint),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = AptoStatusWarning,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -899,7 +920,7 @@ private fun TallyBar(
                 stringResource(Res.string.decisions_tally_votes_pct).format(votes, pct),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = AptoOnSurface
             )
         }
         Spacer(Modifier.height(4.dp))
@@ -956,8 +977,8 @@ private fun ParticipationDonut(
     )
     val ringColor = when {
         participationPct >= 75.0 -> Color(0xFF2E7D32)
-        participationPct >= 50.0 -> Color(0xFFE65100)
-        else -> MaterialTheme.colorScheme.primary
+        participationPct >= 50.0 -> AptoSecondaryContainer
+        else -> AptoOutline
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
@@ -1003,7 +1024,7 @@ private fun ParticipationDonut(
                     totalApartments
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                color = AptoOnSurfaceVariant
             )
         }
     }
@@ -1094,7 +1115,7 @@ private fun WinnerHeroCard(
                 "$" + formatCurrency(winner.amount),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = AptoSecondary
             )
 
             Spacer(Modifier.height(8.dp))
@@ -1103,7 +1124,7 @@ private fun WinnerHeroCard(
                 stringResource(Res.string.decisions_resolved_winner_votes, votes, pct.toInt().toString()),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = AptoOnSurface
             )
 
             decision.finalizedAt?.let { iso ->
@@ -1111,33 +1132,17 @@ private fun WinnerHeroCard(
                 Text(
                     stringResource(
                         Res.string.decisions_resolved_finalized_at,
-                        formatIsoDeadline(iso)
+                        formatDecisionDeadline(iso)
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = AptoOnSurfaceVariant
                 )
             }
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// formatIsoDeadline — private utility (mirrors DecisionsListScreen.kt)
-// ---------------------------------------------------------------------------
-
-private fun formatIsoDeadline(iso: String): String {
-    return try {
-        val instant = Instant.parse(iso)
-        val dt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-        val day = dt.dayOfMonth.toString().padStart(2, '0')
-        val month = dt.monthNumber.toString().padStart(2, '0')
-        val hour = dt.hour.toString().padStart(2, '0')
-        val minute = dt.minute.toString().padStart(2, '0')
-        "$day/$month $hour:$minute"
-    } catch (e: Exception) {
-        iso
-    }
-}
+// formatDecisionDeadline is imported from com.example.condominio.ui.components
 
 private fun hoursUntilDeadline(iso: String): Long? {
     return try {

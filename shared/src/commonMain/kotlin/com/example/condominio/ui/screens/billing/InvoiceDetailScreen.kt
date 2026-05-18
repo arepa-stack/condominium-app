@@ -1,10 +1,17 @@
 package com.example.condominio.ui.screens.billing
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -12,142 +19,226 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
+import com.example.condominio.data.model.Invoice
+import com.example.condominio.data.model.InvoiceStatus
 import com.example.condominio.data.model.Payment
-import com.example.condominio.ui.utils.formatDate
+import com.example.condominio.data.model.PaymentMethod
+import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.formatDate
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceDetailScreen(
     onBackClick: () -> Unit,
     onSeeAllPaymentsClick: () -> Unit,
-    onSeeAllInvoicesClick: () -> Unit,
+    onDownloadClick: () -> Unit,
     onPayRemainderClick: (String) -> Unit,
     onPaymentClick: (String) -> Unit,
     viewModel: InvoiceDetailViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val invoice = uiState.invoice
+    val hasPendingBalance = invoice != null &&
+            invoice.remaining > 0 &&
+            invoice.status != InvoiceStatus.CANCELLED &&
+            invoice.status != InvoiceStatus.PAID
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.invoice_detail_title)) },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.invoice_detail_title),
+                        fontWeight = FontWeight.Bold,
+                        color = AptoPrimary
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.back),
+                            tint = AptoPrimary
+                        )
                     }
-                }
+                },
+                actions = {
+                    IconButton(onClick = { }) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = stringResource(Res.string.share),
+                            tint = AptoPrimary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurfaceContainerLowest)
             )
         },
         bottomBar = {
-            if (uiState.invoice != null && uiState.invoice!!.remaining > 0 && uiState.invoice!!.status != com.example.condominio.data.model.InvoiceStatus.CANCELLED) {
-                Button(
-                    onClick = { onPayRemainderClick(uiState.invoice!!.id) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6D00))
+            if (invoice != null) {
+                Surface(
+                    color = AptoSurfaceContainerLowest,
+                    shadowElevation = 8.dp,
+                    tonalElevation = 0.dp
                 ) {
-                    Text(stringResource(Res.string.pay_remainder_btn, formatCurrency(uiState.invoice!!.remaining)))
-                }
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            // Invoice Summary Card
-            if (uiState.invoice != null) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        val inv = uiState.invoice!!
-                        Text(
-                            text = uiState.invoice!!.description ?: stringResource(Res.string.invoice_period_label, uiState.invoice!!.period),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(stringResource(Res.string.total_label), style = MaterialTheme.typography.bodySmall)
-                            Text(stringResource(Res.string.currency_amount, formatCurrency(inv.amount)), fontWeight = FontWeight.SemiBold)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(stringResource(Res.string.paid_label), style = MaterialTheme.typography.bodySmall)
+                    HorizontalDivider(color = AptoOutlineVariant)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onSeeAllPaymentsClick,
+                            modifier = Modifier.weight(1f),
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, AptoSecondary),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoSecondary)
+                        ) {
                             Text(
-                                stringResource(Res.string.currency_amount, formatCurrency(inv.paid)),
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF2E7D32)
+                                text = stringResource(Res.string.view_all_payments),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
                             )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(stringResource(Res.string.remaining_label), style = MaterialTheme.typography.bodySmall)
-                            Text(
-                                stringResource(Res.string.currency_amount, formatCurrency(inv.remaining)),
-                                fontWeight = FontWeight.Bold,
-                                color = if (inv.remaining > 0) Color(0xFFFF6D00) else Color(0xFF2E7D32)
-                            )
-                        }
-                        if (inv.amount > 0 && inv.paid > 0 && inv.remaining > 0) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            LinearProgressIndicator(
-                                progress = { (inv.paid / inv.amount).toFloat().coerceIn(0f, 1f) },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                        if (hasPendingBalance) {
+                            Button(
+                                onClick = { onPayRemainderClick(invoice.id) },
+                                modifier = Modifier.weight(1f),
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = AptoSecondaryContainer,
+                                    contentColor = AptoOnSecondary
+                                )
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.pay_now).uppercase(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        } else {
+                            Button(
+                                onClick = onDownloadClick,
+                                modifier = Modifier.weight(1f),
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = AptoSecondary,
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.download_invoice),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
             }
+        },
+        containerColor = AptoBackground
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            if (uiState.isLoading && invoice == null) {
+                item {
+                    Box(
+                        modifier = Modifier.fillParentMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = AptoSecondaryContainer)
+                    }
+                }
+                return@LazyColumn
+            }
 
-            Text(
-                text = stringResource(Res.string.payment_history_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            if (invoice == null) {
+                item {
+                    Box(
+                        modifier = Modifier.fillParentMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.no_invoices_found),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = AptoOnSurfaceVariant
+                        )
+                    }
+                }
+                return@LazyColumn
+            }
+
+            item {
+                InvoiceStatusHeader(invoice = invoice)
+            }
+
+            item {
+                InvoiceAmountCard(
+                    invoice = invoice,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            item {
+                Text(
+                    text = stringResource(Res.string.payment_history_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AptoPrimary,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
+                )
+            }
 
             if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = AptoSecondaryContainer)
+                    }
                 }
             } else if (uiState.payments.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                    Text(stringResource(Res.string.no_payments_found))
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.payments) { payment ->
-                        PaymentItem(
-                            payment = payment, 
-                            invoiceId = uiState.invoice?.id,
-                            onClick = { onPaymentClick(payment.id) }
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.no_payments_found),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AptoOnSurfaceVariant,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                OutlinedButton(onClick = onSeeAllPaymentsClick) {
-                    Text(stringResource(Res.string.view_all_payments))
-                }
-                OutlinedButton(onClick = onSeeAllInvoicesClick) {
-                    Text(stringResource(Res.string.view_invoices))
+            } else {
+                items(uiState.payments) { payment ->
+                    PaymentItem(
+                        payment = payment,
+                        invoiceId = invoice.id,
+                        onClick = { onPaymentClick(payment.id) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
                 }
             }
         }
@@ -155,70 +246,181 @@ fun InvoiceDetailScreen(
 }
 
 @Composable
-fun PaymentItem(payment: Payment, invoiceId: String?, onClick: () -> Unit) {
-    // Find allocation for this invoice
-    val allocation = invoiceId?.let { id -> 
-        payment.allocations.find { it.invoiceId == id } 
-    }
-    
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+private fun InvoiceStatusHeader(invoice: Invoice) {
+    val (icon, iconColor, statusText) = resolveInvoiceStatusVisuals(invoice.status)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = formatDate(payment.date, "dd/MM/yyyy"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Column(horizontalAlignment = Alignment.End) {
-                    // Show allocated amount if available and different from total
-                    if (allocation != null) {
-                         Text(
-                            text = stringResource(Res.string.applied_label, formatCurrency(allocation.amount)),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2E7D32)
-                        )
-                        if (allocation.amount != payment.amount) {
-                            Text(
-                                text = stringResource(Res.string.total_amount_label, formatCurrency(payment.amount)),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        Text(
-                            text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2E7D32)
-                        )
-                    }
-                }
-            }
-            val methodLabel = when (payment.method) {
-                com.example.condominio.data.model.PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
-                com.example.condominio.data.model.PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
-                com.example.condominio.data.model.PaymentMethod.CASH -> stringResource(Res.string.method_cash)
-            }
-            Text(
-                text = stringResource(Res.string.payment_method_label, methodLabel),
-                style = MaterialTheme.typography.bodySmall
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .background(iconColor.copy(alpha = 0.1f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(40.dp)
             )
-            if (!payment.reference.isNullOrEmpty()) {
-                Text(
-                    text = "${stringResource(Res.string.reference_short)}: ${payment.reference}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        }
+        Text(
+            text = invoice.description ?: stringResource(Res.string.invoice_period_label, invoice.period),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = AptoPrimary,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = statusText,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = iconColor
+        )
+    }
+}
+
+@Composable
+private fun resolveInvoiceStatusVisuals(status: InvoiceStatus): Triple<ImageVector, Color, String> {
+    return when (status) {
+        InvoiceStatus.PAID -> Triple(Icons.Default.CheckCircle, AptoStatusSuccess, stringResource(Res.string.status_paid))
+        InvoiceStatus.OVERDUE -> Triple(Icons.Default.Warning, AptoStatusError, stringResource(Res.string.status_overdue))
+        InvoiceStatus.CANCELLED -> Triple(Icons.Default.Warning, AptoStatusError, stringResource(Res.string.status_cancelled))
+        InvoiceStatus.PARTIAL -> Triple(Icons.Default.Warning, AptoSecondaryContainer, stringResource(Res.string.status_partial))
+        InvoiceStatus.PENDING -> Triple(Icons.Default.Warning, AptoSecondaryContainer, stringResource(Res.string.status_pending))
+    }
+}
+
+@Composable
+private fun InvoiceAmountCard(
+    invoice: Invoice,
+    modifier: Modifier = Modifier
+) {
+    OutlinedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.outlinedCardColors(containerColor = AptoSurfaceContainerLowest),
+        border = BorderStroke(1.dp, AptoOutlineVariant)
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            AmountRow(
+                label = stringResource(Res.string.total_label),
+                amount = invoice.amount,
+                amountColor = AptoSecondary
+            )
+            AmountRow(
+                label = stringResource(Res.string.paid_label),
+                amount = invoice.paid,
+                amountColor = AptoSecondary
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = AptoOutlineVariant
+            )
+            AmountRow(
+                label = stringResource(Res.string.remaining_label),
+                amount = invoice.remaining,
+                amountColor = if (invoice.remaining <= 0) AptoStatusSuccess else AptoStatusError,
+                labelColor = AptoOutline
+            )
         }
     }
 }
 
+@Composable
+private fun AmountRow(
+    label: String,
+    amount: Double,
+    amountColor: Color,
+    labelColor: Color = AptoSecondary
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = labelColor
+        )
+        Text(
+            text = "\$${formatCurrency(amount)}",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = amountColor
+        )
+    }
+}
+
+@Composable
+fun PaymentItem(
+    payment: Payment,
+    invoiceId: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val allocation = invoiceId?.let { id ->
+        payment.allocations.find { it.invoiceId == id }
+    }
+
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLow),
+        border = BorderStroke(1.dp, AptoOutlineVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = formatDate(payment.date, "dd/MM/yyyy"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AptoOnSurface
+                )
+                val methodLabel = when (payment.method) {
+                    PaymentMethod.PAGO_MOVIL -> stringResource(Res.string.method_pago_movil)
+                    PaymentMethod.TRANSFER -> stringResource(Res.string.method_transfer)
+                    PaymentMethod.CASH -> stringResource(Res.string.method_cash)
+                }
+                Text(
+                    text = stringResource(Res.string.payment_method_label, methodLabel),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AptoOnSurfaceVariant
+                )
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                val displayAmount = allocation?.amount ?: payment.amount
+                Text(
+                    text = stringResource(Res.string.applied_label, formatCurrency(displayAmount)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AptoStatusSuccess,
+                    textDecoration = TextDecoration.Underline
+                )
+                if (allocation != null && allocation.amount != payment.amount) {
+                    Text(
+                        text = stringResource(Res.string.total_amount_label, formatCurrency(payment.amount)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AptoOnSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}

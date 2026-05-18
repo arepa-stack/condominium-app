@@ -143,15 +143,10 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             com.example.condominio.ui.screens.billing.InvoiceListScreen(
                     onBackClick = { navController.popBackStack() },
                     onInvoiceClick = { invoice ->
-                        val status = invoice.status
-                        val isTerminal =
-                                status == com.example.condominio.data.model.InvoiceStatus.PAID ||
-                                        status == com.example.condominio.data.model.InvoiceStatus.CANCELLED
-                        if (isTerminal || invoice.paid > 0) {
-                            navController.navigate("invoice_detail/${invoice.id}")
-                        } else {
-                            navController.navigate("create_payment?invoiceId=${invoice.id}")
-                        }
+                        navController.navigate("invoice_detail/${invoice.id}")
+                    },
+                    onPayNowClick = { invoice ->
+                        navController.navigate("create_payment?invoiceId=${invoice.id}")
                     }
             )
         }
@@ -162,11 +157,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             InvoiceDetailScreen(
                     onBackClick = { navController.popBackStack() },
                     onSeeAllPaymentsClick = { navController.navigate("payment_history") },
-                    onSeeAllInvoicesClick = {
-                        navController.navigate("invoice_list") {
-                            popUpTo("invoice_list") { inclusive = true }
-                        }
-                    },
+                    onDownloadClick = { /* TODO: implementar descarga de factura */ },
                     onPayRemainderClick = { invoiceId ->
                         navController.navigate("create_payment?invoiceId=$invoiceId")
                     },

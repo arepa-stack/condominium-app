@@ -265,12 +265,15 @@
     <string name="error_password_required">La contraseña actual es requerida</string>
 
     <!-- Decisions -->
-    <string name="decisions_title">Decisiones</string>
-    <string name="decisions_empty">No hay decisiones en tu edificio</string>
-    <string name="decisions_filter_all">Todas</string>
-    <string name="decisions_filter_reception">Recepción</string>
-    <string name="decisions_filter_voting">Votación</string>
+    <string name="decisions_title">Presupuesto</string>
+    <string name="decisions_empty">No hay presupuestos en tu edificio</string>
+    <string name="decisions_filter_all">Todos</string>
+    <string name="decisions_filter_reception">Borradores</string>
+    <string name="decisions_filter_voting">En Votación</string>
     <string name="decisions_filter_resolved">Resueltas</string>
+    <string name="decisions_see_detail">Ver detalle</string>
+    <string name="decisions_urgent">Urgente</string>
+    <string name="decisions_finalized_on">Finalizado el %1$s</string>
     <string name="decisions_status_reception">Recepción</string>
     <string name="decisions_status_voting">Votación</string>
     <string name="decisions_status_tiebreak">Desempate</string>
@@ -360,4 +363,10 @@
     <string name="language_settings">Idioma</string>
     <string name="language_dialog_title">Seleccionar Idioma</string>
     <string name="language_current">Idioma actual: %1$s</string>
+
+    <!-- Invoice / Billing UI -->
+    <string name="download_invoice">Descargar Factura</string>
+    <string name="no_invoices_for_filter">No se encontraron facturas para el filtro seleccionado.</string>
+    <string name="share">Compartir</string>
+    <string name="settings">Configuración</string>
 </resources>

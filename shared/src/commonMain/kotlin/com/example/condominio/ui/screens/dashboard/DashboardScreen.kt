@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.HowToVote
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.MoreVert
@@ -376,9 +375,9 @@ fun QuickActions(
         )
         Spacer(modifier = Modifier.width(8.dp))
         QuickActionItem(
-                icon = Icons.Default.HowToVote,
-                label = "Decisiones", // TODO: i18n
-                color = Color(0xFF8E24AA), // Purple
+                icon = Icons.Default.AccountBalanceWallet,
+                label = stringResource(Res.string.decisions_title),
+                color = Color(0xFF0D47A1), // Deep Blue
                 onClick = onDecisionsClick,
                 modifier = Modifier.weight(1f)
         )
