@@ -3,13 +3,47 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Fondo naranja marca -->
     <path
-        android:fillColor="#137fec"
+        android:fillColor="#FF6B00"
         android:pathData="M0,0h108v108h-108z"/>
+
+    <!-- Edificio escalado y centrado (viewportWidth=108, icon centrado en 18-90) -->
+    <!-- Torre derecha: área de x=51 a x=88, y=28 a y=80 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,54m-25,0a25,25 0,1,1 50,0a25,25 0,1,1 -50,0"/>
+        android:pathData="M51,28 L51,80 L88,80 L88,38 L70,38 L70,28 Z"/>
+
+    <!-- Cuerpo izquierdo: área de x=20 a x=55, y=44 a y=80 -->
     <path
-        android:fillColor="#137fec"
-        android:pathData="M54,54m-15,0a15,15 0,1,1 30,0a15,15 0,1,1 -30,0"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,44 L20,80 L55,80 L55,44 Z"/>
+
+    <!-- Ventanas torre derecha (naranja sobre blanco) -->
+    <path android:fillColor="#FF6B00" android:pathData="M55,32 h9 v8 h-9 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M68,32 h9 v8 h-9 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M55,44 h9 v8 h-9 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M68,44 h9 v8 h-9 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M55,56 h9 v8 h-9 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M68,56 h9 v8 h-9 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M55,68 h9 v8 h-9 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M68,68 h9 v8 h-9 z"/>
+
+    <!-- Ventanas cuerpo izquierdo (naranja sobre blanco) -->
+    <path android:fillColor="#FF6B00" android:pathData="M24,48 h8 v7 h-8 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M36,48 h8 v7 h-8 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M24,60 h8 v7 h-8 z"/>
+    <path android:fillColor="#FF6B00" android:pathData="M36,60 h8 v7 h-8 z"/>
+
+    <!-- Puerta entrada izquierda -->
+    <path
+        android:fillColor="#CC5200"
+        android:pathData="M28,80 L28,72 Q28,70 30,70 L34,70 Q36,70 36,72 L36,80 Z"/>
+
+    <!-- Suelo -->
+    <path
+        android:fillColor="#CC5200"
+        android:pathData="M16,80 h76 v4 h-76 z"/>
+
 </vector>

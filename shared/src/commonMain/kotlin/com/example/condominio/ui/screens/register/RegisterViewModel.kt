@@ -2,10 +2,9 @@ package com.example.condominio.ui.screens.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.condominio.data.model.Building
 import com.example.condominio.data.model.UnitDto
-import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.BuildingRepository
+import com.example.condominio.data.repository.OnboardingRepository
 import com.example.condominio.ui.utils.UiText
 import condominio.shared.generated.resources.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,124 +12,106 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class RegisterViewModel (
-    private val authRepository: AuthRepository,
-    private val buildingRepository: BuildingRepository
+class RegisterViewModel(
+    private val buildingRepository: BuildingRepository,
+    private val onboardingRepository: OnboardingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState = _uiState.asStateFlow()
 
-    init {
-        loadBuildings()
-    }
-
-    private fun loadBuildings() {
+    fun onBuildingScanned(buildingCode: String) {
+        if (_uiState.value.buildingCode == buildingCode && _uiState.value.buildingName.isNotBlank()) return
+        _uiState.update { it.copy(buildingCode = buildingCode, isLoadingBuilding = true, error = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingBuildings = true) }
-            val result = buildingRepository.getBuildings()
-            result.onSuccess { buildings ->
-                _uiState.update { 
-                    it.copy(
-                        buildings = buildings,
-                        isLoadingBuildings = false
-                    ) 
+            buildingRepository.getBuildingByCode(buildingCode)
+                .onSuccess { building ->
+                    _uiState.update { it.copy(buildingName = building.name, isLoadingBuilding = false) }
+                    loadUnitsByCode(buildingCode)
                 }
-            }.onFailure {
-                _uiState.update { 
-                    it.copy(
-                        isLoadingBuildings = false,
-                        error = UiText.StringResource(Res.string.error_failed_load_buildings)
-                    ) 
+                .onFailure {
+                    _uiState.update {
+                        it.copy(
+                            isLoadingBuilding = false,
+                            error = UiText.StringResource(Res.string.qr_invalid_code)
+                        )
+                    }
                 }
-            }
         }
     }
 
-    private fun loadUnits(buildingId: String) {
+    private fun loadUnitsByCode(code: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingUnits = true, units = emptyList()) }
-            val result = authRepository.getUnits(buildingId)
-            result.onSuccess { units ->
-                _uiState.update { 
-                    it.copy(
-                        units = units,
-                        isLoadingUnits = false
-                    ) 
+            buildingRepository.getBuildingUnitsByCode(code)
+                .onSuccess { units ->
+                    _uiState.update { it.copy(units = units, isLoadingUnits = false) }
                 }
-            }.onFailure {
-                _uiState.update { 
-                    it.copy(
-                        isLoadingUnits = false,
-                        error = UiText.StringResource(Res.string.error_failed_load_units)
-                    ) 
+                .onFailure {
+                    _uiState.update {
+                        it.copy(
+                            isLoadingUnits = false,
+                            error = UiText.StringResource(Res.string.error_failed_load_units)
+                        )
+                    }
                 }
-            }
         }
     }
 
-    fun onNameChange(name: String) {
-        _uiState.update { it.copy(name = name) }
-    }
-
-    fun onEmailChange(email: String) {
-        _uiState.update { it.copy(email = email) }
-    }
+    fun onFirstNameChange(value: String) = _uiState.update { it.copy(firstName = value) }
+    fun onLastNameChange(value: String) = _uiState.update { it.copy(lastName = value) }
+    fun onEmailChange(value: String) = _uiState.update { it.copy(email = value) }
+    fun onDocumentIdChange(value: String) = _uiState.update { it.copy(documentId = value) }
 
     fun onUnitChange(unitId: String, unitName: String) {
-        _uiState.update { it.copy(unit = unitName, selectedUnitId = unitId) }
-    }
-
-    fun onBuildingChange(buildingId: String) {
-        _uiState.update { it.copy(selectedBuildingId = buildingId, unit = "", selectedUnitId = "") }
-        if (buildingId.isNotBlank()) {
-            loadUnits(buildingId)
-        }
-    }
-
-    fun onPasswordChange(password: String) {
-        _uiState.update { it.copy(password = password) }
+        _uiState.update { it.copy(selectedUnitId = unitId, unit = unitName) }
     }
 
     fun onRegisterClick() {
-        if (_uiState.value.email.isBlank() || _uiState.value.password.isBlank() || 
-            _uiState.value.name.isBlank() || _uiState.value.unit.isBlank() ||
-            _uiState.value.selectedBuildingId.isBlank()) {
+        val state = _uiState.value
+        if (state.firstName.isBlank() || state.lastName.isBlank() ||
+            state.email.isBlank() || state.documentId.isBlank() ||
+            state.selectedUnitId.isBlank() || state.buildingCode.isBlank()
+        ) {
             _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_fill_all_fields)) }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            val result = authRepository.register(
-                _uiState.value.name, 
-                _uiState.value.email, 
-                _uiState.value.selectedUnitId,
-                _uiState.value.selectedBuildingId, // Send building ID
-                _uiState.value.password
-            )
-            _uiState.update { it.copy(isLoading = false) }
-            
-            result.onSuccess {
-                _uiState.update { it.copy(isSuccess = true) }
+            onboardingRepository.submitRegistrationRequest(
+                buildingCode = state.buildingCode,
+                unitId = state.selectedUnitId,
+                email = state.email,
+                firstName = state.firstName,
+                lastName = state.lastName,
+                documentId = state.documentId
+            ).onSuccess {
+                _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             }.onFailure { error ->
-                _uiState.update { it.copy(error = UiText.DynamicString(error.message ?: "")) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = UiText.DynamicString(error.message ?: "")
+                    )
+                }
             }
         }
     }
 }
 
 data class RegisterUiState(
-    val name: String = "",
+    val buildingCode: String = "",
+    val buildingName: String = "",
+    val isLoadingBuilding: Boolean = false,
+    val firstName: String = "",
+    val lastName: String = "",
     val email: String = "",
-    val unit: String = "", // Display name
-    val selectedUnitId: String = "", // UUID
-    val selectedBuildingId: String = "",
-    val buildings: List<Building> = emptyList(),
-    val isLoadingBuildings: Boolean = false,
-    val units: List<com.example.condominio.data.model.UnitDto> = emptyList(),
+    val documentId: String = "",
+    val unit: String = "",
+    val selectedUnitId: String = "",
+    val units: List<UnitDto> = emptyList(),
     val isLoadingUnits: Boolean = false,
-    val password: String = "",
     val isLoading: Boolean = false,
     val error: UiText? = null,
     val isSuccess: Boolean = false

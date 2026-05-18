@@ -1,6 +1,8 @@
 package com.example.condominio.data.remote
 
 import com.example.condominio.data.model.*
+import com.example.condominio.data.model.RegistrationRequestBody
+import com.example.condominio.data.model.RegistrationRequestResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -69,8 +71,23 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         client.get("api/v1/app/buildings/$id")
     }
 
+    override suspend fun getBuildingByCode(code: String): Response<Building> = safeRequest {
+        client.get("api/v1/app/buildings/by-code/$code")
+    }
+
+    override suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>> = safeRequest {
+        client.get("api/v1/app/buildings/by-code/$code/units")
+    }
+
     override suspend fun getBuildingUnits(id: String): Response<List<UnitDto>> = safeRequest {
         client.get("api/v1/app/buildings/$id/units")
+    }
+
+    override suspend fun submitRegistrationRequest(body: RegistrationRequestBody): Response<RegistrationRequestResponse> = safeRequest {
+        client.post("registration-requests") {
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
     }
 
     override suspend fun getUnitDetails(id: String): Response<UnitDto> = safeRequest {

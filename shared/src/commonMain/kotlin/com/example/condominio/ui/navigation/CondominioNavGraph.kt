@@ -26,11 +26,21 @@ import com.example.condominio.ui.screens.decisions.DecisionsListScreen
 import com.example.condominio.ui.screens.decisions.DecisionDetailScreen
 import com.example.condominio.ui.screens.billboard.BillboardListScreen
 import com.example.condominio.ui.screens.billboard.BillboardDetailScreen
+import com.example.condominio.ui.screens.register.QrScannerScreen
 import com.example.condominio.ui.screens.register.RegisterScreen
-
+import com.example.condominio.ui.screens.splash.SplashScreen
 @Composable
 fun CondominioNavGraph(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = "login") {
+    NavHost(navController = navController, startDestination = "splash") {
+        composable("splash") {
+            SplashScreen(
+                onFinished = {
+                    navController.navigate("login") {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                }
+            )
+        }
         composable("login") {
             val viewModel: com.example.condominio.ui.screens.login.LoginViewModel = org.koin.compose.viewmodel.koinViewModel()
             val uiState by viewModel.uiState.collectAsState()
@@ -58,7 +68,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                             popUpTo("login") { inclusive = true }
                         }
                     },
-                    onRegisterClick = { navController.navigate("register") }
+                    onRegisterClick = { navController.navigate("register_scanner") }
             )
         }
         composable("admin_blocked") {
@@ -83,14 +93,29 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     }
             )
         }
-        composable("register") {
+        composable("register_scanner") {
+            QrScannerScreen(
+                onBack = { navController.popBackStack() },
+                onScanned = { buildingId ->
+                    navController.navigate("register_form/$buildingId") {
+                        popUpTo("register_scanner") { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(
+            route = "register_form/{buildingId}",
+            arguments = listOf(navArgument("buildingId") { type = NavType.StringType })
+        ) { backStack ->
+            val buildingId = backStack.arguments?.getString("buildingId") ?: ""
             RegisterScreen(
-                    onRegisterSuccess = {
-                        navController.navigate("pending_approval") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
-                    onLoginClick = { navController.popBackStack() }
+                buildingId = buildingId,
+                onRegisterSuccess = {
+                    navController.navigate("pending_approval") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onBackClick = { navController.popBackStack() }
             )
         }
         composable("pending_approval") {
@@ -118,15 +143,10 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             com.example.condominio.ui.screens.billing.InvoiceListScreen(
                     onBackClick = { navController.popBackStack() },
                     onInvoiceClick = { invoice ->
-                        val status = invoice.status
-                        val isTerminal =
-                                status == com.example.condominio.data.model.InvoiceStatus.PAID ||
-                                        status == com.example.condominio.data.model.InvoiceStatus.CANCELLED
-                        if (isTerminal || invoice.paid > 0) {
-                            navController.navigate("invoice_detail/${invoice.id}")
-                        } else {
-                            navController.navigate("create_payment?invoiceId=${invoice.id}")
-                        }
+                        navController.navigate("invoice_detail/${invoice.id}")
+                    },
+                    onPayNowClick = { invoice ->
+                        navController.navigate("create_payment?invoiceId=${invoice.id}")
                     }
             )
         }
@@ -137,11 +157,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             InvoiceDetailScreen(
                     onBackClick = { navController.popBackStack() },
                     onSeeAllPaymentsClick = { navController.navigate("payment_history") },
-                    onSeeAllInvoicesClick = {
-                        navController.navigate("invoice_list") {
-                            popUpTo("invoice_list") { inclusive = true }
-                        }
-                    },
+                    onDownloadClick = { /* TODO: implementar descarga de factura */ },
                     onPayRemainderClick = { invoiceId ->
                         navController.navigate("create_payment?invoiceId=$invoiceId")
                     },

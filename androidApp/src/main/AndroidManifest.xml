@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name="com.example.condominio.CondominioApp"
@@ -29,7 +31,7 @@
         <activity
             android:name="com.example.condominio.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Condominio">
+            android:theme="@style/Theme.Condominio.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

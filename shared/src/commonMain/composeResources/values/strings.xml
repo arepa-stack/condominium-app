@@ -18,8 +18,36 @@
     <string name="support">Soporte</string>
     <string name="payment_item_label">Pago</string>
 
+    <!-- QR Scanner Screen -->
+    <string name="qr_scan_title">Escanea el código QR de tu edificio</string>
+    <string name="qr_scan_subtitle">Alinea el código dentro del recuadro para comenzar el registro.</string>
+    <string name="qr_scan_scanning">ESCANEANDO...</string>
+    <string name="qr_enter_manually">Ingresar código manualmente</string>
+    <string name="qr_manual_dialog_title">Ingresar código del edificio</string>
+    <string name="qr_manual_dialog_hint">Pega aquí el código que te dieron</string>
+    <string name="qr_camera_permission_required">Necesitamos acceso a la cámara para escanear el código.</string>
+    <string name="qr_grant_permission">Otorgar permiso</string>
+    <string name="qr_invalid_code">Código inválido o edificio no encontrado.</string>
+
+    <!-- Register Form Screen -->
+    <string name="register_title">Registro de Usuario</string>
+    <string name="register_subtitle">Completa tus datos para acceder a los servicios de tu edificio.</string>
+    <string name="register_building_label">EDIFICIO</string>
+    <string name="register_select_unit_label">SELECCIONA TU UNIDAD</string>
+    <string name="register_first_name_label">NOMBRE</string>
+    <string name="register_last_name_label">APELLIDO</string>
+    <string name="register_email_label">CORREO ELECTRÓNICO</string>
+    <string name="register_first_name_hint">Ej. Juan</string>
+    <string name="register_last_name_hint">Ej. Pérez</string>
+    <string name="register_email_hint">nombre@ejemplo.com</string>
+    <string name="register_document_id_label">CÉDULA / PASAPORTE</string>
+    <string name="register_document_id_hint">Ej. V-12345678</string>
+    <string name="register_submit">Registrarme</string>
+    <string name="register_terms_notice">Al registrarte, aceptas nuestros Términos de Servicio y Política de Privacidad.</string>
+
     <!-- Login Screen -->
     <string name="login">Iniciar Sesión</string>
+    <string name="login_subtitle">Inicia sesión para gestionar tu condominio.</string>
     <string name="email">Correo Electrónico</string>
     <string name="password">Contraseña</string>
     <string name="error_missing_fields">Por favor, completa todos los campos</string>
@@ -237,12 +265,15 @@
     <string name="error_password_required">La contraseña actual es requerida</string>
 
     <!-- Decisions -->
-    <string name="decisions_title">Decisiones</string>
-    <string name="decisions_empty">No hay decisiones en tu edificio</string>
-    <string name="decisions_filter_all">Todas</string>
-    <string name="decisions_filter_reception">Recepción</string>
-    <string name="decisions_filter_voting">Votación</string>
+    <string name="decisions_title">Presupuesto</string>
+    <string name="decisions_empty">No hay presupuestos en tu edificio</string>
+    <string name="decisions_filter_all">Todos</string>
+    <string name="decisions_filter_reception">Borradores</string>
+    <string name="decisions_filter_voting">En Votación</string>
     <string name="decisions_filter_resolved">Resueltas</string>
+    <string name="decisions_see_detail">Ver detalle</string>
+    <string name="decisions_urgent">Urgente</string>
+    <string name="decisions_finalized_on">Finalizado el %1$s</string>
     <string name="decisions_status_reception">Recepción</string>
     <string name="decisions_status_voting">Votación</string>
     <string name="decisions_status_tiebreak">Desempate</string>
@@ -332,4 +363,10 @@
     <string name="language_settings">Idioma</string>
     <string name="language_dialog_title">Seleccionar Idioma</string>
     <string name="language_current">Idioma actual: %1$s</string>
+
+    <!-- Invoice / Billing UI -->
+    <string name="download_invoice">Descargar Factura</string>
+    <string name="no_invoices_for_filter">No se encontraron facturas para el filtro seleccionado.</string>
+    <string name="share">Compartir</string>
+    <string name="settings">Configuración</string>
 </resources>

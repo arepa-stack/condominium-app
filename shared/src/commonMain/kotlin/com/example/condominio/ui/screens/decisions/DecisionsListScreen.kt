@@ -1,31 +1,39 @@
 package com.example.condominio.ui.screens.decisions
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.DecisionDto
 import com.example.condominio.data.model.DecisionStatus
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.FilterPillChip
+import com.example.condominio.ui.components.formatDecisionDate
+import com.example.condominio.ui.components.formatDecisionDeadline
+import com.example.condominio.ui.theme.*
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,12 +47,20 @@ fun DecisionsListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.decisions_title)) },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.decisions_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = AptoSecondary
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back)
+                            contentDescription = stringResource(Res.string.back),
+                            tint = AptoSecondary
                         )
                     }
                 },
@@ -52,91 +68,96 @@ fun DecisionsListScreen(
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(Res.string.refresh)
+                            contentDescription = stringResource(Res.string.refresh),
+                            tint = AptoSecondary
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
             )
-        }
+        },
+        containerColor = AptoBackground
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Filter chip row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = uiState.statusFilter == null,
-                    onClick = { viewModel.setStatusFilter(null) },
-                    label = { Text(stringResource(Res.string.decisions_filter_all)) }
-                )
-                FilterChip(
-                    selected = uiState.statusFilter == DecisionStatus.RECEPTION,
-                    onClick = { viewModel.setStatusFilter(DecisionStatus.RECEPTION) },
-                    label = { Text(stringResource(Res.string.decisions_filter_reception)) }
-                )
-                FilterChip(
-                    selected = uiState.statusFilter == DecisionStatus.VOTING,
-                    onClick = { viewModel.setStatusFilter(DecisionStatus.VOTING) },
-                    label = { Text(stringResource(Res.string.decisions_filter_voting)) }
-                )
-                FilterChip(
-                    selected = uiState.statusFilter == DecisionStatus.RESOLVED,
-                    onClick = { viewModel.setStatusFilter(DecisionStatus.RESOLVED) },
-                    label = { Text(stringResource(Res.string.decisions_filter_resolved)) }
-                )
-            }
+            DecisionFilterRow(
+                selected = uiState.statusFilter,
+                onSelect = { viewModel.setStatusFilter(it) }
+            )
 
-            // Content area
             when {
                 uiState.isLoading && uiState.decisions.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = AptoSecondaryContainer)
                     }
                 }
 
                 uiState.error != null && uiState.decisions.isEmpty() -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = uiState.error!!.asString(),
-                            color = MaterialTheme.colorScheme.error
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = uiState.error!!.asString(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = AptoStatusError,
+                                textAlign = TextAlign.Center
+                            )
+                            OutlinedButton(
+                                onClick = { viewModel.refresh() },
+                                border = BorderStroke(1.dp, AptoSecondary),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoSecondary)
+                            ) {
+                                Text(stringResource(Res.string.billboard_retry))
+                            }
+                        }
                     }
                 }
 
                 uiState.decisions.isEmpty() -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = stringResource(Res.string.decisions_empty))
+                        Text(
+                            text = stringResource(Res.string.decisions_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AptoOnSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
 
                 else -> {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(uiState.decisions) { decision ->
                             DecisionCard(
                                 decision = decision,
                                 onClick = { onDecisionClick(decision.id) }
                             )
+                        }
+                        if (uiState.isLoading) {
+                            item {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = AptoSecondaryContainer
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -146,7 +167,57 @@ fun DecisionsListScreen(
 }
 
 // ---------------------------------------------------------------------------
-// DecisionCard — private helper composable
+// Filter row — reuses FilterPillChip from components
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun DecisionFilterRow(
+    selected: DecisionStatus?,
+    onSelect: (DecisionStatus?) -> Unit
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_all),
+                selected = selected == null,
+                onClick = { onSelect(null) }
+            )
+        }
+        item {
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_voting),
+                selected = selected == DecisionStatus.VOTING || selected == DecisionStatus.TIEBREAK_PENDING,
+                onClick = {
+                    onSelect(if (selected == DecisionStatus.VOTING) null else DecisionStatus.VOTING)
+                }
+            )
+        }
+        item {
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_resolved),
+                selected = selected == DecisionStatus.RESOLVED,
+                onClick = {
+                    onSelect(if (selected == DecisionStatus.RESOLVED) null else DecisionStatus.RESOLVED)
+                }
+            )
+        }
+        item {
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_reception),
+                selected = selected == DecisionStatus.RECEPTION,
+                onClick = {
+                    onSelect(if (selected == DecisionStatus.RECEPTION) null else DecisionStatus.RECEPTION)
+                }
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// DecisionCard
 // ---------------------------------------------------------------------------
 
 @Composable
@@ -154,21 +225,21 @@ private fun DecisionCard(
     decision: DecisionDto,
     onClick: () -> Unit
 ) {
+    val isActive = decision.status == DecisionStatus.VOTING ||
+            decision.status == DecisionStatus.RECEPTION ||
+            decision.status == DecisionStatus.TIEBREAK_PENDING
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, AptoOutlineVariant)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Row 1: title + status badge
+        Column(modifier = Modifier.padding(16.dp)) {
+
+            // Header: title + status badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -177,123 +248,146 @@ private fun DecisionCard(
                 Text(
                     text = decision.title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AptoOnSurface,
                     modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
-                StatusBadge(status = decision.status)
+                DecisionStatusBadge(status = decision.status)
             }
 
-            // Row 2: deadline text
-            val receptionUntilFmt = stringResource(Res.string.decisions_reception_until)
-            val votingUntilFmt = stringResource(Res.string.decisions_voting_until)
-            val resolvedLabel = stringResource(Res.string.decisions_status_resolved)
-            val cancelledLabel = stringResource(Res.string.decisions_status_cancelled)
-            val deadlineLabel = when (decision.status) {
-                DecisionStatus.RECEPTION ->
-                    receptionUntilFmt.format(formatIsoDeadline(decision.receptionDeadline))
-                DecisionStatus.VOTING,
-                DecisionStatus.TIEBREAK_PENDING ->
-                    votingUntilFmt.format(formatIsoDeadline(decision.votingDeadline))
-                DecisionStatus.RESOLVED ->
-                    resolvedLabel
-                DecisionStatus.CANCELLED ->
-                    cancelledLabel
-            }
+            Spacer(Modifier.height(4.dp))
+
+            // Subtitle: deadline or finalization date
             Text(
-                text = deadlineLabel,
+                text = buildDeadlineLabel(decision),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = AptoOnSurfaceVariant
             )
 
-            // Row 3: quote count chip + vote count (if status != RECEPTION)
+            Spacer(Modifier.height(16.dp))
+
+            // Footer: quote chip + divider + action
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                QuoteCountChip(count = decision.quoteCount)
+                // Quote count chip (left)
+                DecisionQuoteChip(
+                    count = decision.quoteCount,
+                    resolved = decision.status == DecisionStatus.RESOLVED
+                )
+
+                // Thin divider line (fill remaining space)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(2.dp)
+                        .padding(horizontal = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    HorizontalDivider(color = AptoOutlineVariant)
+                }
+
+                // Right action: urgent warning OR "Ver detalle" link
+                if (isActive && decision.isDeadlinePassed) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = AptoStatusWarning,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = stringResource(Res.string.decisions_urgent),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = AptoStatusWarning,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                } else if (isActive) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(Res.string.decisions_see_detail),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = AptoSecondary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = AptoSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// StatusBadge — private helper composable
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun StatusBadge(status: DecisionStatus) {
-    val label = when (status) {
-        DecisionStatus.RECEPTION -> stringResource(Res.string.decisions_status_reception)
-        DecisionStatus.VOTING -> stringResource(Res.string.decisions_status_voting)
-        DecisionStatus.TIEBREAK_PENDING -> stringResource(Res.string.decisions_status_tiebreak)
-        DecisionStatus.RESOLVED -> stringResource(Res.string.decisions_status_resolved)
-        DecisionStatus.CANCELLED -> stringResource(Res.string.decisions_status_cancelled)
-    }
-    val color = when (status) {
-        DecisionStatus.RECEPTION -> Color(0xFF1565C0)
-        DecisionStatus.VOTING -> Color(0xFFE65100)
-        DecisionStatus.TIEBREAK_PENDING -> Color(0xFFF9A825)
-        DecisionStatus.RESOLVED -> Color(0xFF2E7D32)
-        DecisionStatus.CANCELLED -> Color(0xFF757575)
-    }
-
-    Box(
-        modifier = Modifier
-            .background(
-                color = color.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
-}
+// DecisionStatusBadge is imported from com.example.condominio.ui.components
 
 // ---------------------------------------------------------------------------
-// QuoteCountChip — private helper composable
+// DecisionQuoteChip
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun QuoteCountChip(count: Int) {
-    Box(
-        modifier = Modifier
-            .background(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+private fun DecisionQuoteChip(count: Int, resolved: Boolean) {
+    val bgColor = if (resolved) AptoSurfaceContainerLow else AptoPrimaryFixed
+    val contentColor = if (resolved) AptoOnSurfaceVariant else Color(0xFF111D22)
+
+    Surface(
+        color = bgColor,
+        shape = RoundedCornerShape(8.dp)
     ) {
-        Text(
-            text = stringResource(Res.string.decisions_quote_count, count),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Description,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = stringResource(Res.string.decisions_quote_count, count),
+                style = MaterialTheme.typography.labelLarge,
+                color = contentColor,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
     }
 }
 
 // ---------------------------------------------------------------------------
-// formatIsoDeadline — private utility
+// Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Parses an ISO-8601 string and returns a "dd/MM HH:mm" formatted string.
- * Falls back to the raw string on parse failure.
- */
-private fun formatIsoDeadline(iso: String): String {
-    return try {
-        val instant = Instant.parse(iso)
-        val dt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-        val day = dt.dayOfMonth.toString().padStart(2, '0')
-        val month = dt.monthNumber.toString().padStart(2, '0')
-        val hour = dt.hour.toString().padStart(2, '0')
-        val minute = dt.minute.toString().padStart(2, '0')
-        "$day/$month $hour:$minute"
-    } catch (e: Exception) {
-        iso
+@Composable
+private fun buildDeadlineLabel(decision: DecisionDto): String {
+    val receptionFmt = stringResource(Res.string.decisions_reception_until)
+    val votingFmt = stringResource(Res.string.decisions_voting_until)
+    val resolvedFmt = stringResource(Res.string.decisions_finalized_on)
+    val cancelledLabel = stringResource(Res.string.decisions_status_cancelled)
+
+    return when (decision.status) {
+        DecisionStatus.RECEPTION ->
+            receptionFmt.format(formatDecisionDeadline(decision.receptionDeadline))
+        DecisionStatus.VOTING,
+        DecisionStatus.TIEBREAK_PENDING ->
+            votingFmt.format(formatDecisionDeadline(decision.votingDeadline))
+        DecisionStatus.RESOLVED ->
+            resolvedFmt.format(
+                decision.finalizedAt?.let { formatDecisionDate(it) }
+                    ?: formatDecisionDeadline(decision.votingDeadline)
+            )
+        DecisionStatus.CANCELLED -> cancelledLabel
     }
 }
+

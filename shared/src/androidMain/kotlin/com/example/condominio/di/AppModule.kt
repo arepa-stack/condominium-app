@@ -64,6 +64,7 @@ val appModule = module {
     single<AuthRepository> { RemoteAuthRepository(get(), get()) }
     single<PaymentRepository> { RemotePaymentRepository(get(), get()) }
     single<BuildingRepository> { RemoteBuildingRepository(get()) }
+    single<OnboardingRepository> { RemoteOnboardingRepository(get()) }
     single<PettyCashRepository> { PettyCashRepositoryImpl(get()) }
     single<DecisionsRepository> { RemoteDecisionsRepositoryImpl(get(), get()) }
     single<AnnouncementsRepository> { RemoteAnnouncementsRepositoryImpl(get()) }

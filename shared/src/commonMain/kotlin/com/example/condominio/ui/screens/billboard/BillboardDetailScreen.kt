@@ -30,7 +30,10 @@ import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.example.condominio.data.model.AnnouncementCategory
+import com.example.condominio.ui.components.AnnouncementCategoryBadge
+import com.example.condominio.ui.components.AnnouncementMetricItem
 import com.example.condominio.ui.components.FullScreenImageDialog
+import com.example.condominio.ui.components.announcementCategoryAccent
 import com.example.condominio.ui.components.shimmerEffect
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
@@ -122,7 +125,7 @@ fun BillboardDetailScreen(
 
             uiState.announcement != null -> {
                 val announcement = uiState.announcement!!
-                val accent = categoryColor(announcement.category)
+                val accent = announcementCategoryAccent(announcement.category)
                 val attachmentUrl = announcement.attachmentUrl
 
                 Column(
@@ -138,20 +141,7 @@ fun BillboardDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = accent.copy(alpha = 0.15f),
-                        ) {
-                            Text(
-                                text = categoryLabel(announcement.category).uppercase(),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.8.sp,
-                                ),
-                                color = accent,
-                            )
-                        }
+                        AnnouncementCategoryBadge(category = announcement.category)
                         if (announcement.isPinned) {
                             Icon(
                                 imageVector = Icons.Default.PushPin,

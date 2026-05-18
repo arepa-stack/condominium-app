@@ -12,8 +12,11 @@ interface ApiService {
 
     suspend fun getBuildings(): Response<List<Building>>
     suspend fun getBuilding(id: String): Response<Building>
+    suspend fun getBuildingByCode(code: String): Response<Building>
+    suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>>
     suspend fun getBuildingUnits(id: String): Response<List<UnitDto>>
     suspend fun getUnitDetails(id: String): Response<UnitDto>
+    suspend fun submitRegistrationRequest(body: RegistrationRequestBody): Response<RegistrationRequestResponse>
     
     suspend fun getPayments(unitId: String? = null, year: Int? = null): Response<List<PaymentDto>>
     suspend fun getPayment(id: String): Response<PaymentDto>
