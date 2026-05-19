@@ -17,12 +17,6 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
@@ -81,10 +75,7 @@ fun DashboardScreen(
 
     Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.background,
-            bottomBar = {
-                BottomNavBar(onProfileClick = onProfileClick)
-            }
+            containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading && uiState.userName.isEmpty()) {
             Box(
@@ -595,101 +586,3 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
     }
 }
 
-@Composable
-fun BottomNavBar(
-    onProfileClick: () -> Unit = {},
-) {
-    val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = MaterialTheme.colorScheme.outline
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Inicio (active)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { }
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Home,
-                    contentDescription = "Inicio",
-                    tint = activeColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Inicio",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = activeColor
-                )
-            }
-
-            // Alertas
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { }
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Alertas",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Alertas",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = inactiveColor
-                )
-            }
-
-            // Perfil
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable(onClick = onProfileClick)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
-                    contentDescription = "Perfil",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Perfil",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = inactiveColor
-                )
-            }
-
-            // Más
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Más",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Más",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = inactiveColor
-                )
-            }
-        }
-    }
-}
