@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.HomeWork
 import androidx.compose.material.icons.filled.Payments
@@ -32,6 +31,7 @@ import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.StatusBadge
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
@@ -65,21 +65,10 @@ fun PaymentHistoryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Historial de Pagos",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = AptoPrimary)
-                    }
-                },
+            TopBarWithBack(
+                title = "Historial de Pagos",
+                onBackClick = onBackClick,
                 actions = {
-                    // Avatar Placeholder based on HTML
                     Box(
                         modifier = Modifier
                             .padding(end = 16.dp)
@@ -95,10 +84,7 @@ fun PaymentHistoryScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AptoSurfaceContainerLowest
-                )
+                }
             )
         },
         containerColor = AptoBackground

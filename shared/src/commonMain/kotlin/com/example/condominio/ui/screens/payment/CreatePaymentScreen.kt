@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
@@ -38,6 +37,7 @@ import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.utils.rememberImagePickerLauncher
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.PrimaryButton
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.AptoSuccess
 import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
 import com.example.condominio.ui.utils.formatCurrency
@@ -71,27 +71,13 @@ fun CreatePaymentScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (currentStep == 1) "Pagar Ahora" else "Detalles del Pago",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (currentStep == 2) {
-                            currentStep = 1
-                        } else {
-                            onBackClick()
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+            TopBarWithBack(
+                title = if (currentStep == 1) "Pagar Ahora" else "Detalles del Pago",
+                onBackClick = {
+                    if (currentStep == 2) {
+                        currentStep = 1
+                    } else {
+                        onBackClick()
                     }
                 },
                 actions = {
@@ -100,14 +86,11 @@ fun CreatePaymentScreen(
                             Icon(
                                 imageVector = Icons.Default.HelpOutline,
                                 contentDescription = "Ayuda",
-                                tint = MaterialTheme.colorScheme.outline
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                }
             )
         },
         bottomBar = {
