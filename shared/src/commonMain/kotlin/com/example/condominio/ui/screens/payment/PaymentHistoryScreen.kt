@@ -85,8 +85,6 @@ fun PaymentHistoryScreen(
                     EmptyState(
                         title = "No hay pagos registrados.",
                         icon = Icons.Default.ReceiptLong,
-                        iconBackgroundSize = 192.dp,
-                        iconSize = 64.dp,
                     )
                 }
                 else -> {
