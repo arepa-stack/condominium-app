@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -32,13 +31,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.condominio.ui.theme.BrandDark
-import com.example.condominio.ui.theme.BrandOrange
-import com.example.condominio.ui.theme.BorderGray
-import com.example.condominio.ui.theme.OrangeShadow
-import com.example.condominio.ui.theme.SubtitleGray
-import com.example.condominio.ui.theme.SurfaceWhite
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -68,7 +60,7 @@ fun LoginScreen(
 
     if (uiState.isCheckingSession || uiState.isSuccess || uiState.isPending || uiState.isAdminBlocked) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = BrandOrange)
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
         return
     }
@@ -76,10 +68,11 @@ fun LoginScreen(
     val passwordFocusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     var passwordVisible by remember { mutableStateOf(false) }
+    val shadowColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = SurfaceWhite
+        containerColor = MaterialTheme.colorScheme.surface
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -96,16 +89,14 @@ fun LoginScreen(
             ) {
                 Text(
                     text = stringResource(Res.string.welcome_back),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandDark,
-                    lineHeight = 34.sp
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(Res.string.login_subtitle),
-                    fontSize = 14.sp,
-                    color = SubtitleGray
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -115,7 +106,7 @@ fun LoginScreen(
                     value = uiState.email,
                     onValueChange = onEmailChange,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("ejemplo@correo.com", color = SubtitleGray) },
+                    placeholder = { Text("ejemplo@correo.com", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
                     shape = FieldShape,
                     colors = fieldColors(),
@@ -139,7 +130,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(passwordFocusRequester),
-                    placeholder = { Text("••••••••", color = SubtitleGray) },
+                    placeholder = { Text("••••••••", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
                     shape = FieldShape,
                     colors = fieldColors(),
@@ -152,7 +143,7 @@ fun LoginScreen(
                                     stringResource(Res.string.hide_password)
                                 else
                                     stringResource(Res.string.show_password),
-                                tint = SubtitleGray
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     },
@@ -174,8 +165,8 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = uiState.error.asString(),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 13.sp,
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }
@@ -189,8 +180,8 @@ fun LoginScreen(
                     .shadow(
                         elevation = 8.dp,
                         shape = FieldShape,
-                        ambientColor = OrangeShadow,
-                        spotColor = OrangeShadow
+                        ambientColor = shadowColor,
+                        spotColor = shadowColor
                     )
             ) {
                 Button(
@@ -201,23 +192,22 @@ fun LoginScreen(
                     shape = FieldShape,
                     enabled = !uiState.isLoading,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = BrandOrange,
-                        contentColor = Color.White,
-                        disabledContainerColor = BrandOrange.copy(alpha = 0.6f),
-                        disabledContentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(22.dp),
                             strokeWidth = 2.dp
                         )
                     } else {
                         Text(
                             text = stringResource(Res.string.login),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
                 }
@@ -233,12 +223,11 @@ fun LoginScreen(
             ) {
                 TextButton(
                     onClick = onRegisterClick,
-                    colors = ButtonDefaults.textButtonColors(contentColor = BrandOrange)
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(
                         text = stringResource(Res.string.dont_have_account),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             }
@@ -254,9 +243,8 @@ private fun LabeledField(
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = BrandDark,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
         )
         content()
@@ -265,11 +253,11 @@ private fun LabeledField(
 
 @Composable
 private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = BrandOrange,
-    unfocusedBorderColor = BorderGray,
-    cursorColor = BrandOrange,
-    focusedTextColor = BrandDark,
-    unfocusedTextColor = BrandDark,
-    focusedContainerColor = SurfaceWhite,
-    unfocusedContainerColor = SurfaceWhite
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface
 )

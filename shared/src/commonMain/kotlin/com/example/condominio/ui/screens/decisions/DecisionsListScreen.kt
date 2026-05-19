@@ -51,7 +51,6 @@ fun DecisionsListScreen(
                     Text(
                         text = stringResource(Res.string.decisions_title),
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
                         color = AptoSecondary
                     )
                 },
@@ -247,8 +246,7 @@ private fun DecisionCard(
             ) {
                 Text(
                     text = decision.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = AptoOnSurface,
                     modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
@@ -304,8 +302,7 @@ private fun DecisionCard(
                         Text(
                             text = stringResource(Res.string.decisions_urgent),
                             style = MaterialTheme.typography.labelLarge,
-                            color = AptoStatusWarning,
-                            fontWeight = FontWeight.SemiBold
+                            color = AptoStatusWarning
                         )
                     }
                 } else if (isActive) {
@@ -313,8 +310,7 @@ private fun DecisionCard(
                         Text(
                             text = stringResource(Res.string.decisions_see_detail),
                             style = MaterialTheme.typography.labelLarge,
-                            color = AptoSecondary,
-                            fontWeight = FontWeight.SemiBold
+                            color = AptoSecondary
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -338,7 +334,7 @@ private fun DecisionCard(
 @Composable
 private fun DecisionQuoteChip(count: Int, resolved: Boolean) {
     val bgColor = if (resolved) AptoSurfaceContainerLow else AptoPrimaryFixed
-    val contentColor = if (resolved) AptoOnSurfaceVariant else Color(0xFF111D22)
+    val contentColor = if (resolved) AptoOnSurfaceVariant else MaterialTheme.colorScheme.onSurface
 
     Surface(
         color = bgColor,
@@ -358,8 +354,7 @@ private fun DecisionQuoteChip(count: Int, resolved: Boolean) {
             Text(
                 text = stringResource(Res.string.decisions_quote_count, count),
                 style = MaterialTheme.typography.labelLarge,
-                color = contentColor,
-                fontWeight = FontWeight.SemiBold
+                color = contentColor
             )
         }
     }

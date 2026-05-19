@@ -2,47 +2,67 @@ package com.example.condominio.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Vibrant Orange Palette
-val PrimaryWarm = Color(0xFFFF6D00)      // Vibrant Orange
-val SecondaryWarm = Color(0xFFFF9100)    // Lighter Vibrant Orange
-val TertiaryWarm = Color(0xFF0091EA)     // Complementary Blue (for contrast elements)
+// =============================================================================
+// Apto Design System — canonical palette (single source of truth)
+// =============================================================================
+//
+// Consumption rules:
+// 1. Prefer `MaterialTheme.colorScheme.*` over direct token references.
+// 2. Use semantic status tokens (AptoSuccess/Warning) for success/warning UI —
+//    Material 3 colorScheme has no equivalent.
+// 3. Use category tokens (AptoCategory*) only for decorative multi-color
+//    elements like quick-action chips, where each item needs its own hue.
+// =============================================================================
 
-val BackgroundLight = Color(0xFFFFF8E1)  // Warm Very Light Cream
-val BackgroundDark = Color(0xFF263238)   // Blue Grey Dark
+// --- Material 3 colorScheme tokens ---------------------------------------------
+val AptoPrimary                = Color(0xFF000000) // text/icon primary on light surfaces
+val AptoPrimaryFixed           = Color(0xFFD8E4EC)
 
-val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceDark = Color(0xFF37474F)
+val AptoSecondary              = Color(0xFF9F4200) // brand dark variant
+val AptoOnSecondary            = Color(0xFFFFFFFF)
+val AptoSecondaryContainer     = Color(0xFFDB5A07) // brand orange Apto (terracota cálido)
+val AptoSecondaryFixed         = Color(0xFFFFDBCB)
 
-val OnBackgroundLight = Color(0xFF3E2723) // Deep Brown
-val OnBackgroundDark = Color(0xFFECEFF1)
+val AptoBackground             = Color(0xFFFFFFFF) // Apto: blanco puro de pantalla
+val AptoSurface                = Color(0xFFFFFFFF)
+val AptoSurfaceContainerLowest = Color(0xFFFFFFFF) // cards
+val AptoSurfaceContainerLow    = Color(0xFFF2F4F6)
+val AptoSurfaceContainerHigh   = Color(0xFFE6E8EA)
 
-// Design system tokens
-val BrandDark    = Color(0xFF09151A)
-val BrandOrange  = Color(0xFFFF6B00)
-val SurfaceWhite = Color(0xFFFFFFFF)
-val BorderGray   = Color(0xFFE5E7EB)
-val SubtitleGray = Color(0xFF6B7280)
-val OrangeShadow = Color(0x33FF6B00)
+val AptoOnSurface              = Color(0xFF09151A) // Apto: azul profundo / negro
+val AptoOnSurfaceVariant       = Color(0xFF43474A)
+val AptoOutline                = Color(0xFF73787A)
+val AptoOutlineVariant         = Color(0xFFE6E8EA) // Apto: borde suave de cards
 
-// Apto Dashboard Tokens (Extracted for Reusability)
-val AptoBackground = Color(0xFFF7F9FB)
-val AptoSurface = Color(0xFFF7F9FB)
-val AptoSurfaceContainerLowest = Color(0xFFFFFFFF)
-val AptoSurfaceContainerLow = Color(0xFFF2F4F6)
-val AptoSurfaceContainerHigh = Color(0xFFE6E8EA)
-val AptoOnSurface = Color(0xFF191C1E)
-val AptoOnSurfaceVariant = Color(0xFF43474A)
-val AptoOutline = Color(0xFF73787A)
-val AptoOutlineVariant = Color(0xFFC3C7CA)
-val AptoSecondary = Color(0xFF9F4200)
-val AptoSecondaryContainer = Color(0xFFFD6C00)
-val AptoOnSecondary = Color(0xFFFFFFFF)
-val AptoSecondaryFixed = Color(0xFFFFDBCB)
-val AptoPrimary = Color(0xFF000000)
-val AptoPrimaryFixed = Color(0xFFD8E4EC)
-val AptoStatusSuccess = Color(0xFF10B981)
-val AptoStatusError = Color(0xFFEF4444)
-val AptoStatusWarning = Color(0xFFF59E0B)
-val AptoError = Color(0xFFBA1A1A)
-val AptoErrorContainer = Color(0xFFFFDAD6)
+val AptoError                  = Color(0xFFB3261E) // Apto: rojo crítico
+val AptoErrorContainer         = Color(0xFFFFDAD6)
+
+// --- Semantic status tokens (no M3 colorScheme equivalent) ---------------------
+val AptoSuccess                = Color(0xFF146C2E) // Apto: verde bandera (aprobado)
+val AptoSuccessContainer       = Color(0xFFD1FAE5)
+val AptoWarning                = Color(0xFFF59E0B)
+val AptoWarningContainer       = Color(0xFFFEF3C7)
+val AptoStatusSuccess          = AptoSuccess  // alias for legacy call sites
+val AptoStatusWarning          = AptoWarning  // alias for legacy call sites
+val AptoStatusError            = AptoError    // alias — Apto unifica crítico = error
+
+// --- Category decorative tokens (multi-color UI surfaces) ----------------------
+val AptoCategoryOrange         = Color(0xFFFF6D00)
+val AptoCategoryBlue           = Color(0xFF0091EA)
+val AptoCategoryLavender       = Color(0xFF8B5CF6) // Apto: quick action Decisiones
+val AptoCategoryGreen          = Color(0xFF16A34A) // Apto: quick action Cartelera
+
+// Petty cash: Apto spec = icono terracota sobre fondo rosa suave
+val AptoPettyCashAccent          = Color(0xFFC2410C) // terracota
+val AptoPettyCashAccentContainer = Color(0xFFFDF2F8) // rosa suave
+
+// Hero gradients (decorative headers)
+val AptoGradientGold             = Color(0xFFFF9E00) // golden orange — top of brand gradient
+
+// Decisions medal tokens (decorative — podium top 3 + neutral)
+val AptoMedalGold     = Color(0xFFFFC107)
+val AptoMedalGoldDark = Color(0xFFB8860B) // dark goldenrod for contrast on gold backgrounds
+val AptoMedalSilver   = Color(0xFFB0BEC5)
+val AptoMedalBronze   = Color(0xFFCD7F32)
+val AptoMedalNeutral  = Color(0xFF90A4AE) // gris azulado — barras "fuera del top 3"
 

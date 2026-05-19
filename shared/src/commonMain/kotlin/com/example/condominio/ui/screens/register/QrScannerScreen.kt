@@ -22,11 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.condominio.ui.theme.BrandOrange
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
-private val ScannerCornerColor = BrandOrange
 private val ViewfinderSize = 280.dp
 private val CornerSize = 40.dp
 private val CornerThickness = 4.dp
@@ -77,13 +75,12 @@ fun QrScannerScreen(
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.1f))
                 ) {
-                    Text("✕", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Light)
+                    Text("✕", color = Color.White, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Light))
                 }
                 Text(
                     text = "Apto",
                     color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.size(40.dp))
             }
@@ -101,14 +98,13 @@ fun QrScannerScreen(
                     Text(
                         text = stringResource(Res.string.qr_scan_title),
                         color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         textAlign = TextAlign.Center
                     )
                     Text(
                         text = stringResource(Res.string.qr_scan_subtitle),
                         color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -139,9 +135,7 @@ fun QrScannerScreen(
                         Text(
                             text = stringResource(Res.string.qr_scan_scanning),
                             color = Color.White.copy(alpha = 0.2f),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 3.sp
+                            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp)
                         )
                     }
                 }
@@ -174,15 +168,14 @@ fun QrScannerScreen(
                 ) {
                     Text(
                         text = stringResource(Res.string.qr_enter_manually),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
                     )
                 }
 
                 Text(
                     text = "Apto v1.0 • Sistema de Gestión Residencial",
                     color = Color.White.copy(alpha = 0.3f),
-                    fontSize = 11.sp,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Normal),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
@@ -225,7 +218,7 @@ private fun ScanLine() {
                     Brush.horizontalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            BrandOrange,
+                            MaterialTheme.colorScheme.primary,
                             Color.Transparent
                         )
                     )
@@ -236,6 +229,7 @@ private fun ScanLine() {
 
 @Composable
 private fun ScannerCorners() {
+    val cornerColor = MaterialTheme.colorScheme.primary
     Box(modifier = Modifier.fillMaxSize()) {
         // Top-left
         Box(
@@ -244,7 +238,7 @@ private fun ScannerCorners() {
                 .align(Alignment.TopStart)
                 .border(
                     width = CornerThickness,
-                    color = ScannerCornerColor,
+                    color = cornerColor,
                     shape = RoundedCornerShape(topStart = 12.dp)
                 )
         )
@@ -255,7 +249,7 @@ private fun ScannerCorners() {
                 .align(Alignment.TopEnd)
                 .border(
                     width = CornerThickness,
-                    color = ScannerCornerColor,
+                    color = cornerColor,
                     shape = RoundedCornerShape(topEnd = 12.dp)
                 )
         )
@@ -266,7 +260,7 @@ private fun ScannerCorners() {
                 .align(Alignment.BottomStart)
                 .border(
                     width = CornerThickness,
-                    color = ScannerCornerColor,
+                    color = cornerColor,
                     shape = RoundedCornerShape(bottomStart = 12.dp)
                 )
         )
@@ -277,7 +271,7 @@ private fun ScannerCorners() {
                 .align(Alignment.BottomEnd)
                 .border(
                     width = CornerThickness,
-                    color = ScannerCornerColor,
+                    color = cornerColor,
                     shape = RoundedCornerShape(bottomEnd = 12.dp)
                 )
         )
@@ -326,9 +320,9 @@ private fun ManualCodeDialog(
             Button(
                 onClick = { onConfirm(code) },
                 enabled = code.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text(stringResource(Res.string.accept), color = Color.White)
+                Text(stringResource(Res.string.accept), color = MaterialTheme.colorScheme.onPrimary)
             }
         },
         dismissButton = {

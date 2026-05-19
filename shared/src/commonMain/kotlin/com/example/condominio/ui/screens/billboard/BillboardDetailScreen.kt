@@ -35,6 +35,8 @@ import com.example.condominio.ui.components.AnnouncementMetricItem
 import com.example.condominio.ui.components.FullScreenImageDialog
 import com.example.condominio.ui.components.announcementCategoryAccent
 import com.example.condominio.ui.components.shimmerEffect
+import com.example.condominio.ui.theme.AptoSuccess
+import com.example.condominio.ui.theme.AptoSuccessContainer
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -153,7 +155,7 @@ fun BillboardDetailScreen(
                         if (announcement.readByCurrentUser) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF4CAF50).copy(alpha = 0.12f),
+                                color = AptoSuccessContainer,
                             ) {
                                 Text(
                                     text = stringResource(Res.string.billboard_read).uppercase(),
@@ -162,7 +164,7 @@ fun BillboardDetailScreen(
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = 0.8.sp,
                                     ),
-                                    color = Color(0xFF4CAF50),
+                                    color = AptoSuccess,
                                 )
                             }
                         }
@@ -503,7 +505,7 @@ private fun ReactionBar(
                         ) {
                             Text(
                                 text = "👍",
-                                fontSize = 20.sp,
+                                style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.alpha(if (reacted) 0.6f else 1f)
                             )
                             Text(

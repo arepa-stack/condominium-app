@@ -24,10 +24,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.condominio.ui.locale.AppLanguage
 import com.example.condominio.ui.locale.LocaleManager
-import com.example.condominio.ui.theme.*
+import com.example.condominio.ui.theme.AptoGradientGold
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -66,34 +65,33 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        text = stringResource(Res.string.profile_title), 
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = Color(0xFF09151A)
-                    ) 
+                        text = stringResource(Res.string.profile_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, 
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(Res.string.back),
-                            tint = Color(0xFF09151A)
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* Placeholder setting action */ }) {
                         Icon(
-                            imageVector = Icons.Default.Settings, 
+                            imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
-                            tint = Color(0xFF09151A)
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AptoBackground
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
@@ -103,7 +101,7 @@ fun ProfileScreen(
                 onProfileClick = {}
             )
         },
-        containerColor = AptoBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading && uiState.user == null) {
             Box(
@@ -112,7 +110,7 @@ fun ProfileScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = AptoSecondaryContainer)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
             return@Scaffold
         }
@@ -134,8 +132,8 @@ fun ProfileScreen(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFFFF9E00), // golden orange
-                                AptoSecondaryContainer // brand orange
+                                AptoGradientGold,
+                                MaterialTheme.colorScheme.primary
                             )
                         )
                     )
@@ -157,8 +155,7 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = uiState.user?.name?.firstOrNull()?.uppercase() ?: "U",
-                            fontSize = 40.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.displayMedium,
                             color = Color.White
                         )
                     }
@@ -167,8 +164,7 @@ fun ProfileScreen(
 
                     Text(
                         text = uiState.user?.name ?: stringResource(Res.string.loading),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                         color = Color.White
                     )
 
@@ -184,10 +180,8 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = stringResource(Res.string.apt_label, uiState.user?.apartmentUnit ?: "-"),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            letterSpacing = 0.5.sp
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White
                         )
                     }
                 }
@@ -198,9 +192,8 @@ fun ProfileScreen(
             // Account Information Section
             Text(
                 text = stringResource(Res.string.account_info_title),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = AptoOnSurface,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
             )
 
@@ -231,9 +224,8 @@ fun ProfileScreen(
             // Quick Actions Section
             Text(
                 text = stringResource(Res.string.quick_actions_title),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = AptoOnSurface,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
             )
 
@@ -242,9 +234,9 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = AptoSurfaceContainerLowest
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AptoOutlineVariant)
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column {
                     ProfileActionButton(
@@ -252,8 +244,8 @@ fun ProfileScreen(
                         text = stringResource(Res.string.edit_profile),
                         onClick = onEditProfileClick
                     )
-                    
-                    HorizontalDivider(color = AptoOutlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
 
                     ProfileActionButton(
                         icon = Icons.Default.Notifications,
@@ -261,7 +253,7 @@ fun ProfileScreen(
                         onClick = onNotificationSettingsClick
                     )
 
-                    HorizontalDivider(color = AptoOutlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
 
                     // Language Selector
                     ProfileActionButton(
@@ -271,7 +263,7 @@ fun ProfileScreen(
                         onClick = { showLanguageDialog = true }
                     )
 
-                    HorizontalDivider(color = AptoOutlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
 
                     ProfileActionButton(
                         icon = Icons.Default.Lock,
@@ -289,10 +281,10 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .border(1.dp, AptoError.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                    .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AptoErrorContainer,
-                    contentColor = AptoError
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.error
                 ),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
@@ -305,8 +297,7 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(Res.string.logout),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                 )
             }
 
@@ -324,8 +315,8 @@ private fun ProfileInfoRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AptoSurfaceContainerLowest, RoundedCornerShape(12.dp))
-            .border(1.dp, AptoOutlineVariant, RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -333,32 +324,30 @@ private fun ProfileInfoRow(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(AptoSurfaceContainerLow, CircleShape),
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = AptoSecondary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(22.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = AptoOnSurfaceVariant
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = value,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AptoOnSurface
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -381,34 +370,32 @@ private fun ProfileActionButton(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = AptoSecondary,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
         )
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = text,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = AptoOnSurface
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
             if (subtitle != null) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = AptoOnSurfaceVariant
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-        
+
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = AptoOutline,
+            tint = MaterialTheme.colorScheme.outline,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -425,9 +412,8 @@ private fun LanguageSelectionDialog(
         title = {
             Text(
                 text = stringResource(Res.string.language_dialog_title),
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = AptoOnSurface
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         text = {
@@ -438,7 +424,7 @@ private fun LanguageSelectionDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                color = if (isSelected) AptoPrimaryFixed else AptoSurfaceContainerLow,
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .clickable { onLanguageSelected(language) }
@@ -447,21 +433,22 @@ private fun LanguageSelectionDialog(
                     ) {
                         Text(
                             text = language.flag,
-                            fontSize = 24.sp
+                            style = MaterialTheme.typography.headlineSmall
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             text = language.displayName,
-                            fontSize = 16.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = AptoOnSurface,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
                         )
                         if (isSelected) {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
-                                tint = AptoSecondary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -473,12 +460,12 @@ private fun LanguageSelectionDialog(
             TextButton(onClick = onDismiss) {
                 Text(
                     text = stringResource(Res.string.close),
-                    fontWeight = FontWeight.Bold,
-                    color = AptoSecondary
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         },
-        containerColor = AptoSurfaceContainerLowest,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(24.dp)
     )
 }
@@ -488,14 +475,14 @@ private fun ProfileBottomNavBar(
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    val activeColor = AptoSecondary
-    val inactiveColor = AptoOutline
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = MaterialTheme.colorScheme.outline
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = AptoSurfaceContainerLowest,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, AptoOutlineVariant)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -521,8 +508,7 @@ private fun ProfileBottomNavBar(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Home",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
                     color = inactiveColor
                 )
             }
@@ -544,8 +530,7 @@ private fun ProfileBottomNavBar(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Requests",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
                     color = inactiveColor
                 )
             }
@@ -567,8 +552,7 @@ private fun ProfileBottomNavBar(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Units",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
                     color = inactiveColor
                 )
             }
@@ -590,12 +574,10 @@ private fun ProfileBottomNavBar(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Profile",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
                     color = activeColor
                 )
             }
         }
     }
 }
-

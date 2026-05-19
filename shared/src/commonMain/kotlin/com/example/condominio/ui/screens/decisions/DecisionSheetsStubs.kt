@@ -306,8 +306,7 @@ fun UploadQuoteSheet(
                 } else {
                     Text(
                         text = stringResource(Res.string.decisions_upload_submit_btn),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 }
             }

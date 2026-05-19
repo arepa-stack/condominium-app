@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.condominio.ui.theme.*
 
 @Composable
 fun PrimaryButton(
@@ -21,8 +20,8 @@ fun PrimaryButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     icon: ImageVector? = null,
-    containerColor: Color = AptoSecondaryContainer,
-    contentColor: Color = AptoOnSecondary
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
     Button(
         onClick = onClick,
@@ -32,15 +31,15 @@ fun PrimaryButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
-            disabledContainerColor = AptoOutlineVariant,
-            disabledContentColor = Color.White
+            disabledContainerColor = MaterialTheme.colorScheme.outlineVariant,
+            disabledContentColor = MaterialTheme.colorScheme.surface
         )
     ) {
         if (isLoading) {
             CircularProgressIndicator(color = contentColor, modifier = Modifier.size(24.dp))
         } else {
             Row(
-                verticalAlignment = Alignment.CenterVertically, 
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 if (icon != null) {
@@ -63,8 +62,8 @@ fun SecondaryOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    borderColor: Color = AptoPrimary,
-    contentColor: Color = AptoSecondary
+    borderColor: Color = MaterialTheme.colorScheme.outline,
+    contentColor: Color = MaterialTheme.colorScheme.primary
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -76,7 +75,7 @@ fun SecondaryOutlinedButton(
         border = androidx.compose.foundation.BorderStroke(1.dp, borderColor)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically, 
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             if (icon != null) {
