@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -28,6 +27,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
+import com.example.condominio.ui.components.EmptyState
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.StatusBadge
@@ -82,33 +82,10 @@ fun PaymentHistoryScreen(
                     LoadingState()
                 }
                 uiState.payments.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(
-                                modifier = Modifier
-                                    .size(192.dp)
-                                    .background(AptoSurfaceContainerHigh, CircleShape)
-                                    .padding(bottom = 16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ReceiptLong,
-                                    contentDescription = null,
-                                    tint = AptoOutlineVariant,
-                                    modifier = Modifier.size(64.dp)
-                                )
-                            }
-                            Text(
-                                text = "No hay pagos registrados.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = AptoOnSurfaceVariant,
-                                modifier = Modifier.padding(top = 16.dp)
-                            )
-                        }
-                    }
+                    EmptyState(
+                        title = "No hay pagos registrados.",
+                        icon = Icons.Default.ReceiptLong,
+                    )
                 }
                 else -> {
                     LazyColumn(
