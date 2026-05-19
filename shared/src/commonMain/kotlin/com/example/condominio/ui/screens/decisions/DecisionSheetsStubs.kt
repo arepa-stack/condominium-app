@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.QuoteDto
 import com.example.condominio.data.utils.PlatformFileReader
 import com.example.condominio.data.utils.rememberDocumentPickerLauncher
+import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.utils.UiText
 import condominio.shared.generated.resources.*
@@ -159,48 +159,38 @@ fun UploadQuoteSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = provider,
                 onValueChange = { provider = it },
-                label = { Text(stringResource(Res.string.decisions_upload_provider_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
+                label = stringResource(Res.string.decisions_upload_provider_label),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { amountFocus.requestFocus() })
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = { Text(stringResource(Res.string.decisions_upload_amount_label)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(amountFocus),
-                shape = RoundedCornerShape(12.dp),
+                label = stringResource(Res.string.decisions_upload_amount_label),
+                modifier = Modifier.focusRequester(amountFocus),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next
                 ),
-                keyboardActions = KeyboardActions(onNext = { notesFocus.requestFocus() }),
-                singleLine = true
+                keyboardActions = KeyboardActions(onNext = { notesFocus.requestFocus() })
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text(stringResource(Res.string.decisions_upload_notes_label)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(notesFocus),
-                shape = RoundedCornerShape(12.dp),
+                label = stringResource(Res.string.decisions_upload_notes_label),
+                modifier = Modifier.focusRequester(notesFocus),
+                singleLine = false,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                maxLines = 3
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
             )
 
             Spacer(modifier = Modifier.height(20.dp))

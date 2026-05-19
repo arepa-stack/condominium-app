@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.utils.rememberImagePickerLauncher
+import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.TopBarWithBack
@@ -461,46 +462,46 @@ private fun Step2Details(
         // Dynamic Form Fields
         when (uiState.method) {
             PaymentMethod.PAGO_MOVIL -> {
-                CustomTextField(
-                    label = "Banco Emisor",
+                LabeledOutlinedField(
                     value = uiState.bank,
                     onValueChange = viewModel::onBankChange,
+                    label = "Banco Emisor",
                     placeholder = "Seleccione el banco"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    CustomTextField(
-                        label = "Teléfono",
+                    LabeledOutlinedField(
                         value = uiState.phone,
                         onValueChange = viewModel::onPhoneChange,
+                        label = "Teléfono",
                         placeholder = "0414-0000000",
-                        keyboardType = KeyboardType.Phone,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.weight(1f)
                     )
-                    CustomTextField(
-                        label = "Referencia",
+                    LabeledOutlinedField(
                         value = uiState.reference,
                         onValueChange = viewModel::onReferenceChange,
+                        label = "Referencia",
                         placeholder = "Últimos 6 dígitos",
-                        keyboardType = KeyboardType.Number,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
             PaymentMethod.TRANSFER -> {
-                CustomTextField(
-                    label = "Banco Emisor",
+                LabeledOutlinedField(
                     value = uiState.bank,
                     onValueChange = viewModel::onBankChange,
+                    label = "Banco Emisor",
                     placeholder = "Seleccione el banco"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                CustomTextField(
-                    label = "Referencia",
+                LabeledOutlinedField(
                     value = uiState.reference,
                     onValueChange = viewModel::onReferenceChange,
+                    label = "Referencia",
                     placeholder = "Últimos dígitos de confirmación",
-                    keyboardType = KeyboardType.Number
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
             PaymentMethod.CASH -> {
@@ -575,41 +576,6 @@ private fun Step2Details(
         }
 
         Spacer(modifier = Modifier.height(100.dp)) // padding for bottom bar
-    }
-}
-
-@Composable
-private fun CustomTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-        )
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.outlineVariant) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                focusedBorderColor = MaterialTheme.colorScheme.primary
-            ),
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge
-        )
     }
 }
 

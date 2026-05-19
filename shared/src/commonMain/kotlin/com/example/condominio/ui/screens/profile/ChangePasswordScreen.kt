@@ -2,7 +2,6 @@ package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,12 +13,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.TopBarWithBack
 import condominio.shared.generated.resources.*
@@ -65,22 +64,18 @@ fun ChangePasswordScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Current Password
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = uiState.currentPassword,
                 onValueChange = viewModel::onCurrentPasswordChange,
-                label = { Text(stringResource(Res.string.current_password)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
+                label = stringResource(Res.string.current_password),
                 enabled = !uiState.isLoading,
-                visualTransformation = if (uiState.currentPasswordVisible) 
+                visualTransformation = if (uiState.currentPasswordVisible)
                     VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     IconButton(onClick = viewModel::toggleCurrentPasswordVisibility) {
                         Icon(
-                            imageVector = if (uiState.currentPasswordVisible) 
+                            imageVector = if (uiState.currentPasswordVisible)
                                 Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (uiState.currentPasswordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
                         )
@@ -90,22 +85,18 @@ fun ChangePasswordScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // New Password
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = uiState.newPassword,
                 onValueChange = viewModel::onNewPasswordChange,
-                label = { Text(stringResource(Res.string.new_password)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
+                label = stringResource(Res.string.new_password),
                 enabled = !uiState.isLoading,
-                visualTransformation = if (uiState.newPasswordVisible) 
+                visualTransformation = if (uiState.newPasswordVisible)
                     VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     IconButton(onClick = viewModel::toggleNewPasswordVisibility) {
                         Icon(
-                            imageVector = if (uiState.newPasswordVisible) 
+                            imageVector = if (uiState.newPasswordVisible)
                                 Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (uiState.newPasswordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
                         )
@@ -115,22 +106,18 @@ fun ChangePasswordScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Confirm New Password
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = uiState.confirmPassword,
                 onValueChange = viewModel::onConfirmPasswordChange,
-                label = { Text(stringResource(Res.string.confirm_new_password)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
+                label = stringResource(Res.string.confirm_new_password),
                 enabled = !uiState.isLoading,
-                visualTransformation = if (uiState.confirmPasswordVisible) 
+                visualTransformation = if (uiState.confirmPasswordVisible)
                     VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     IconButton(onClick = viewModel::toggleConfirmPasswordVisibility) {
                         Icon(
-                            imageVector = if (uiState.confirmPasswordVisible) 
+                            imageVector = if (uiState.confirmPasswordVisible)
                                 Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (uiState.confirmPasswordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
                         )

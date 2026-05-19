@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.theme.AptoSurfaceContainerLow
 import condominio.shared.generated.resources.*
@@ -177,91 +178,40 @@ fun RegisterScreen(
                 }
             }
 
-            // Name row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.register_first_name_label),
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-                    OutlinedTextField(
-                        value = uiState.firstName,
-                        onValueChange = viewModel::onFirstNameChange,
-                        placeholder = { Text(stringResource(Res.string.register_first_name_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = FieldShape,
-                        colors = registerFieldColors(),
-                        singleLine = true
-                    )
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.register_last_name_label),
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-                    OutlinedTextField(
-                        value = uiState.lastName,
-                        onValueChange = viewModel::onLastNameChange,
-                        placeholder = { Text(stringResource(Res.string.register_last_name_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = FieldShape,
-                        colors = registerFieldColors(),
-                        singleLine = true
-                    )
-                }
-            }
-
-            // Email
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = stringResource(Res.string.register_email_label),
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp)
+                LabeledOutlinedField(
+                    value = uiState.firstName,
+                    onValueChange = viewModel::onFirstNameChange,
+                    label = stringResource(Res.string.register_first_name_label),
+                    placeholder = stringResource(Res.string.register_first_name_hint),
+                    modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
-                    value = uiState.email,
-                    onValueChange = viewModel::onEmailChange,
-                    placeholder = { Text(stringResource(Res.string.register_email_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = FieldShape,
-                    colors = registerFieldColors(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                LabeledOutlinedField(
+                    value = uiState.lastName,
+                    onValueChange = viewModel::onLastNameChange,
+                    label = stringResource(Res.string.register_last_name_label),
+                    placeholder = stringResource(Res.string.register_last_name_hint),
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            // Document ID (cédula / pasaporte)
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = stringResource(Res.string.register_document_id_label),
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-                OutlinedTextField(
-                    value = uiState.documentId,
-                    onValueChange = viewModel::onDocumentIdChange,
-                    placeholder = { Text(stringResource(Res.string.register_document_id_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = FieldShape,
-                    colors = registerFieldColors(),
-                    singleLine = true
-                )
-            }
+            LabeledOutlinedField(
+                value = uiState.email,
+                onValueChange = viewModel::onEmailChange,
+                label = stringResource(Res.string.register_email_label),
+                placeholder = stringResource(Res.string.register_email_hint),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
+
+            LabeledOutlinedField(
+                value = uiState.documentId,
+                onValueChange = viewModel::onDocumentIdChange,
+                label = stringResource(Res.string.register_document_id_label),
+                placeholder = stringResource(Res.string.register_document_id_hint)
+            )
 
             // Error
             if (uiState.error != null) {
