@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.condominio.ui.components.PrimaryButton
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -165,26 +166,11 @@ fun ChangePasswordScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Change Password Button
-            Button(
+            PrimaryButton(
+                text = stringResource(Res.string.change_password),
                 onClick = viewModel::onChangePasswordClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !uiState.isLoading
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(
-                        text = stringResource(Res.string.change_password),
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                }
-            }
+                isLoading = uiState.isLoading
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }

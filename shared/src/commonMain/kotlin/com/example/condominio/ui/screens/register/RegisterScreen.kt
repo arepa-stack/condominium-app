@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.theme.AptoSurfaceContainerLow
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -279,39 +280,12 @@ fun RegisterScreen(
                         .fillMaxWidth()
                         .shadow(8.dp, FieldShape, ambientColor = shadowColor, spotColor = shadowColor)
                 ) {
-                    Button(
+                    PrimaryButton(
+                        text = stringResource(Res.string.register_submit),
                         onClick = viewModel::onRegisterClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = FieldShape,
-                        enabled = !uiState.isLoading,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                            disabledContentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(22.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = stringResource(Res.string.register_submit),
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
+                        isLoading = uiState.isLoading,
+                        trailingIcon = Icons.AutoMirrored.Filled.ArrowForward
+                    )
                 }
 
                 Text(

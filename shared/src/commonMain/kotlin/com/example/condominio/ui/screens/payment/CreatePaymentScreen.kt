@@ -17,7 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.utils.rememberImagePickerLauncher
+import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.theme.AptoSuccess
 import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
 import com.example.condominio.ui.utils.formatCurrency
@@ -358,33 +359,12 @@ private fun Step1BottomBar(
                 )
             }
 
-            Button(
+            PrimaryButton(
+                text = "Continuar al Pago",
                 onClick = onContinue,
                 enabled = isEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.outlineVariant
-                )
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                    Text(
-                        text = "Continuar al Pago",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
+                trailingIcon = Icons.AutoMirrored.Filled.ArrowForward
+            )
         }
     }
 }
@@ -683,28 +663,12 @@ private fun Step2BottomBar(
                 .padding(horizontal = 16.dp, vertical = 16.dp)
                 .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
-            Button(
+            PrimaryButton(
+                text = "Registrar Pago",
                 onClick = onSubmit,
                 enabled = !isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.outlineVariant
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
-                } else {
-                    Text(
-                        text = "Registrar Pago",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
+                isLoading = isLoading
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
