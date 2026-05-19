@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// `icon` is leading (create/identify actions: Add, Save, Search).
+// `trailingIcon` is directional (next-step / external link: ArrowForward, OpenInNew).
 @Composable
 fun PrimaryButton(
     text: String,
@@ -20,6 +22,7 @@ fun PrimaryButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     icon: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
@@ -51,6 +54,10 @@ fun PrimaryButton(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
+                if (trailingIcon != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(imageVector = trailingIcon, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
             }
         }
     }

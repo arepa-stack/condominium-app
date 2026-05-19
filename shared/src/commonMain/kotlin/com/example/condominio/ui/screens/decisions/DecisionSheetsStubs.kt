@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.QuoteDto
 import com.example.condominio.data.utils.PlatformFileReader
 import com.example.condominio.data.utils.rememberDocumentPickerLauncher
+import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.utils.UiText
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -281,7 +282,8 @@ fun UploadQuoteSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
+            PrimaryButton(
+                text = stringResource(Res.string.decisions_upload_submit_btn),
                 onClick = {
                     onSubmit(
                         provider.trim(),
@@ -291,25 +293,9 @@ fun UploadQuoteSheet(
                         fileMime!!
                     )
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = canSubmit
-            ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White
-                    )
-                } else {
-                    Text(
-                        text = stringResource(Res.string.decisions_upload_submit_btn),
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                }
-            }
+                enabled = canSubmit,
+                isLoading = isSubmitting
+            )
         }
     }
 }

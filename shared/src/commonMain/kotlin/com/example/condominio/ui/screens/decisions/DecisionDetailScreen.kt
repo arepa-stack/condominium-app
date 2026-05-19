@@ -43,6 +43,7 @@ import com.example.condominio.data.model.ResultingType
 import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
 import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -111,29 +112,14 @@ fun DecisionDetailScreen(
                     color = AptoSurface,
                     shadowElevation = 8.dp
                 ) {
-                    Button(
+                    PrimaryButton(
+                        text = stringResource(Res.string.decisions_upload_quote_btn),
                         onClick = { viewModel.openUploadSheet() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AptoSecondaryContainer,
-                            contentColor = AptoOnSecondary
-                        )
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(Res.string.decisions_upload_quote_btn),
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                        )
-                    }
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        icon = Icons.Default.Add,
+                        containerColor = AptoSecondaryContainer,
+                        contentColor = AptoOnSecondary
+                    )
                 }
             }
         }

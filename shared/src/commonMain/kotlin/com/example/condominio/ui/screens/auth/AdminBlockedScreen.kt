@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.condominio.ui.components.PrimaryButton
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -37,11 +38,9 @@ fun AdminBlockedScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
-            onClick = onBackToLogin,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(Res.string.back_to_login))
-        }
+        PrimaryButton(
+            text = stringResource(Res.string.back_to_login),
+            onClick = onBackToLogin
+        )
     }
 }
