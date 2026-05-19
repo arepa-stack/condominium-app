@@ -10,12 +10,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -39,6 +37,7 @@ import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.FullScreenImageDialog
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.SecondaryOutlinedButton
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.shimmerEffect
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -70,27 +69,9 @@ fun PaymentDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Detalle del Pago",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = AptoPrimary)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Share */ }) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Compartir", tint = AptoPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AptoSurfaceContainerLowest
-                )
+            TopBarWithBack(
+                title = "Detalle del Pago",
+                onBackClick = onBackClick
             )
         },
         containerColor = AptoBackground,

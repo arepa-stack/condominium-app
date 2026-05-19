@@ -8,9 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -28,6 +26,7 @@ import com.example.condominio.data.model.Invoice
 import com.example.condominio.data.model.InvoiceStatus
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
@@ -54,33 +53,9 @@ fun InvoiceDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.invoice_detail_title),
-                        fontWeight = FontWeight.Bold,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                            tint = AptoPrimary
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { }) {
-                        Icon(
-                            Icons.Default.Share,
-                            contentDescription = stringResource(Res.string.share),
-                            tint = AptoPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurfaceContainerLowest)
+            TopBarWithBack(
+                title = stringResource(Res.string.invoice_detail_title),
+                onBackClick = onBackClick
             )
         },
         bottomBar = {

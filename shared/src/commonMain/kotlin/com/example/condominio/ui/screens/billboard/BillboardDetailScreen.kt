@@ -7,7 +7,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +32,7 @@ import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.ui.components.AnnouncementCategoryBadge
 import com.example.condominio.ui.components.AnnouncementMetricItem
 import com.example.condominio.ui.components.FullScreenImageDialog
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.announcementCategoryAccent
 import com.example.condominio.ui.components.shimmerEffect
 import com.example.condominio.ui.theme.AptoSuccess
@@ -83,24 +83,9 @@ fun BillboardDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.billboard_detail_title),
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                        )
-                    }
-                },
-
+            TopBarWithBack(
+                title = stringResource(Res.string.billboard_detail_title),
+                onBackClick = onBackClick
             )
         },
         bottomBar = {

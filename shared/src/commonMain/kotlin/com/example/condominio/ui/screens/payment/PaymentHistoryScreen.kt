@@ -9,11 +9,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.HomeWork
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -30,7 +28,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
+import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.StatusBadge
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
@@ -64,40 +64,9 @@ fun PaymentHistoryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Historial de Pagos",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = AptoPrimary)
-                    }
-                },
-                actions = {
-                    // Avatar Placeholder based on HTML
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 16.dp)
-                            .size(32.dp)
-                            .background(AptoSurfaceContainerHigh, CircleShape)
-                            .border(1.dp, AptoOutlineVariant, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = AptoOutline,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AptoSurfaceContainerLowest
-                )
+            TopBarWithBack(
+                title = "Historial de Pagos",
+                onBackClick = onBackClick
             )
         },
         containerColor = AptoBackground
@@ -218,14 +187,8 @@ fun PaymentHistoryCard(
 
     val iconBgColor = if (payment.status == PaymentStatus.REJECTED) AptoSurfaceContainerHigh else AptoSecondaryFixed
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AptoSurfaceContainerLowest, RoundedCornerShape(12.dp))
-            .border(1.dp, AptoOutlineVariant, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
+    ListItemCard(
+        onClick = onClick,
         verticalAlignment = Alignment.Top
     ) {
         Box(
