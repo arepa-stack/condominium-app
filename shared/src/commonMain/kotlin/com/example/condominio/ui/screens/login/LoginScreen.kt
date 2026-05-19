@@ -13,11 +13,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.example.condominio.ui.components.LabeledOutlinedField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,65 +99,54 @@ fun LoginScreen(
                 )
             }
 
-            // Email field
-            LabeledField(label = stringResource(Res.string.email)) {
-                OutlinedTextField(
-                    value = uiState.email,
-                    onValueChange = onEmailChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("ejemplo@correo.com", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    singleLine = true,
-                    shape = FieldShape,
-                    colors = fieldColors(),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = { passwordFocusRequester.requestFocus() }
-                    )
+            LabeledOutlinedField(
+                value = uiState.email,
+                onValueChange = onEmailChange,
+                label = stringResource(Res.string.email),
+                placeholder = "ejemplo@correo.com",
+                shape = FieldShape,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { passwordFocusRequester.requestFocus() }
                 )
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Password field
-            LabeledField(label = stringResource(Res.string.password)) {
-                OutlinedTextField(
-                    value = uiState.password,
-                    onValueChange = onPasswordChange,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(passwordFocusRequester),
-                    placeholder = { Text("••••••••", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    singleLine = true,
-                    shape = FieldShape,
-                    colors = fieldColors(),
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                contentDescription = if (passwordVisible)
-                                    stringResource(Res.string.hide_password)
-                                else
-                                    stringResource(Res.string.show_password),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                            onLoginClick()
-                        }
-                    )
+            LabeledOutlinedField(
+                value = uiState.password,
+                onValueChange = onPasswordChange,
+                label = stringResource(Res.string.password),
+                modifier = Modifier.focusRequester(passwordFocusRequester),
+                placeholder = "••••••••",
+                shape = FieldShape,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (passwordVisible)
+                                stringResource(Res.string.hide_password)
+                            else
+                                stringResource(Res.string.show_password),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        onLoginClick()
+                    }
                 )
-            }
+            )
 
             // Error message
             if (uiState.error != null) {
@@ -235,29 +223,3 @@ fun LoginScreen(
     }
 }
 
-@Composable
-private fun LabeledField(
-    label: String,
-    content: @Composable () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
-        )
-        content()
-    }
-}
-
-@Composable
-private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = MaterialTheme.colorScheme.primary,
-    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-    cursorColor = MaterialTheme.colorScheme.primary,
-    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-    focusedContainerColor = MaterialTheme.colorScheme.surface,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-)
