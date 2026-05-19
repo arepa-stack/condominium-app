@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -72,16 +71,7 @@ fun PaymentDetailScreen(
         topBar = {
             TopBarWithBack(
                 title = "Detalle del Pago",
-                onBackClick = onBackClick,
-                actions = {
-                    IconButton(onClick = { /* Share */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Compartir",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                onBackClick = onBackClick
             )
         },
         containerColor = AptoBackground,

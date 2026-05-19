@@ -69,13 +69,6 @@ fun InvoiceListScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                    IconButton(onClick = { }) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = stringResource(Res.string.settings),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
             )
         },

@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -56,16 +55,7 @@ fun InvoiceDetailScreen(
         topBar = {
             TopBarWithBack(
                 title = stringResource(Res.string.invoice_detail_title),
-                onBackClick = onBackClick,
-                actions = {
-                    IconButton(onClick = { }) {
-                        Icon(
-                            Icons.Default.Share,
-                            contentDescription = stringResource(Res.string.share),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                onBackClick = onBackClick
             )
         },
         bottomBar = {

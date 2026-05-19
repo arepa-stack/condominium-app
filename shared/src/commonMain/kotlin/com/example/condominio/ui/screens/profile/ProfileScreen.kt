@@ -66,16 +66,7 @@ fun ProfileScreen(
         topBar = {
             TopBarWithBack(
                 title = stringResource(Res.string.profile_title),
-                onBackClick = onBackClick,
-                actions = {
-                    IconButton(onClick = { /* Placeholder setting action */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                onBackClick = onBackClick
             )
         },
         containerColor = MaterialTheme.colorScheme.background

@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
@@ -78,17 +77,6 @@ fun CreatePaymentScreen(
                         currentStep = 1
                     } else {
                         onBackClick()
-                    }
-                },
-                actions = {
-                    if (currentStep == 1) {
-                        IconButton(onClick = { /* TODO: Help */ }) {
-                            Icon(
-                                imageVector = Icons.Default.HelpOutline,
-                                contentDescription = "Ayuda",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
                     }
                 }
             )

@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.HomeWork
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -67,24 +66,7 @@ fun PaymentHistoryScreen(
         topBar = {
             TopBarWithBack(
                 title = "Historial de Pagos",
-                onBackClick = onBackClick,
-                actions = {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 16.dp)
-                            .size(32.dp)
-                            .background(AptoSurfaceContainerHigh, CircleShape)
-                            .border(1.dp, AptoOutlineVariant, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = AptoOutline,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
+                onBackClick = onBackClick
             )
         },
         containerColor = AptoBackground
