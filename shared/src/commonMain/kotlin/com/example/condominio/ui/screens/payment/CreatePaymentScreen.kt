@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.utils.rememberImagePickerLauncher
+import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.theme.AptoSuccess
 import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
@@ -246,15 +247,9 @@ private fun InvoiceCard(
 ) {
     val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+    ListItemCard(
+        onClick = onClick,
+        borderColor = borderColor
     ) {
         // Custom Checkbox
         Box(

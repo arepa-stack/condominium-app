@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
@@ -44,6 +43,7 @@ import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
 import com.example.condominio.ui.components.DecisionStatusBadge
 import com.example.condominio.ui.components.PrimaryButton
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -73,36 +73,19 @@ fun DecisionDetailScreen(
     Scaffold(
         containerColor = AptoBackground,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = uiState.detail?.decision?.title
-                            ?: stringResource(Res.string.decisions_detail_fallback_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = AptoSecondary,
-                        maxLines = 1
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                            tint = AptoSecondary
-                        )
-                    }
-                },
+            TopBarWithBack(
+                title = uiState.detail?.decision?.title
+                    ?: stringResource(Res.string.decisions_detail_fallback_title),
+                onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = stringResource(Res.string.refresh),
-                            tint = AptoSecondary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
+                }
             )
         },
         bottomBar = {

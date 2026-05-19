@@ -30,6 +30,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
+import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.StatusBadge
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -218,14 +219,8 @@ fun PaymentHistoryCard(
 
     val iconBgColor = if (payment.status == PaymentStatus.REJECTED) AptoSurfaceContainerHigh else AptoSecondaryFixed
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AptoSurfaceContainerLowest, RoundedCornerShape(12.dp))
-            .border(1.dp, AptoOutlineVariant, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
+    ListItemCard(
+        onClick = onClick,
         verticalAlignment = Alignment.Top
     ) {
         Box(

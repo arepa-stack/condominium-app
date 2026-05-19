@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
@@ -24,6 +23,8 @@ import com.example.condominio.data.model.DecisionDto
 import com.example.condominio.data.model.DecisionStatus
 import com.example.condominio.ui.components.DecisionStatusBadge
 import com.example.condominio.ui.components.FilterPillChip
+import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.formatDecisionDate
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
@@ -46,33 +47,18 @@ fun DecisionsListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.decisions_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = AptoSecondary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                            tint = AptoSecondary
-                        )
-                    }
-                },
+            TopBarWithBack(
+                title = stringResource(Res.string.decisions_title),
+                onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = stringResource(Res.string.refresh),
-                            tint = AptoSecondary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
+                }
             )
         },
         containerColor = AptoBackground
@@ -228,15 +214,8 @@ private fun DecisionCard(
             decision.status == DecisionStatus.RECEPTION ||
             decision.status == DecisionStatus.TIEBREAK_PENDING
 
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLowest),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, AptoOutlineVariant)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    ListItemCard(onClick = onClick) {
+        Column(modifier = Modifier.weight(1f)) {
 
             // Header: title + status badge
             Row(

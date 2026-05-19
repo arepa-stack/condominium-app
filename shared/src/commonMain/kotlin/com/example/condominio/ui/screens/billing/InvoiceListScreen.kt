@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -21,7 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.Invoice
+import androidx.compose.foundation.layout.PaddingValues
 import com.example.condominio.data.model.InvoiceStatus
+import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
@@ -56,40 +58,25 @@ fun InvoiceListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.invoices_title),
-                        fontWeight = FontWeight.Bold,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                            tint = AptoPrimary
-                        )
-                    }
-                },
+            TopBarWithBack(
+                title = stringResource(Res.string.invoices_title),
+                onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = stringResource(Res.string.refresh),
-                            tint = AptoPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     IconButton(onClick = { }) {
                         Icon(
                             Icons.Default.Settings,
                             contentDescription = stringResource(Res.string.settings),
-                            tint = AptoPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
+                }
             )
         },
         containerColor = AptoBackground
@@ -169,16 +156,12 @@ fun InvoiceItem(
             invoice.status != InvoiceStatus.CANCELLED
     val showPaidColumn = invoice.paid > 0 || invoice.status == InvoiceStatus.PAID
 
-    Card(
+    ListItemCard(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLowest),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, AptoOutlineVariant)
+        padding = PaddingValues(24.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
