@@ -29,6 +29,7 @@ import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.StatusBadge
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
@@ -78,12 +79,7 @@ fun PaymentHistoryScreen(
         ) {
             when {
                 uiState.isLoading && uiState.payments.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = AptoSecondary)
-                    }
+                    LoadingState()
                 }
                 uiState.payments.isEmpty() -> {
                     Box(

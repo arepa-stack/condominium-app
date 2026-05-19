@@ -26,6 +26,7 @@ import com.example.condominio.data.model.Invoice
 import com.example.condominio.data.model.InvoiceStatus
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -132,12 +133,7 @@ fun InvoiceDetailScreen(
         ) {
             if (uiState.isLoading && invoice == null) {
                 item {
-                    Box(
-                        modifier = Modifier.fillParentMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = AptoSecondaryContainer)
-                    }
+                    LoadingState(modifier = Modifier.fillParentMaxSize())
                 }
                 return@LazyColumn
             }
@@ -181,14 +177,10 @@ fun InvoiceDetailScreen(
 
             if (uiState.isLoading) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = AptoSecondaryContainer)
-                    }
+                    LoadingState(
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        fullScreen = false
+                    )
                 }
             } else if (uiState.payments.isEmpty()) {
                 item {

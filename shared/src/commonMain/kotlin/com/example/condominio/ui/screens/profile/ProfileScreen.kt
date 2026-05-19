@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.locale.AppLanguage
 import com.example.condominio.ui.locale.LocaleManager
@@ -72,14 +73,7 @@ fun ProfileScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading && uiState.user == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
+            LoadingState(modifier = Modifier.padding(paddingValues))
             return@Scaffold
         }
 

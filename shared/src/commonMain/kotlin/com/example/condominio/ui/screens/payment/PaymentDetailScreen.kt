@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.FullScreenImageDialog
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.SecondaryOutlinedButton
 import com.example.condominio.ui.components.TopBarWithBack
@@ -250,9 +251,7 @@ fun PaymentDetailScreen(
                 )
             }
         } else if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = AptoSecondary)
-            }
+            LoadingState()
         }
     }
 }

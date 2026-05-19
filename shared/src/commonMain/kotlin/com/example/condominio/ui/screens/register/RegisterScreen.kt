@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.condominio.ui.components.LabeledOutlinedField
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.theme.AptoSurfaceContainerLow
 import condominio.shared.generated.resources.*
@@ -114,14 +115,11 @@ fun RegisterScreen(
 
             // Building card
             if (uiState.isLoadingBuilding) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(72.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                }
+                LoadingState(
+                    modifier = Modifier.fillMaxWidth().height(72.dp),
+                    size = 24.dp,
+                    fullScreen = false
+                )
             } else if (uiState.buildingName.isNotBlank()) {
                 BuildingCard(name = uiState.buildingName)
             }

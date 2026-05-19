@@ -32,6 +32,7 @@ import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.ui.components.AnnouncementCategoryBadge
 import com.example.condominio.ui.components.AnnouncementMetricItem
 import com.example.condominio.ui.components.FullScreenImageDialog
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.announcementCategoryAccent
 import com.example.condominio.ui.components.shimmerEffect
@@ -102,12 +103,7 @@ fun BillboardDetailScreen(
     ) { paddingValues ->
         when {
             uiState.isLoading && uiState.announcement == null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
+                LoadingState(modifier = Modifier.padding(paddingValues))
             }
 
             uiState.announcement != null -> {

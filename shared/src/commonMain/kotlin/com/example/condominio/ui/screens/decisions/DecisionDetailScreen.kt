@@ -42,6 +42,7 @@ import com.example.condominio.data.model.ResultingType
 import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
 import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.formatDecisionDeadline
@@ -110,14 +111,7 @@ fun DecisionDetailScreen(
         val detail = uiState.detail
         when {
             uiState.isLoading && detail == null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                LoadingState(modifier = Modifier.padding(paddingValues))
             }
 
             uiState.error != null && detail == null -> {
