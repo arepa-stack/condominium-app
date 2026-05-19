@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import com.example.condominio.ui.components.LabeledOutlinedField
+import com.example.condominio.ui.components.LoadingState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,9 +59,7 @@ fun LoginScreen(
     }
 
     if (uiState.isCheckingSession || uiState.isSuccess || uiState.isPending || uiState.isAdminBlocked) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-        }
+        LoadingState()
         return
     }
 

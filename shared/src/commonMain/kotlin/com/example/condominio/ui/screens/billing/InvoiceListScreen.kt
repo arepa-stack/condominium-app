@@ -23,6 +23,7 @@ import com.example.condominio.data.model.Invoice
 import androidx.compose.foundation.layout.PaddingValues
 import com.example.condominio.data.model.InvoiceStatus
 import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -108,9 +109,7 @@ fun InvoiceListScreen(
 
             when {
                 uiState.isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = AptoSecondaryContainer)
-                    }
+                    LoadingState()
                 }
                 uiState.error != null -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

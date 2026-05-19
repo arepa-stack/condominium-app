@@ -36,6 +36,7 @@ import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.utils.rememberImagePickerLauncher
 import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.AptoSuccess
@@ -157,9 +158,10 @@ private fun Step1Invoices(
         )
 
         if (uiState.isLoadingInvoices) {
-            Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
+            LoadingState(
+                modifier = Modifier.fillMaxWidth().height(100.dp),
+                fullScreen = false
+            )
         } else if (uiState.pendingInvoices.isNotEmpty()) {
             val invoices = uiState.pendingInvoices.sortedBy { it.period }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

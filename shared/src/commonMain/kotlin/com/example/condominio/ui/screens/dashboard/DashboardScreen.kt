@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.theme.AptoCategoryBlue
@@ -78,12 +79,7 @@ fun DashboardScreen(
             containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading && uiState.userName.isEmpty()) {
-            Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            LoadingState(modifier = Modifier.padding(paddingValues))
             return@Scaffold
         }
         LazyColumn(

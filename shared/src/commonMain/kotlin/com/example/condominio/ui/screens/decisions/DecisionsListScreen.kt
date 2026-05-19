@@ -24,6 +24,7 @@ import com.example.condominio.data.model.DecisionStatus
 import com.example.condominio.ui.components.DecisionStatusBadge
 import com.example.condominio.ui.components.FilterPillChip
 import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.formatDecisionDate
 import com.example.condominio.ui.components.formatDecisionDeadline
@@ -75,9 +76,7 @@ fun DecisionsListScreen(
 
             when {
                 uiState.isLoading && uiState.decisions.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = AptoSecondaryContainer)
-                    }
+                    LoadingState()
                 }
 
                 uiState.error != null && uiState.decisions.isEmpty() -> {
@@ -133,15 +132,11 @@ fun DecisionsListScreen(
                         }
                         if (uiState.isLoading) {
                             item {
-                                Box(
+                                LoadingState(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        color = AptoSecondaryContainer
-                                    )
-                                }
+                                    size = 24.dp,
+                                    fullScreen = false
+                                )
                             }
                         }
                     }

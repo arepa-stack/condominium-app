@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.ui.components.AnnouncementCard
 import com.example.condominio.ui.components.FilterPillChip
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.announcementCategoryLabel
 import com.example.condominio.ui.theme.*
@@ -67,9 +68,7 @@ fun BillboardListScreen(
 
             when {
                 uiState.isLoading && uiState.announcements.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = AptoSecondaryContainer)
-                    }
+                    LoadingState()
                 }
 
                 uiState.error != null && uiState.announcements.isEmpty() -> {
@@ -125,15 +124,11 @@ fun BillboardListScreen(
                         }
                         if (uiState.isLoading) {
                             item {
-                                Box(
+                                LoadingState(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        color = AptoSecondaryContainer
-                                    )
-                                }
+                                    size = 24.dp,
+                                    fullScreen = false
+                                )
                             }
                         }
                     }
