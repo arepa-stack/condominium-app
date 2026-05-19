@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.Invoice
 import androidx.compose.foundation.layout.PaddingValues
 import com.example.condominio.data.model.InvoiceStatus
+import com.example.condominio.ui.components.EmptyState
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
@@ -313,44 +314,9 @@ fun InvoiceStatusBadge(status: InvoiceStatus) {
 
 @Composable
 private fun InvoiceEmptyState() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Surface(
-                modifier = Modifier.size(96.dp),
-                shape = CircleShape,
-                color = AptoSurfaceContainerHigh
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Receipt,
-                        contentDescription = null,
-                        tint = AptoOutline,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(Res.string.no_invoices_found),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = AptoOnSurface,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = stringResource(Res.string.no_invoices_for_filter),
-                style = MaterialTheme.typography.bodyMedium,
-                color = AptoOnSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
+    EmptyState(
+        title = stringResource(Res.string.no_invoices_found),
+        subtitle = stringResource(Res.string.no_invoices_for_filter),
+        icon = Icons.Default.Receipt,
+    )
 }

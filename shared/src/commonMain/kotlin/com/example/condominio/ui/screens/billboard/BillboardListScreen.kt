@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.ui.components.AnnouncementCard
+import com.example.condominio.ui.components.EmptyState
 import com.example.condominio.ui.components.FilterPillChip
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
@@ -98,17 +99,7 @@ fun BillboardListScreen(
                 }
 
                 sortedAnnouncements.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.billboard_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AptoOnSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    EmptyState(title = stringResource(Res.string.billboard_empty))
                 }
 
                 else -> {
