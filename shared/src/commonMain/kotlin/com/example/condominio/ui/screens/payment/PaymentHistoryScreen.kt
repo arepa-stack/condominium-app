@@ -23,10 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
@@ -70,8 +68,7 @@ fun PaymentHistoryScreen(
                 title = {
                     Text(
                         text = "Historial de Pagos",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         color = AptoPrimary
                     )
                 },
@@ -141,7 +138,7 @@ fun PaymentHistoryScreen(
                             }
                             Text(
                                 text = "No hay pagos registrados.",
-                                fontSize = 16.sp,
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = AptoOnSurfaceVariant,
                                 modifier = Modifier.padding(top = 16.dp)
                             )
@@ -160,17 +157,14 @@ fun PaymentHistoryScreen(
                                 if (uiState.unit.isNotEmpty()) {
                                     Text(
                                         text = "UNIDAD ${uiState.unit}".uppercase(),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = AptoOnSurfaceVariant,
-                                        letterSpacing = 0.5.sp,
                                         modifier = Modifier.padding(bottom = 4.dp)
                                     )
                                 }
                                 Text(
                                     text = "Transacciones Recientes",
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                                     color = AptoPrimary
                                 )
                             }
@@ -183,7 +177,7 @@ fun PaymentHistoryScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
-                        
+
                         item {
                              Spacer(modifier = Modifier.height(80.dp)) // Safe padding for global bottom bar if any
                         }
@@ -247,9 +241,9 @@ fun PaymentHistoryCard(
                 modifier = Modifier.size(24.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -259,27 +253,25 @@ fun PaymentHistoryCard(
                 Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
                         text = payment.description.ifBlank { "Pago de Recibo" },
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                         color = AptoPrimary,
                         modifier = Modifier.padding(bottom = 4.dp),
                         maxLines = 1
                     )
                     Text(
                         text = formattedDate,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = AptoOnSurfaceVariant,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                 }
                 Text(
                     text = "$${formatCurrency(payment.amount)}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                     color = AptoPrimary
                 )
             }
-            
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
@@ -295,8 +287,7 @@ fun PaymentHistoryCard(
                 }
                 Text(
                     text = extraText,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                     color = AptoOutline
                 )
             }

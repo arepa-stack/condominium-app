@@ -297,9 +297,7 @@ private fun UnitRow(unit: UserUnit, onClick: () -> Unit) {
                     text = stringResource(Res.string.primary_label),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = AptoSecondary,
-                    fontSize = 10.sp
+                    color = AptoSecondary
                 )
             }
         }

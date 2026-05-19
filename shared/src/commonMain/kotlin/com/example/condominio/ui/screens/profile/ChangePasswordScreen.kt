@@ -181,8 +181,7 @@ fun ChangePasswordScreen(
                 } else {
                     Text(
                         text = stringResource(Res.string.change_password),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 }
             }

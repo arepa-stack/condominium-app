@@ -144,8 +144,7 @@ fun EditProfileScreen(
                 } else {
                     Text(
                         text = stringResource(Res.string.save_changes),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 }
             }

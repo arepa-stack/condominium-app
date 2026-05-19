@@ -16,18 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.condominio.ui.theme.BrandDark
-import com.example.condominio.ui.theme.BrandOrange
-import com.example.condominio.ui.theme.BorderGray
-import com.example.condominio.ui.theme.OrangeShadow
-import com.example.condominio.ui.theme.SubtitleGray
-import com.example.condominio.ui.theme.SurfaceWhite
+import com.example.condominio.ui.theme.AptoSurfaceContainerLow
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -43,6 +36,7 @@ fun RegisterScreen(
     viewModel: RegisterViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val shadowColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
 
     LaunchedEffect(buildingId) {
         if (buildingId.isNotBlank() && uiState.buildingCode != buildingId) {
@@ -56,10 +50,10 @@ fun RegisterScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = SurfaceWhite,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             Surface(
-                color = SurfaceWhite,
+                color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp
             ) {
                 Row(
@@ -79,18 +73,17 @@ fun RegisterScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(Res.string.back),
-                            tint = BrandDark
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Text(
                         text = "Apto",
-                        color = BrandOrange,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                     )
                     Spacer(modifier = Modifier.size(40.dp))
                 }
-                HorizontalDivider(color = BorderGray)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
     ) { paddingValues ->
@@ -107,15 +100,13 @@ fun RegisterScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = stringResource(Res.string.register_title),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandDark,
-                    lineHeight = 34.sp
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = stringResource(Res.string.register_subtitle),
-                    fontSize = 14.sp,
-                    color = SubtitleGray
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -127,7 +118,7 @@ fun RegisterScreen(
                         .height(72.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = BrandOrange, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                 }
             } else if (uiState.buildingName.isNotBlank()) {
                 BuildingCard(name = uiState.buildingName)
@@ -137,10 +128,8 @@ fun RegisterScreen(
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = stringResource(Res.string.register_select_unit_label),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SubtitleGray,
-                    letterSpacing = 0.05.sp,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp)
                 )
                 var unitExpanded by remember { mutableStateOf(false) }
@@ -161,7 +150,7 @@ fun RegisterScreen(
                             Text(
                                 if (uiState.isLoadingUnits) stringResource(Res.string.loading)
                                 else stringResource(Res.string.select_unit_placeholder),
-                                color = SubtitleGray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
@@ -198,15 +187,14 @@ fun RegisterScreen(
                 ) {
                     Text(
                         text = stringResource(Res.string.register_first_name_label),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = SubtitleGray,
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp)
                     )
                     OutlinedTextField(
                         value = uiState.firstName,
                         onValueChange = viewModel::onFirstNameChange,
-                        placeholder = { Text(stringResource(Res.string.register_first_name_hint), color = SubtitleGray) },
+                        placeholder = { Text(stringResource(Res.string.register_first_name_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = FieldShape,
                         colors = registerFieldColors(),
@@ -219,15 +207,14 @@ fun RegisterScreen(
                 ) {
                     Text(
                         text = stringResource(Res.string.register_last_name_label),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = SubtitleGray,
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp)
                     )
                     OutlinedTextField(
                         value = uiState.lastName,
                         onValueChange = viewModel::onLastNameChange,
-                        placeholder = { Text(stringResource(Res.string.register_last_name_hint), color = SubtitleGray) },
+                        placeholder = { Text(stringResource(Res.string.register_last_name_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = FieldShape,
                         colors = registerFieldColors(),
@@ -240,15 +227,14 @@ fun RegisterScreen(
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = stringResource(Res.string.register_email_label),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SubtitleGray,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp)
                 )
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = viewModel::onEmailChange,
-                    placeholder = { Text(stringResource(Res.string.register_email_hint), color = SubtitleGray) },
+                    placeholder = { Text(stringResource(Res.string.register_email_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = FieldShape,
                     colors = registerFieldColors(),
@@ -261,15 +247,14 @@ fun RegisterScreen(
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = stringResource(Res.string.register_document_id_label),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SubtitleGray,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp)
                 )
                 OutlinedTextField(
                     value = uiState.documentId,
                     onValueChange = viewModel::onDocumentIdChange,
-                    placeholder = { Text(stringResource(Res.string.register_document_id_hint), color = SubtitleGray) },
+                    placeholder = { Text(stringResource(Res.string.register_document_id_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = FieldShape,
                     colors = registerFieldColors(),
@@ -281,8 +266,8 @@ fun RegisterScreen(
             if (uiState.error != null) {
                 Text(
                     text = uiState.error!!.asString(),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 13.sp,
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }
@@ -292,7 +277,7 @@ fun RegisterScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(8.dp, FieldShape, ambientColor = OrangeShadow, spotColor = OrangeShadow)
+                        .shadow(8.dp, FieldShape, ambientColor = shadowColor, spotColor = shadowColor)
                 ) {
                     Button(
                         onClick = viewModel::onRegisterClick,
@@ -302,23 +287,22 @@ fun RegisterScreen(
                         shape = FieldShape,
                         enabled = !uiState.isLoading,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = BrandOrange,
-                            contentColor = Color.White,
-                            disabledContainerColor = BrandOrange.copy(alpha = 0.6f),
-                            disabledContentColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(22.dp),
                                 strokeWidth = 2.dp
                             )
                         } else {
                             Text(
                                 text = stringResource(Res.string.register_submit),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             Icon(
@@ -332,8 +316,8 @@ fun RegisterScreen(
 
                 Text(
                     text = stringResource(Res.string.register_terms_notice),
-                    fontSize = 12.sp,
-                    color = SubtitleGray,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -348,7 +332,7 @@ private fun BuildingCard(name: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFF2F4F6))
+            .background(AptoSurfaceContainerLow)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -357,24 +341,21 @@ private fun BuildingCard(name: String) {
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(BrandOrange.copy(alpha = 0.1f)),
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
-            Text("🏢", fontSize = 22.sp)
+            Text("🏢", style = MaterialTheme.typography.titleLarge)
         }
         Column {
             Text(
                 text = "EDIFICIO",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = SubtitleGray,
-                letterSpacing = 0.05.sp
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = name,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = BrandDark
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -382,11 +363,11 @@ private fun BuildingCard(name: String) {
 
 @Composable
 private fun registerFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = BrandOrange,
-    unfocusedBorderColor = BorderGray,
-    cursorColor = BrandOrange,
-    focusedTextColor = BrandDark,
-    unfocusedTextColor = BrandDark,
-    focusedContainerColor = SurfaceWhite,
-    unfocusedContainerColor = SurfaceWhite
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface
 )
