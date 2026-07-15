@@ -2,19 +2,19 @@ package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.condominio.ui.components.LabeledOutlinedField
+import com.example.condominio.ui.components.PrimaryButton
+import com.example.condominio.ui.components.TopBarWithBack
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -35,16 +35,9 @@ fun EditProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.edit_profile), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+            TopBarWithBack(
+                title = stringResource(Res.string.edit_profile),
+                onBackClick = onBackClick
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -65,46 +58,29 @@ fun EditProfileScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Name Field
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text(stringResource(Res.string.full_name)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
+                label = stringResource(Res.string.full_name),
                 enabled = !uiState.isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Apartment Unit Field
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = uiState.apartmentUnit,
                 onValueChange = viewModel::onApartmentUnitChange,
-                label = { Text(stringResource(Res.string.apartment_unit_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
+                label = stringResource(Res.string.apartment_unit_label),
                 enabled = !uiState.isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Email (Read-only)
-            OutlinedTextField(
+            LabeledOutlinedField(
                 value = uiState.email,
                 onValueChange = {},
-                label = { Text(stringResource(Res.string.email)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                enabled = false,
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                    disabledBorderColor = MaterialTheme.colorScheme.outline,
-                    disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                label = stringResource(Res.string.email),
+                enabled = false
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -128,27 +104,11 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Save Button
-            Button(
+            PrimaryButton(
+                text = stringResource(Res.string.save_changes),
                 onClick = viewModel::onSaveClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !uiState.isLoading
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(
-                        text = stringResource(Res.string.save_changes),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
+                isLoading = uiState.isLoading
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }

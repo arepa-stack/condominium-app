@@ -27,9 +27,16 @@ open class LoginViewModel(
             _uiState.update { it.copy(isCheckingSession = true) }
             val hasSession = authRepository.hasValidSession()
             if (hasSession) {
-                // Fetch user data in background to populate currentUser flow
-                authRepository.fetchCurrentUser()
-                _uiState.update { it.copy(isCheckingSession = false, isSuccess = true) }
+                // Fetch user data to populate currentUser flow
+                val result = authRepository.fetchCurrentUser()
+                val mustChange = result.getOrNull()?.mustChangePassword == true
+                _uiState.update {
+                    it.copy(
+                        isCheckingSession = false,
+                        mustChangePassword = mustChange,
+                        isSuccess = !mustChange
+                    )
+                }
             } else {
                 _uiState.update { it.copy(isCheckingSession = false) }
             }
@@ -56,6 +63,11 @@ open class LoginViewModel(
             _uiState.update { it.copy(isLoading = false) }
             
             result.onSuccess { user ->
+                if (user.mustChangePassword) {
+                    _uiState.update { it.copy(mustChangePassword = true) }
+                    return@onSuccess
+                }
+
                 if (user.isAdmin) {
                     authRepository.logout()
                     _uiState.update { it.copy(isAdminBlocked = true) }
@@ -97,5 +109,6 @@ data class LoginUiState(
     val isPending: Boolean = false,
     val isAdminBlocked: Boolean = false,
     val databaseCleared: Boolean = false,
-    val hasMultipleUnits: Boolean = false
+    val hasMultipleUnits: Boolean = false,
+    val mustChangePassword: Boolean = false
 )

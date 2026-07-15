@@ -44,7 +44,9 @@ private val routesWithoutBottomBar = setOf(
         "pending_approval",
         "unit_selection",
         "register_scanner",
-        "register_form/{buildingId}"
+        "register_form/{buildingId}",
+        "forgot_password",
+        "first_login_change_password"
 )
 
 @Composable
@@ -109,7 +111,27 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                             popUpTo("login") { inclusive = true }
                         }
                     },
-                    onRegisterClick = { navController.navigate("register_scanner") }
+                    onRegisterClick = { navController.navigate("register_scanner") },
+                    onForgotPasswordClick = { navController.navigate("forgot_password") },
+                    onMustChangePassword = {
+                        navController.navigate("first_login_change_password") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
+            )
+        }
+        composable("forgot_password") {
+            com.example.condominio.ui.screens.login.ForgotPasswordScreen(
+                    onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable("first_login_change_password") {
+            com.example.condominio.ui.screens.login.FirstLoginChangePasswordScreen(
+                    onSuccess = {
+                        navController.navigate("dashboard") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
             )
         }
         composable("admin_blocked") {

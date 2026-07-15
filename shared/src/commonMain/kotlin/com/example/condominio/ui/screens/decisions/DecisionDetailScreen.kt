@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
@@ -43,6 +42,9 @@ import com.example.condominio.data.model.ResultingType
 import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
 import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.LoadingState
+import com.example.condominio.ui.components.PrimaryButton
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -72,36 +74,19 @@ fun DecisionDetailScreen(
     Scaffold(
         containerColor = AptoBackground,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = uiState.detail?.decision?.title
-                            ?: stringResource(Res.string.decisions_detail_fallback_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = AptoSecondary,
-                        maxLines = 1
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                            tint = AptoSecondary
-                        )
-                    }
-                },
+            TopBarWithBack(
+                title = uiState.detail?.decision?.title
+                    ?: stringResource(Res.string.decisions_detail_fallback_title),
+                onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = stringResource(Res.string.refresh),
-                            tint = AptoSecondary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
+                }
             )
         },
         bottomBar = {
@@ -111,30 +96,14 @@ fun DecisionDetailScreen(
                     color = AptoSurface,
                     shadowElevation = 8.dp
                 ) {
-                    Button(
+                    PrimaryButton(
+                        text = stringResource(Res.string.decisions_upload_quote_btn),
                         onClick = { viewModel.openUploadSheet() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AptoSecondaryContainer,
-                            contentColor = AptoOnSecondary
-                        )
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(Res.string.decisions_upload_quote_btn),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        icon = Icons.Default.Add,
+                        containerColor = AptoSecondaryContainer,
+                        contentColor = AptoOnSecondary
+                    )
                 }
             }
         }
@@ -142,14 +111,7 @@ fun DecisionDetailScreen(
         val detail = uiState.detail
         when {
             uiState.isLoading && detail == null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                LoadingState(modifier = Modifier.padding(paddingValues))
             }
 
             uiState.error != null && detail == null -> {
@@ -413,12 +375,12 @@ private fun PhaseInfoCard(status: DecisionStatus) {
         DecisionStatus.RECEPTION -> {
             title = stringResource(Res.string.decisions_phase_reception_title)
             body = stringResource(Res.string.decisions_phase_reception_body)
-            accent = Color(0xFF1565C0)
+            accent = AptoCategoryBlue
         }
         DecisionStatus.VOTING -> {
             title = stringResource(Res.string.decisions_phase_voting_title)
             body = stringResource(Res.string.decisions_phase_voting_body)
-            accent = Color(0xFFE65100)
+            accent = MaterialTheme.colorScheme.primary
         }
         else -> return
     }
@@ -545,7 +507,7 @@ private fun QuoteItem(
     val canDelete = isMine && status == DecisionStatus.RECEPTION && quote.deletedAt == null
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val accent = when {
-        isWinner -> Color(0xFF2E7D32)
+        isWinner -> AptoSuccess
         rank != null && rank <= rankPalette.size -> rankPalette[rank - 1]
         else -> null
     }
@@ -555,7 +517,7 @@ private fun QuoteItem(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isWinner) {
-                Color(0xFF2E7D32).copy(alpha = 0.08f)
+                AptoSuccess.copy(alpha = 0.08f)
             } else {
                 AptoSurfaceContainerLowest
             }
@@ -575,7 +537,7 @@ private fun QuoteItem(
                     Icon(
                         Icons.Default.EmojiEvents,
                         contentDescription = null,
-                        tint = Color(0xFF2E7D32),
+                        tint = AptoSuccess,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(6.dp))
@@ -583,7 +545,7 @@ private fun QuoteItem(
                         stringResource(Res.string.decisions_quote_rank_winner),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2E7D32)
+                        color = AptoSuccess
                     )
                 }
             } else if (rank != null && accent != null) {
@@ -824,11 +786,11 @@ private fun VoteSectionByState(
 // ---------------------------------------------------------------------------
 
 private val rankPalette = listOf(
-    Color(0xFFFFC107), // gold
-    Color(0xFFB0BEC5), // silver
-    Color(0xFFCD7F32)  // bronze
+    AptoMedalGold, // gold
+    AptoMedalSilver, // silver
+    AptoMedalBronze  // bronze
 )
-private val neutralBar = Color(0xFF90A4AE)
+private val neutralBar = AptoMedalNeutral
 
 @Composable
 private fun TallyBreakdown(tally: TallyDto) {
@@ -976,7 +938,7 @@ private fun ParticipationDonut(
         label = "participation-donut"
     )
     val ringColor = when {
-        participationPct >= 75.0 -> Color(0xFF2E7D32)
+        participationPct >= 75.0 -> AptoSuccess
         participationPct >= 50.0 -> AptoSecondaryContainer
         else -> AptoOutline
     }
@@ -1040,8 +1002,8 @@ private fun WinnerHeroCard(
     winner: QuoteDto,
     tally: TallyDto
 ) {
-    val gold = Color(0xFFFFC107)
-    val green = Color(0xFF2E7D32)
+    val gold = AptoMedalGold
+    val green = AptoSuccess
     val winnerVotes = tally.tallies.find { it.quoteId == winner.id }
     val votes = winnerVotes?.votes ?: 0
     val pct = winnerVotes?.pct ?: 0.0
@@ -1080,7 +1042,7 @@ private fun WinnerHeroCard(
                 Icon(
                     Icons.Default.EmojiEvents,
                     contentDescription = null,
-                    tint = Color(0xFFB8860B),
+                    tint = AptoMedalGoldDark,
                     modifier = Modifier.size(40.dp)
                 )
             }

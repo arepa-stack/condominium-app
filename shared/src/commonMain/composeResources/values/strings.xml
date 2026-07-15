@@ -52,6 +52,20 @@
     <string name="password">Contraseña</string>
     <string name="error_missing_fields">Por favor, completa todos los campos</string>
     <string name="error_invalid_credentials">Credenciales inválidas</string>
+    <string name="error_invalid_email">Ingresa un correo electrónico válido</string>
+
+    <!-- Forgot Password -->
+    <string name="forgot_password_link">¿Olvidaste tu contraseña?</string>
+    <string name="forgot_password_title">Recuperar contraseña</string>
+    <string name="forgot_password_desc">Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</string>
+    <string name="forgot_password_submit">Enviar enlace</string>
+    <string name="forgot_password_sent">Si existe una cuenta con ese correo, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada.</string>
+
+    <!-- First Login -->
+    <string name="first_login_title">Crea tu contraseña</string>
+    <string name="first_login_desc">Es tu primer inicio de sesión. Por seguridad, define una contraseña nueva para continuar.</string>
+    <string name="first_login_password_policy">Mínimo 8 caracteres, con al menos una mayúscula y un número.</string>
+    <string name="first_login_submit">Guardar y continuar</string>
 
     <!-- Payment History -->
     <string name="payment_history">Historial de Pagos</string>

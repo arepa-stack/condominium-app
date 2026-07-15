@@ -43,7 +43,12 @@ class RemoteAuthRepository
                 tokenManager.saveToken(loginResponse.accessToken)
 
                 var user = loginResponse.user.toDomain()
-                user = enrichUserWithUnits(user)
+                    .copy(mustChangePassword = loginResponse.mustChangePassword ?: false)
+
+                // First login: skip unit enrichment; user must change password before using the app.
+                if (!user.mustChangePassword) {
+                    user = enrichUserWithUnits(user)
+                }
                 _currentUser.value = user
 
                 Result.success(user)
@@ -101,6 +106,35 @@ class RemoteAuthRepository
                 val errorMsg =
                         "Registration failed: ${response.errorBody().string()}"
                 Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun resetPassword(email: String): Result<Unit> {
+        return try {
+            val response = apiService.resetPassword(email)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to send reset email (${response.code})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun changePasswordFirstLogin(newPassword: String): Result<Unit> {
+        return try {
+            val response = apiService.changePasswordFirstLogin(newPassword)
+            if (response.isSuccessful && response.body() != null) {
+                // Backend returns a FRESH session; the old (temp) token is now invalid.
+                tokenManager.saveToken(response.body()!!.accessToken)
+                fetchCurrentUser() // repopulate currentUser with must_change_password cleared
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to change password (${response.code})"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -187,8 +221,17 @@ class RemoteAuthRepository
             currentPassword: String,
             newPassword: String
     ): Result<Unit> {
-        // changePassword NOT IMPLEMENTED in ApiService yet
-        return Result.failure(Exception("Change password not implemented in backend API yet"))
+        // ponytail: backend verifies via session token, not currentPassword; client-side check only
+        return try {
+            val response = apiService.changePassword(newPassword)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to change password (${response.code})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun deleteAccount(reason: String?): Result<Unit> {
@@ -285,6 +328,7 @@ private fun UserProfile.toDomain(): User {
             status = status ?: "active",
             units = domainUnits,
             buildingRoles = domainBuildingRoles,
-            currentUnit = domainUnits.firstOrNull()
+            currentUnit = domainUnits.firstOrNull(),
+            mustChangePassword = mustChangePassword ?: false
     )
 }

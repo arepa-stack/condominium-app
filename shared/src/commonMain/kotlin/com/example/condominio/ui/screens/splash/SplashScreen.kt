@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import condominio.shared.generated.resources.Res
 import condominio.shared.generated.resources.logo
@@ -23,10 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.condominio.ui.theme.BrandDark
-import com.example.condominio.ui.theme.BrandOrange
-import com.example.condominio.ui.theme.SubtitleGray
-import com.example.condominio.ui.theme.SurfaceWhite
 import kotlinx.coroutines.delay
 
 @Composable
@@ -39,7 +36,7 @@ fun SplashScreen(onFinished: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SurfaceWhite),
+            .background(MaterialTheme.colorScheme.surface),
         contentAlignment = Alignment.Center
     ) {
         // Radial gradient background accent
@@ -49,7 +46,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            BrandOrange.copy(alpha = 0.04f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.04f),
                             Color.Transparent
                         )
                     )
@@ -74,10 +71,8 @@ fun SplashScreen(onFinished: () -> Unit) {
             // App name
             Text(
                 text = "Apto",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = BrandDark,
-                letterSpacing = (-0.5).sp
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -85,10 +80,11 @@ fun SplashScreen(onFinished: () -> Unit) {
             // Tagline
             Text(
                 text = "VIVIENDA ELEVADA",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = SubtitleGray,
-                letterSpacing = 3.sp
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 3.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -103,10 +99,11 @@ fun SplashScreen(onFinished: () -> Unit) {
             LoadingBar()
             Text(
                 text = "Apto by Nibs",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = SubtitleGray,
-                letterSpacing = 1.sp
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -133,7 +130,7 @@ private fun LoadingBar() {
             .width(totalWidth)
             .height(3.dp)
             .clip(RoundedCornerShape(99.dp))
-            .background(Color.Black.copy(alpha = 0.08f))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
     ) {
         Box(
             modifier = Modifier
@@ -141,7 +138,7 @@ private fun LoadingBar() {
                 .fillMaxHeight()
                 .offset(x = totalWidth * offsetFraction)
                 .clip(RoundedCornerShape(99.dp))
-                .background(BrandOrange)
+                .background(MaterialTheme.colorScheme.primary)
         )
     }
 }

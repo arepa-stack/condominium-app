@@ -52,6 +52,20 @@
     <string name="password">Password</string>
     <string name="error_missing_fields">Please fill in all fields</string>
     <string name="error_invalid_credentials">Invalid credentials</string>
+    <string name="error_invalid_email">Enter a valid email address</string>
+
+    <!-- Forgot Password -->
+    <string name="forgot_password_link">Forgot your password?</string>
+    <string name="forgot_password_title">Reset password</string>
+    <string name="forgot_password_desc">Enter your email and we\'ll send you a link to reset your password.</string>
+    <string name="forgot_password_submit">Send link</string>
+    <string name="forgot_password_sent">If an account exists for that email, we\'ve sent a link to reset your password. Check your inbox.</string>
+
+    <!-- First Login -->
+    <string name="first_login_title">Create your password</string>
+    <string name="first_login_desc">This is your first sign-in. For your security, set a new password to continue.</string>
+    <string name="first_login_password_policy">At least 8 characters, including one uppercase letter and one number.</string>
+    <string name="first_login_submit">Save and continue</string>
 
     <!-- Payment History -->
     <string name="payment_history">Payment History</string>

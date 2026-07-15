@@ -10,12 +10,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -29,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -38,8 +35,10 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.FullScreenImageDialog
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.SecondaryOutlinedButton
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.shimmerEffect
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
@@ -71,28 +70,9 @@ fun PaymentDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Detalle del Pago",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = AptoPrimary)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Share */ }) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Compartir", tint = AptoPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AptoSurfaceContainerLowest
-                )
+            TopBarWithBack(
+                title = "Detalle del Pago",
+                onBackClick = onBackClick
             )
         },
         containerColor = AptoBackground,
@@ -128,7 +108,7 @@ fun PaymentDetailScreen(
             ) {
                 // Success/Status Header
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 val statusConfig = when (payment.status) {
                     PaymentStatus.APPROVED -> Triple("Pago Aprobado", AptoStatusSuccess, Icons.Default.CheckCircle)
                     PaymentStatus.REJECTED -> Triple("Pago Rechazado", AptoStatusError, Icons.Default.Warning)
@@ -153,19 +133,15 @@ fun PaymentDetailScreen(
 
                 Text(
                     text = "$${formatCurrency(payment.amount)}",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = AptoPrimary,
-                    letterSpacing = (-0.5).sp
+                    style = MaterialTheme.typography.headlineLarge.copy(letterSpacing = (-0.5).sp),
+                    color = AptoPrimary
                 )
 
                 Text(
                     text = statusConfig.first,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = AptoOnSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                    letterSpacing = 0.5.sp
+                    modifier = Modifier.padding(top = 4.dp)
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -187,8 +163,7 @@ fun PaymentDetailScreen(
                     ) {
                         Text(
                             text = "Detalles de la Transacción",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                             color = AptoPrimary
                         )
                     }
@@ -215,14 +190,12 @@ fun PaymentDetailScreen(
                 ) {
                     Text(
                         text = "Comprobante de Pago",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                         color = AptoPrimary
                     )
                     Text(
                         text = "Ver Completo",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = AptoSecondary,
                         modifier = Modifier.clickable {
                             if (payment.proofUrl != null) showFullImage = true
@@ -261,8 +234,7 @@ fun PaymentDetailScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Sin Comprobante",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                 color = AptoOutline
                             )
                         }
@@ -279,9 +251,7 @@ fun PaymentDetailScreen(
                 )
             }
         } else if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = AptoSecondary)
-            }
+            LoadingState()
         }
     }
 }
@@ -296,13 +266,12 @@ fun DetailRow(label: String, value: String) {
     ) {
         Text(
             text = label,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium,
             color = AptoOutline
         )
         Text(
             text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
             color = AptoOnSurface
         )
     }

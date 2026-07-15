@@ -24,15 +24,26 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentStatus
+import androidx.compose.ui.graphics.Color
+import com.example.condominio.ui.theme.AptoCategoryBlue
+import com.example.condominio.ui.theme.AptoCategoryGreen
+import com.example.condominio.ui.theme.AptoCategoryLavender
+import com.example.condominio.ui.theme.AptoCategoryOrange
+import com.example.condominio.ui.theme.AptoPettyCashAccent
+import com.example.condominio.ui.theme.AptoPettyCashAccentContainer
+import com.example.condominio.ui.theme.AptoSuccess
+import com.example.condominio.ui.theme.AptoSuccessContainer
+import com.example.condominio.ui.theme.AptoWarning
+import com.example.condominio.ui.theme.AptoWarningContainer
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
@@ -69,12 +80,7 @@ fun DashboardScreen(
             containerColor = Color(0xFFF7F9FB) // pro-surface
     ) { paddingValues ->
         if (uiState.isLoading && uiState.userName.isEmpty()) {
-            Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            LoadingState(modifier = Modifier.padding(paddingValues))
             return@Scaffold
         }
         LazyColumn(
@@ -136,12 +142,12 @@ fun DashboardScreen(
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = (-0.3).sp
                             ),
-                            color = Color(0xFF09151A)
+                            color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                             text = stringResource(Res.string.see_all),
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color(0xFFFF6B00), // brand orange
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable { onHistoryClick() }
                     )
                 }
@@ -163,12 +169,12 @@ fun BillingCard(
         onSeeAllClick: () -> Unit = {}
 ) {
     val isSolvent = totalDebt <= 0
-    val amountColor = if (isSolvent) Color(0xFF16A34A) else Color(0xFFDC2626) // pro-success or pro-danger
+    val amountColor = if (isSolvent) AptoSuccess else MaterialTheme.colorScheme.onSurface
 
     Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(8.dp), // pro border radius
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF3F4F6)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(8.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             modifier = Modifier.fillMaxWidth()
     ) {
@@ -184,7 +190,7 @@ fun BillingCard(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         ),
-                        color = Color(0xFF6B7280) // text-gray-500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                         text = stringResource(Res.string.see_all),
@@ -192,7 +198,7 @@ fun BillingCard(
                             fontWeight = FontWeight.Bold,
                             textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
                         ),
-                        color = Color(0xFF09151A), // dark text instead of blue
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.clickable { onSeeAllClick() }
                 )
             }
@@ -205,16 +211,7 @@ fun BillingCard(
                     ),
                     color = amountColor
             )
-            
-            if (totalDebt > 0) {
-                 Text(
-                        text = "¡Atención! Tienes saldo deudor pendiente.",
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = Color(0xFFDC2626), // pro-danger
-                        modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
 
             if (pendingInvoices.isNotEmpty()) {
@@ -222,10 +219,10 @@ fun BillingCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(Color(0xFFF3F4F6))
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 pendingInvoices.take(3).forEach { invoice ->
                     Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -236,18 +233,18 @@ fun BillingCard(
                             Text(
                                 text = stringResource(Res.string.pending_invoices_label),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF6B7280) // text-gray-500
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                     text = invoice.description ?: invoice.period,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = Color(0xFF09151A)
+                                    color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                         Text(
                                 text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color(0xFFDC2626) // pro-danger
+                                color = MaterialTheme.colorScheme.error
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -256,7 +253,7 @@ fun BillingCard(
                 Text(
                         text = stringResource(Res.string.up_to_date),
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                        color = Color(0xFF16A34A) // pro-success
+                        color = AptoSuccess
                 )
             }
         }
@@ -283,7 +280,7 @@ fun HeaderSection(
             Text(
                     text = stringResource(Res.string.welcome_back),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    color = Color(0xFF6B7280) // gray-500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                     text = userName,
@@ -291,7 +288,7 @@ fun HeaderSection(
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = (-0.5).sp
                     ),
-                    color = Color(0xFF09151A)
+                    color = MaterialTheme.colorScheme.onSurface
             )
             if (building.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -299,13 +296,13 @@ fun HeaderSection(
                     Text(
                             text = stringResource(Res.string.apt_unit_label, building, apartmentUnit),
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = Color(0xFFFF6B00) // brand orange
+                            color = MaterialTheme.colorScheme.primary
                     )
                     if (hasMultipleUnits) {
                         Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = stringResource(Res.string.select_unit),
-                                tint = Color(0xFFFF6B00),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
                         )
                     }
@@ -316,8 +313,8 @@ fun HeaderSection(
         Surface(
                 modifier = Modifier.size(48.dp).clickable(onClick = onProfileClick),
                 shape = CircleShape,
-                color = Color(0xFFFFF7ED), // orange-100
-                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFFEDD5)) // orange-200
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (userName.isNotEmpty()) {
@@ -326,13 +323,13 @@ fun HeaderSection(
                             style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold
                             ),
-                            color = Color(0xFFEA580C) // orange-600
+                            color = MaterialTheme.colorScheme.primary
                     )
                 } else {
                     Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = stringResource(Res.string.profile),
-                            tint = Color(0xFFEA580C)
+                            tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -352,7 +349,7 @@ fun QuickActions(
         QuickActionItem(
                 icon = Icons.Default.Payment,
                 label = stringResource(Res.string.pay_now),
-                color = Color(0xFFFF6D00), // Orange
+                color = AptoCategoryOrange,
                 onClick = onPayClick,
                 modifier = Modifier.weight(1f)
         )
@@ -360,7 +357,7 @@ fun QuickActions(
         QuickActionItem(
                 icon = Icons.Default.History,
                 label = stringResource(Res.string.history),
-                color = Color(0xFF0091EA), // Blue
+                color = AptoCategoryBlue,
                 onClick = onHistoryClick,
                 modifier = Modifier.weight(1f)
         )
@@ -368,7 +365,7 @@ fun QuickActions(
         QuickActionItem(
                 icon = Icons.Default.AccountBalanceWallet,
                 label = stringResource(Res.string.decisions_title),
-                color = Color(0xFF0D47A1), // Deep Blue
+                color = AptoCategoryLavender,
                 onClick = onDecisionsClick,
                 modifier = Modifier.weight(1f)
         )
@@ -376,7 +373,7 @@ fun QuickActions(
         QuickActionItem(
                 icon = Icons.Default.Campaign,
                 label = "Cartelera",
-                color = Color(0xFF00897B), // Teal
+                color = AptoCategoryGreen,
                 onClick = onBillboardClick,
                 modifier = Modifier.weight(1f),
                 badgeCount = unreadAnnouncementsCount
@@ -387,14 +384,12 @@ fun QuickActions(
 @Composable
 fun PettyCashBalanceCard(amount: Double, currency: String) {
     val isNegative = amount < 0
-    val amountColor = if (isNegative) Color(0xFFDC2626) else Color(0xFF09151A)
-    val iconTint = Color(0xFFEC4899) // pink-500
-    val iconBg = Color(0xFFFDF2F8) // pink-50
+    val amountColor = if (isNegative) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
     Card(
             shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF3F4F6)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             modifier = Modifier.fillMaxWidth()
     ) {
@@ -405,13 +400,13 @@ fun PettyCashBalanceCard(amount: Double, currency: String) {
             Box(
                     modifier = Modifier
                             .size(48.dp)
-                            .background(iconBg, CircleShape),
+                            .background(AptoPettyCashAccentContainer, CircleShape),
                     contentAlignment = Alignment.Center
             ) {
                 Icon(
                         imageVector = Icons.Default.Savings,
                         contentDescription = null,
-                        tint = iconTint,
+                        tint = AptoPettyCashAccent,
                         modifier = Modifier.size(24.dp)
                 )
             }
@@ -420,12 +415,12 @@ fun PettyCashBalanceCard(amount: Double, currency: String) {
                 Text(
                         text = stringResource(Res.string.petty_cash),
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF374151) // gray-700
+                        color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                         text = stringResource(Res.string.available_balance),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF9CA3AF) // gray-400
+                        color = MaterialTheme.colorScheme.outline
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -437,7 +432,7 @@ fun PettyCashBalanceCard(amount: Double, currency: String) {
                 Text(
                         text = currency,
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF9CA3AF) // gray-400
+                        color = MaterialTheme.colorScheme.outline
                 )
             }
         }
@@ -448,7 +443,7 @@ fun PettyCashBalanceCard(amount: Double, currency: String) {
 fun QuickActionItem(
         icon: ImageVector,
         label: String,
-        color: Color,
+        color: androidx.compose.ui.graphics.Color,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
         badgeCount: Int = 0,
@@ -482,7 +477,7 @@ fun QuickActionItem(
         Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, lineHeight = androidx.compose.ui.unit.TextUnit.Unspecified),
-                color = Color(0xFF4B5563), // gray-600
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
@@ -494,10 +489,10 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
             modifier =
                     Modifier.fillMaxWidth()
                             .background(
-                                    Color.White, // pro-container
-                                    RoundedCornerShape(8.dp) // pro border radius
+                                    MaterialTheme.colorScheme.surface,
+                                    RoundedCornerShape(8.dp)
                             )
-                            .border(1.dp, Color(0xFFF9FAFB), RoundedCornerShape(8.dp)) // border-gray-50
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
                             .clickable(onClick = onClick)
                             .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -506,7 +501,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                 modifier =
                         Modifier.size(48.dp)
                                 .background(
-                                        Color(0xFFFFF7ED), // orange-50
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                                         RoundedCornerShape(8.dp)
                                 ),
                 contentAlignment = Alignment.Center
@@ -514,7 +509,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
             Icon(
                     imageVector = Icons.Default.Payment,
                     contentDescription = null,
-                    tint = Color(0xFFEA580C) // orange-600
+                    tint = MaterialTheme.colorScheme.primary
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
@@ -522,14 +517,14 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
             Text(
                     text = payment.description.ifBlank { stringResource(Res.string.payment_item_label) },
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFF09151A),
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
             Text(
                     text = formatDate(payment.date),
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                    color = Color(0xFF9CA3AF) // gray-400
+                    color = MaterialTheme.colorScheme.outline
             )
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
@@ -538,17 +533,17 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                     PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper)
                     PaymentStatus.PENDING -> stringResource(Res.string.status_pending)
                 }
-                
+
                 val statusBg = when (payment.status) {
-                    PaymentStatus.APPROVED -> Color(0xFFF0FDF4) // green-50
-                    PaymentStatus.REJECTED -> Color(0xFFFEF2F2) // red-50
-                    PaymentStatus.PENDING -> Color(0xFFFEFCE8) // yellow-50
+                    PaymentStatus.APPROVED -> AptoSuccessContainer
+                    PaymentStatus.REJECTED -> MaterialTheme.colorScheme.errorContainer
+                    PaymentStatus.PENDING -> AptoWarningContainer
                 }
-                
+
                 val statusColor = when (payment.status) {
-                    PaymentStatus.APPROVED -> Color(0xFF16A34A) // pro-success
-                    PaymentStatus.REJECTED -> Color(0xFFDC2626) // pro-danger
-                    PaymentStatus.PENDING -> Color(0xFFD97706) // yellow-600
+                    PaymentStatus.APPROVED -> AptoSuccess
+                    PaymentStatus.REJECTED -> MaterialTheme.colorScheme.error
+                    PaymentStatus.PENDING -> AptoWarning
                 }
 
                 Box(
@@ -557,14 +552,14 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                     Text(
                             text = statusLabel,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.ExtraBold, 
+                                fontWeight = FontWeight.ExtraBold,
                                 fontSize = 9.sp,
                                 letterSpacing = 0.5.sp
                             ),
                             color = statusColor
                     )
                 }
-                
+
                 if (payment.status != PaymentStatus.PENDING && !payment.processorName.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -573,7 +568,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 9.sp
                             ),
-                            color = Color(0xFF9CA3AF),
+                            color = MaterialTheme.colorScheme.outline,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
@@ -583,7 +578,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
         Text(
                 text = "$${formatCurrency(payment.amount)}",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.ExtraBold),
-                color = Color(0xFF09151A)
+                color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

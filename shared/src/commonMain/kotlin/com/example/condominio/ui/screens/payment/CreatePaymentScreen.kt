@@ -16,12 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
@@ -32,29 +30,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.utils.rememberImagePickerLauncher
+import com.example.condominio.ui.components.LabeledOutlinedField
+import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
+import com.example.condominio.ui.components.PrimaryButton
+import com.example.condominio.ui.components.TopBarWithBack
+import com.example.condominio.ui.theme.AptoSuccess
+import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-
-// --- Custom Colors based on HTML ---
-private val SurfaceColor = Color(0xFFF7F9FB)
-private val OnSurfaceColor = Color(0xFF191C1E)
-private val SurfaceContainerLowest = Color(0xFFFFFFFF)
-private val SurfaceContainerHigh = Color(0xFFE6E8EA)
-private val OutlineVariantColor = Color(0xFFC3C7CA)
-private val OutlineColor = Color(0xFF73787A)
-private val SecondaryColor = Color(0xFF9F4200)
-private val SecondaryContainerColor = Color(0xFFFD6C00)
-private val OnSecondaryColor = Color(0xFFFFFFFF)
-private val StatusErrorColor = Color(0xFFEF4444)
-private val StatusSuccessColor = Color(0xFF10B981)
-private val OnSurfaceVariantColor = Color(0xFF43474A)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,44 +72,15 @@ fun CreatePaymentScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (currentStep == 1) "Pagar Ahora" else "Detalles del Pago",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
-                        color = OnSurfaceColor
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (currentStep == 2) {
-                            currentStep = 1
-                        } else {
-                            onBackClick()
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás",
-                            tint = OnSurfaceColor
-                        )
+            TopBarWithBack(
+                title = if (currentStep == 1) "Pagar Ahora" else "Detalles del Pago",
+                onBackClick = {
+                    if (currentStep == 2) {
+                        currentStep = 1
+                    } else {
+                        onBackClick()
                     }
-                },
-                actions = {
-                    if (currentStep == 1) {
-                        IconButton(onClick = { /* TODO: Help */ }) {
-                            Icon(
-                                imageVector = Icons.Default.HelpOutline,
-                                contentDescription = "Ayuda",
-                                tint = OutlineColor
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceColor
-                )
+                }
             )
         },
         bottomBar = {
@@ -137,7 +98,7 @@ fun CreatePaymentScreen(
                 )
             }
         },
-        containerColor = SurfaceColor
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         AnimatedContent(
             targetState = currentStep,
@@ -185,22 +146,22 @@ private fun Step1Invoices(
     ) {
         Text(
             text = "Seleccionar Recibos",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = OnSurfaceColor,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
             text = "Elige los recibos pendientes que deseas liquidar hoy.",
-            fontSize = 14.sp,
-            color = OutlineColor,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
         if (uiState.isLoadingInvoices) {
-            Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = SecondaryColor)
-            }
+            LoadingState(
+                modifier = Modifier.fillMaxWidth().height(100.dp),
+                fullScreen = false
+            )
         } else if (uiState.pendingInvoices.isNotEmpty()) {
             val invoices = uiState.pendingInvoices.sortedBy { it.period }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -216,8 +177,8 @@ private fun Step1Invoices(
         } else {
             Text(
                 text = "No tienes recibos pendientes.",
-                fontSize = 16.sp,
-                color = OutlineColor,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(vertical = 24.dp)
             )
         }
@@ -228,26 +189,25 @@ private fun Step1Invoices(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(SurfaceContainerHigh, RoundedCornerShape(12.dp))
-                .border(1.dp, OutlineVariantColor, RoundedCornerShape(12.dp))
+                .background(AptoSurfaceContainerHigh, RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
                 .padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
             Icon(
                 imageVector = Icons.Default.Info,
                 contentDescription = null,
-                tint = SecondaryColor,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Al realizar el pago se generará un comprobante digital inmediato disponible en tu sección de Historial.",
-                fontSize = 14.sp,
-                color = OnSurfaceVariantColor,
-                lineHeight = 20.sp
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
+
         // Add extra spacer to avoid hiding behind bottom bar
         Spacer(modifier = Modifier.height(32.dp))
     }
@@ -259,26 +219,20 @@ private fun InvoiceCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) SecondaryColor else OutlineVariantColor
-    
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(SurfaceContainerLowest, RoundedCornerShape(12.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+
+    ListItemCard(
+        onClick = onClick,
+        borderColor = borderColor
     ) {
         // Custom Checkbox
         Box(
             modifier = Modifier
                 .size(24.dp)
-                .background(if (isSelected) SecondaryColor else Color.Transparent, RoundedCornerShape(6.dp))
+                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
                 .border(
                     width = if (isSelected) 0.dp else 2.dp,
-                    color = if (isSelected) Color.Transparent else OutlineColor,
+                    color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
                     shape = RoundedCornerShape(6.dp)
                 ),
             contentAlignment = Alignment.Center
@@ -287,14 +241,14 @@ private fun InvoiceCard(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(16.dp)
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             // Month parser logic (basic)
             val parts = invoice.period.split("-")
@@ -304,32 +258,27 @@ private fun InvoiceCard(
 
             Text(
                 text = monthName.uppercase(),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = SecondaryColor,
-                letterSpacing = 0.5.sp,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
                 text = invoice.description ?: "Mantenimiento Mensual",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = OnSurfaceColor
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
-        
+
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "$${formatCurrency(invoice.remaining)}",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = OnSurfaceColor
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "Pendiente",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = StatusErrorColor
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.error
             )
         }
     }
@@ -345,7 +294,7 @@ private fun Step1BottomBar(
     val isEnabled = selectedCount > 0
 
     Surface(
-        color = SurfaceContainerLowest,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -363,54 +312,28 @@ private fun Step1BottomBar(
                 Column {
                     Text(
                         text = "TOTAL A PAGAR",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = OutlineColor,
-                        letterSpacing = 0.5.sp
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.outline
                     )
                     Text(
                         text = "$$amountToDisplay",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = OnSurfaceColor
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
                     text = "$selectedCount recibo${if (selectedCount == 1) "" else "s"} seleccionado${if (selectedCount == 1) "" else "s"}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SecondaryColor
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Button(
+            PrimaryButton(
+                text = "Continuar al Pago",
                 onClick = onContinue,
                 enabled = isEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SecondaryContainerColor,
-                    disabledContainerColor = OutlineVariantColor
-                )
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                    Text(
-                        text = "Continuar al Pago",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
+                trailingIcon = Icons.AutoMirrored.Filled.ArrowForward
+            )
         }
     }
 }
@@ -435,8 +358,8 @@ private fun Step2Details(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(SurfaceContainerLowest, RoundedCornerShape(12.dp))
-                .border(1.dp, OutlineVariantColor, RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -445,41 +368,38 @@ private fun Step2Details(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(SecondaryColor.copy(alpha = 0.15f), RoundedCornerShape(20.dp)),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(20.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.ReceiptLong,
                         contentDescription = null,
-                        tint = SecondaryColor
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = "Total a Registrar",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = OutlineColor
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.outline
                     )
                     Text(
                         text = "$${uiState.amount}",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SecondaryColor
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
             Box(
                 modifier = Modifier
-                    .background(SecondaryColor.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
                     .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = "Paso 2 de 2",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SecondaryColor
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -489,9 +409,8 @@ private fun Step2Details(
         // Method Selector
         Text(
             text = "Método de Pago",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = OutlineColor,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
         )
         ExposedDropdownMenuBox(
@@ -511,12 +430,12 @@ private fun Step2Details(
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = SurfaceContainerLowest,
-                    focusedContainerColor = SurfaceContainerLowest,
-                    unfocusedBorderColor = OutlineVariantColor,
-                    focusedBorderColor = SecondaryColor
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary
                 ),
-                textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
+                textStyle = MaterialTheme.typography.bodyLarge
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -545,53 +464,53 @@ private fun Step2Details(
         // Dynamic Form Fields
         when (uiState.method) {
             PaymentMethod.PAGO_MOVIL -> {
-                CustomTextField(
-                    label = "Banco Emisor",
+                LabeledOutlinedField(
                     value = uiState.bank,
                     onValueChange = viewModel::onBankChange,
+                    label = "Banco Emisor",
                     placeholder = "Seleccione el banco"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    CustomTextField(
-                        label = "Teléfono",
+                    LabeledOutlinedField(
                         value = uiState.phone,
                         onValueChange = viewModel::onPhoneChange,
+                        label = "Teléfono",
                         placeholder = "0414-0000000",
-                        keyboardType = KeyboardType.Phone,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.weight(1f)
                     )
-                    CustomTextField(
-                        label = "Referencia",
+                    LabeledOutlinedField(
                         value = uiState.reference,
                         onValueChange = viewModel::onReferenceChange,
+                        label = "Referencia",
                         placeholder = "Últimos 6 dígitos",
-                        keyboardType = KeyboardType.Number,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
             PaymentMethod.TRANSFER -> {
-                CustomTextField(
-                    label = "Banco Emisor",
+                LabeledOutlinedField(
                     value = uiState.bank,
                     onValueChange = viewModel::onBankChange,
+                    label = "Banco Emisor",
                     placeholder = "Seleccione el banco"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                CustomTextField(
-                    label = "Referencia",
+                LabeledOutlinedField(
                     value = uiState.reference,
                     onValueChange = viewModel::onReferenceChange,
+                    label = "Referencia",
                     placeholder = "Últimos dígitos de confirmación",
-                    keyboardType = KeyboardType.Number
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
             PaymentMethod.CASH -> {
                 Text(
                     text = "Para pagos en efectivo o Zelle, acérquese a la administración o adjunte captura del Zelle.",
-                    fontSize = 14.sp,
-                    color = OnSurfaceVariantColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
@@ -602,18 +521,17 @@ private fun Step2Details(
         // Upload Area
         Text(
             text = "Comprobante de Pago",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = OutlineColor,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
         )
-        
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(SurfaceContainerLowest, RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
                 // Note: Dashed borders require custom drawing in Compose, using solid for simplicity or basic border
-                .border(2.dp, if (isImageSelected) StatusSuccessColor else OutlineVariantColor, RoundedCornerShape(12.dp))
+                .border(2.dp, if (isImageSelected) AptoSuccess else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
                 .clickable(onClick = onUploadClick)
                 .padding(24.dp),
@@ -624,7 +542,7 @@ private fun Step2Details(
                     modifier = Modifier
                         .size(64.dp)
                         .background(
-                            if (isImageSelected) StatusSuccessColor.copy(alpha = 0.2f) else SurfaceContainerHigh, 
+                            if (isImageSelected) AptoSuccess.copy(alpha = 0.2f) else AptoSurfaceContainerHigh,
                             RoundedCornerShape(32.dp)
                         ),
                     contentAlignment = Alignment.Center
@@ -632,21 +550,20 @@ private fun Step2Details(
                     Icon(
                         imageVector = if (isImageSelected) Icons.Default.CheckCircle else Icons.Default.CloudUpload,
                         contentDescription = null,
-                        tint = if (isImageSelected) StatusSuccessColor else OutlineColor,
+                        tint = if (isImageSelected) AptoSuccess else MaterialTheme.colorScheme.outline,
                         modifier = Modifier.size(32.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = if (isImageSelected) "Archivo Cargado" else "Subir Comprobante",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = OnSurfaceColor
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = if (isImageSelected) "Toca para cambiar archivo" else "JPG, PNG o PDF (Máx. 5MB)",
-                    fontSize = 14.sp,
-                    color = OutlineColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -655,48 +572,12 @@ private fun Step2Details(
         if (uiState.error != null) {
             Text(
                 text = uiState.error!!.asString(),
-                color = StatusErrorColor,
+                color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 16.dp)
             )
         }
-        
-        Spacer(modifier = Modifier.height(100.dp)) // padding for bottom bar
-    }
-}
 
-@Composable
-private fun CustomTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = OutlineColor,
-            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-        )
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text(placeholder, color = OutlineVariantColor) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = SurfaceContainerLowest,
-                focusedContainerColor = SurfaceContainerLowest,
-                unfocusedBorderColor = OutlineVariantColor,
-                focusedBorderColor = SecondaryColor
-            ),
-            singleLine = true,
-            textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-        )
+        Spacer(modifier = Modifier.height(100.dp)) // padding for bottom bar
     }
 }
 
@@ -716,42 +597,26 @@ private fun Step2BottomBar(
                 .padding(horizontal = 16.dp, vertical = 16.dp)
                 .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
-            Button(
+            PrimaryButton(
+                text = "Registrar Pago",
                 onClick = onSubmit,
                 enabled = !isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SecondaryContainerColor,
-                    disabledContainerColor = OutlineVariantColor
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text(
-                        text = "Registrar Pago",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                }
-            }
-            
+                isLoading = isLoading
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             TextButton(
                 onClick = onCancel,
                 modifier = Modifier.fillMaxWidth().height(48.dp)
             ) {
                 Text(
                     text = "CANCELAR OPERACIÓN",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SecondaryColor,
-                    letterSpacing = 1.sp
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -761,22 +626,21 @@ private fun Step2BottomBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(SurfaceContainerHigh.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .background(AptoSurfaceContainerHigh.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                     .padding(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
                 Icon(
                     imageVector = Icons.Default.Info,
                     contentDescription = null,
-                    tint = OutlineColor,
+                    tint = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "Tu pago será validado por la administración en un lapso de 24 a 48 horas hábiles.",
-                    fontSize = 14.sp,
-                    color = OnSurfaceVariantColor,
-                    lineHeight = 20.sp
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

@@ -6,14 +6,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.HomeWork
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -23,16 +20,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
+import com.example.condominio.ui.components.EmptyState
+import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.StatusBadge
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
@@ -66,41 +65,9 @@ fun PaymentHistoryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Historial de Pagos",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = AptoPrimary)
-                    }
-                },
-                actions = {
-                    // Avatar Placeholder based on HTML
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 16.dp)
-                            .size(32.dp)
-                            .background(AptoSurfaceContainerHigh, CircleShape)
-                            .border(1.dp, AptoOutlineVariant, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = AptoOutline,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AptoSurfaceContainerLowest
-                )
+            TopBarWithBack(
+                title = "Historial de Pagos",
+                onBackClick = onBackClick
             )
         },
         containerColor = AptoBackground
@@ -112,41 +79,13 @@ fun PaymentHistoryScreen(
         ) {
             when {
                 uiState.isLoading && uiState.payments.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = AptoSecondary)
-                    }
+                    LoadingState()
                 }
                 uiState.payments.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(
-                                modifier = Modifier
-                                    .size(192.dp)
-                                    .background(AptoSurfaceContainerHigh, CircleShape)
-                                    .padding(bottom = 16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ReceiptLong,
-                                    contentDescription = null,
-                                    tint = AptoOutlineVariant,
-                                    modifier = Modifier.size(64.dp)
-                                )
-                            }
-                            Text(
-                                text = "No hay pagos registrados.",
-                                fontSize = 16.sp,
-                                color = AptoOnSurfaceVariant,
-                                modifier = Modifier.padding(top = 16.dp)
-                            )
-                        }
-                    }
+                    EmptyState(
+                        title = "No hay pagos registrados.",
+                        icon = Icons.Default.ReceiptLong,
+                    )
                 }
                 else -> {
                     LazyColumn(
@@ -160,17 +99,14 @@ fun PaymentHistoryScreen(
                                 if (uiState.unit.isNotEmpty()) {
                                     Text(
                                         text = "UNIDAD ${uiState.unit}".uppercase(),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = AptoOnSurfaceVariant,
-                                        letterSpacing = 0.5.sp,
                                         modifier = Modifier.padding(bottom = 4.dp)
                                     )
                                 }
                                 Text(
                                     text = "Transacciones Recientes",
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                                     color = AptoPrimary
                                 )
                             }
@@ -183,7 +119,7 @@ fun PaymentHistoryScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
-                        
+
                         item {
                              Spacer(modifier = Modifier.height(80.dp)) // Safe padding for global bottom bar if any
                         }
@@ -224,14 +160,8 @@ fun PaymentHistoryCard(
 
     val iconBgColor = if (payment.status == PaymentStatus.REJECTED) AptoSurfaceContainerHigh else AptoSecondaryFixed
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AptoSurfaceContainerLowest, RoundedCornerShape(12.dp))
-            .border(1.dp, AptoOutlineVariant, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
+    ListItemCard(
+        onClick = onClick,
         verticalAlignment = Alignment.Top
     ) {
         Box(
@@ -247,9 +177,9 @@ fun PaymentHistoryCard(
                 modifier = Modifier.size(24.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -259,27 +189,25 @@ fun PaymentHistoryCard(
                 Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
                         text = payment.description.ifBlank { "Pago de Recibo" },
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                         color = AptoPrimary,
                         modifier = Modifier.padding(bottom = 4.dp),
                         maxLines = 1
                     )
                     Text(
                         text = formattedDate,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = AptoOnSurfaceVariant,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                 }
                 Text(
                     text = "$${formatCurrency(payment.amount)}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                     color = AptoPrimary
                 )
             }
-            
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
@@ -295,8 +223,7 @@ fun PaymentHistoryCard(
                 }
                 Text(
                     text = extraText,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                     color = AptoOutline
                 )
             }

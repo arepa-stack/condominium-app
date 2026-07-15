@@ -6,6 +6,9 @@ import kotlinx.serialization.json.JsonElement
 interface ApiService {
     suspend fun register(request: Map<String, String>): Response<RegisterResponse>
     suspend fun login(credentials: Map<String, String>): Response<LoginResponse>
+    suspend fun resetPassword(email: String): Response<SuccessDto>
+    suspend fun changePassword(newPassword: String): Response<SuccessDto>
+    suspend fun changePasswordFirstLogin(newPassword: String): Response<ChangePasswordFirstLoginResponse>
     
     suspend fun getCurrentUser(): Response<UserProfile>
     suspend fun updateUser(updates: UpdateUserRequest): Response<UserProfile>

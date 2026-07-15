@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.profile
+package com.example.condominio.ui.screens.login
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,35 +17,25 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.PrimaryButton
-import com.example.condominio.ui.components.TopBarWithBack
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChangePasswordScreen(
-    onBackClick: () -> Unit,
-    viewModel: ChangePasswordViewModel = koinViewModel()
+fun FirstLoginChangePasswordScreen(
+    onSuccess: () -> Unit,
+    viewModel: FirstLoginChangePasswordViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) {
-            onBackClick()
-        }
+        if (uiState.isSuccess) onSuccess()
     }
 
     Scaffold(
-        topBar = {
-            TopBarWithBack(
-                title = stringResource(Res.string.change_password),
-                onBackClick = onBackClick
-            )
-        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
@@ -55,35 +45,20 @@ fun ChangePasswordScreen(
                 .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
             Text(
-                text = stringResource(Res.string.change_password_desc),
+                text = stringResource(Res.string.first_login_title),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(Res.string.first_login_desc),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.padding(bottom = 24.dp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 32.dp)
             )
-
-            LabeledOutlinedField(
-                value = uiState.currentPassword,
-                onValueChange = viewModel::onCurrentPasswordChange,
-                label = stringResource(Res.string.current_password),
-                enabled = !uiState.isLoading,
-                visualTransformation = if (uiState.currentPasswordVisible)
-                    VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = viewModel::toggleCurrentPasswordVisibility) {
-                        Icon(
-                            imageVector = if (uiState.currentPasswordVisible)
-                                Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (uiState.currentPasswordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
-                        )
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             LabeledOutlinedField(
                 value = uiState.newPassword,
@@ -128,12 +103,11 @@ fun ChangePasswordScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(Res.string.password_min_length),
+                text = stringResource(Res.string.first_login_password_policy),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
 
-            // Error Message
             uiState.error?.let { error ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -145,10 +119,9 @@ fun ChangePasswordScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Change Password Button
             PrimaryButton(
-                text = stringResource(Res.string.change_password),
-                onClick = viewModel::onChangePasswordClick,
+                text = stringResource(Res.string.first_login_submit),
+                onClick = viewModel::onSubmitClick,
                 isLoading = uiState.isLoading
             )
 
@@ -156,4 +129,3 @@ fun ChangePasswordScreen(
         }
     }
 }
-

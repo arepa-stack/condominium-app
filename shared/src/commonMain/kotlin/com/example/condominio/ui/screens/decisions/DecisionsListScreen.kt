@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
@@ -24,6 +23,9 @@ import com.example.condominio.data.model.DecisionDto
 import com.example.condominio.data.model.DecisionStatus
 import com.example.condominio.ui.components.DecisionStatusBadge
 import com.example.condominio.ui.components.FilterPillChip
+import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.formatDecisionDate
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
@@ -46,34 +48,18 @@ fun DecisionsListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.decisions_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = AptoSecondary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                            tint = AptoSecondary
-                        )
-                    }
-                },
+            TopBarWithBack(
+                title = stringResource(Res.string.decisions_title),
+                onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = stringResource(Res.string.refresh),
-                            tint = AptoSecondary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
+                }
             )
         },
         containerColor = AptoBackground
@@ -90,9 +76,7 @@ fun DecisionsListScreen(
 
             when {
                 uiState.isLoading && uiState.decisions.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = AptoSecondaryContainer)
-                    }
+                    LoadingState()
                 }
 
                 uiState.error != null && uiState.decisions.isEmpty() -> {
@@ -148,15 +132,11 @@ fun DecisionsListScreen(
                         }
                         if (uiState.isLoading) {
                             item {
-                                Box(
+                                LoadingState(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        color = AptoSecondaryContainer
-                                    )
-                                }
+                                    size = 24.dp,
+                                    fullScreen = false
+                                )
                             }
                         }
                     }
@@ -229,15 +209,8 @@ private fun DecisionCard(
             decision.status == DecisionStatus.RECEPTION ||
             decision.status == DecisionStatus.TIEBREAK_PENDING
 
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLowest),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, AptoOutlineVariant)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    ListItemCard(onClick = onClick) {
+        Column(modifier = Modifier.weight(1f)) {
 
             // Header: title + status badge
             Row(
@@ -247,8 +220,7 @@ private fun DecisionCard(
             ) {
                 Text(
                     text = decision.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = AptoOnSurface,
                     modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
@@ -304,8 +276,7 @@ private fun DecisionCard(
                         Text(
                             text = stringResource(Res.string.decisions_urgent),
                             style = MaterialTheme.typography.labelLarge,
-                            color = AptoStatusWarning,
-                            fontWeight = FontWeight.SemiBold
+                            color = AptoStatusWarning
                         )
                     }
                 } else if (isActive) {
@@ -313,8 +284,7 @@ private fun DecisionCard(
                         Text(
                             text = stringResource(Res.string.decisions_see_detail),
                             style = MaterialTheme.typography.labelLarge,
-                            color = AptoSecondary,
-                            fontWeight = FontWeight.SemiBold
+                            color = AptoSecondary
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -338,7 +308,7 @@ private fun DecisionCard(
 @Composable
 private fun DecisionQuoteChip(count: Int, resolved: Boolean) {
     val bgColor = if (resolved) AptoSurfaceContainerLow else AptoPrimaryFixed
-    val contentColor = if (resolved) AptoOnSurfaceVariant else Color(0xFF111D22)
+    val contentColor = if (resolved) AptoOnSurfaceVariant else MaterialTheme.colorScheme.onSurface
 
     Surface(
         color = bgColor,
@@ -358,8 +328,7 @@ private fun DecisionQuoteChip(count: Int, resolved: Boolean) {
             Text(
                 text = stringResource(Res.string.decisions_quote_count, count),
                 style = MaterialTheme.typography.labelLarge,
-                color = contentColor,
-                fontWeight = FontWeight.SemiBold
+                color = contentColor
             )
         }
     }

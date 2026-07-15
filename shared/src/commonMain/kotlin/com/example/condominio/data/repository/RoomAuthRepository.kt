@@ -143,6 +143,20 @@ class RoomAuthRepository (
         return Result.success(user)
     }
 
+    override suspend fun resetPassword(email: String): Result<Unit> {
+        delay(500)
+        // ponytail: demo stub, real reset lives in RemoteAuthRepository
+        return if (email.isNotBlank()) Result.success(Unit)
+        else Result.failure(Exception("Email is required"))
+    }
+
+    override suspend fun changePasswordFirstLogin(newPassword: String): Result<Unit> {
+        delay(500)
+        // ponytail: demo stub, real flow lives in RemoteAuthRepository
+        return if (newPassword.length >= 8) Result.success(Unit)
+        else Result.failure(Exception("Password must be at least 8 characters"))
+    }
+
     override suspend fun logout() {
         // In a real app, you might clear the user session
         // For now, we'll keep the user in the database

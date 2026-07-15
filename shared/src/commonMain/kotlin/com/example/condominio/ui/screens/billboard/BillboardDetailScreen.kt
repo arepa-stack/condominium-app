@@ -7,7 +7,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,8 +32,12 @@ import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.ui.components.AnnouncementCategoryBadge
 import com.example.condominio.ui.components.AnnouncementMetricItem
 import com.example.condominio.ui.components.FullScreenImageDialog
+import com.example.condominio.ui.components.LoadingState
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.announcementCategoryAccent
 import com.example.condominio.ui.components.shimmerEffect
+import com.example.condominio.ui.theme.AptoSuccess
+import com.example.condominio.ui.theme.AptoSuccessContainer
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -81,24 +84,9 @@ fun BillboardDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.billboard_detail_title),
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                        )
-                    }
-                },
-
+            TopBarWithBack(
+                title = stringResource(Res.string.billboard_detail_title),
+                onBackClick = onBackClick
             )
         },
         bottomBar = {
@@ -115,12 +103,7 @@ fun BillboardDetailScreen(
     ) { paddingValues ->
         when {
             uiState.isLoading && uiState.announcement == null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
+                LoadingState(modifier = Modifier.padding(paddingValues))
             }
 
             uiState.announcement != null -> {
@@ -153,7 +136,7 @@ fun BillboardDetailScreen(
                         if (announcement.readByCurrentUser) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF4CAF50).copy(alpha = 0.12f),
+                                color = AptoSuccessContainer,
                             ) {
                                 Text(
                                     text = stringResource(Res.string.billboard_read).uppercase(),
@@ -162,7 +145,7 @@ fun BillboardDetailScreen(
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = 0.8.sp,
                                     ),
-                                    color = Color(0xFF4CAF50),
+                                    color = AptoSuccess,
                                 )
                             }
                         }
@@ -503,7 +486,7 @@ private fun ReactionBar(
                         ) {
                             Text(
                                 text = "👍",
-                                fontSize = 20.sp,
+                                style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.alpha(if (reacted) 0.6f else 1f)
                             )
                             Text(

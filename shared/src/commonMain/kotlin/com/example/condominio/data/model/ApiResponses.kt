@@ -48,7 +48,16 @@ data class LoginResponse(
         @SerialName("access_token") val accessToken: String,
         @SerialName("refresh_token") val refreshToken: String,
         @SerialName("expires_in") val expiresIn: Int,
+        @SerialName("must_change_password") val mustChangePassword: Boolean? = false,
         val user: UserProfile
+)
+
+@Serializable
+data class ChangePasswordFirstLoginResponse(
+        val success: Boolean,
+        @SerialName("access_token") val accessToken: String,
+        @SerialName("refresh_token") val refreshToken: String,
+        @SerialName("expires_in") val expiresIn: Int
 )
 
 // Register returns just the user profile, no token
@@ -73,6 +82,7 @@ data class UserProfile(
         val units: List<UserUnitDto>? = null,
         @SerialName("buildingRoles") val buildingRoles: List<BuildingRoleDto>? = null,
         val phone: String? = null,
+        @SerialName("must_change_password") val mustChangePassword: Boolean? = false,
         val settings: Map<String, JsonElement>? = null
 )
 

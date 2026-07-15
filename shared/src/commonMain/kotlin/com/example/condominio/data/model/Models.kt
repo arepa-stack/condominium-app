@@ -11,7 +11,8 @@ data class User(
         val status: String = "active",
         val units: List<UserUnit> = emptyList(),
         val buildingRoles: List<BuildingRole> = emptyList(),
-        val currentUnit: UserUnit? = units.firstOrNull()
+        val currentUnit: UserUnit? = units.firstOrNull(),
+        val mustChangePassword: Boolean = false
 ) {
         val isAdmin: Boolean get() = appRole == "admin"
 

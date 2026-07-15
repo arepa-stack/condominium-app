@@ -72,6 +72,8 @@ val appModule = module {
 
     // ViewModels
     viewModelOf(::LoginViewModel)
+    viewModelOf(::ForgotPasswordViewModel)
+    viewModelOf(::FirstLoginChangePasswordViewModel)
     viewModelOf(::UnitSelectionViewModel)
     viewModelOf(::InvoiceDetailViewModel)
     viewModelOf(::InvoiceListViewModel)

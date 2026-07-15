@@ -52,8 +52,29 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         }
     }
 
+    override suspend fun resetPassword(email: String): Response<SuccessDto> = safeRequest {
+        client.post("auth/reset-password") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("email" to email))
+        }
+    }
+
     override suspend fun getCurrentUser(): Response<UserProfile> = safeRequest {
         client.get("api/v1/app/users/me")
+    }
+
+    override suspend fun changePassword(newPassword: String): Response<SuccessDto> = safeRequest {
+        client.patch("api/v1/app/users/me/password") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("new_password" to newPassword))
+        }
+    }
+
+    override suspend fun changePasswordFirstLogin(newPassword: String): Response<ChangePasswordFirstLoginResponse> = safeRequest {
+        client.post("auth/change-password-first-login") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("newPassword" to newPassword))
+        }
     }
 
     override suspend fun updateUser(updates: UpdateUserRequest): Response<UserProfile> = safeRequest {

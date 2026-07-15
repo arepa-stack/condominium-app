@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.UserUnit
+import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.theme.*
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -68,10 +69,7 @@ fun UnitSelectionScreen(
                 .padding(paddingValues)
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = AptoSecondaryContainer
-                )
+                LoadingState()
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -297,9 +295,7 @@ private fun UnitRow(unit: UserUnit, onClick: () -> Unit) {
                     text = stringResource(Res.string.primary_label),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = AptoSecondary,
-                    fontSize = 10.sp
+                    color = AptoSecondary
                 )
             }
         }

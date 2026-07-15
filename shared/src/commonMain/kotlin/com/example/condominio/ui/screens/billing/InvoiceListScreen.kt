@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -21,7 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.Invoice
+import androidx.compose.foundation.layout.PaddingValues
 import com.example.condominio.data.model.InvoiceStatus
+import com.example.condominio.ui.components.EmptyState
+import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.LoadingState
+import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
@@ -56,40 +60,18 @@ fun InvoiceListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.invoices_title),
-                        fontWeight = FontWeight.Bold,
-                        color = AptoPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back),
-                            tint = AptoPrimary
-                        )
-                    }
-                },
+            TopBarWithBack(
+                title = stringResource(Res.string.invoices_title),
+                onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = stringResource(Res.string.refresh),
-                            tint = AptoPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                    IconButton(onClick = { }) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = stringResource(Res.string.settings),
-                            tint = AptoPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AptoSurface)
+                }
             )
         },
         containerColor = AptoBackground
@@ -128,9 +110,7 @@ fun InvoiceListScreen(
 
             when {
                 uiState.isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = AptoSecondaryContainer)
-                    }
+                    LoadingState()
                 }
                 uiState.error != null -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -169,16 +149,12 @@ fun InvoiceItem(
             invoice.status != InvoiceStatus.CANCELLED
     val showPaidColumn = invoice.paid > 0 || invoice.status == InvoiceStatus.PAID
 
-    Card(
+    ListItemCard(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLowest),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, AptoOutlineVariant)
+        padding = PaddingValues(24.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
@@ -338,44 +314,9 @@ fun InvoiceStatusBadge(status: InvoiceStatus) {
 
 @Composable
 private fun InvoiceEmptyState() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Surface(
-                modifier = Modifier.size(96.dp),
-                shape = CircleShape,
-                color = AptoSurfaceContainerHigh
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Receipt,
-                        contentDescription = null,
-                        tint = AptoOutline,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(Res.string.no_invoices_found),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = AptoOnSurface,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = stringResource(Res.string.no_invoices_for_filter),
-                style = MaterialTheme.typography.bodyMedium,
-                color = AptoOnSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
+    EmptyState(
+        title = stringResource(Res.string.no_invoices_found),
+        subtitle = stringResource(Res.string.no_invoices_for_filter),
+        icon = Icons.Default.Receipt,
+    )
 }
