@@ -11,13 +11,21 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/ic_launcher_foreground"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_launcher_foreground"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.Condominio"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
+        <!-- AdMob App ID. IMPORTANTE: este es el ID de PRUEBA de Google.
+             Reemplazar por el App ID real de tu app en AdMob (Apps > Configuración de la app),
+             formato ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

@@ -86,6 +86,11 @@
     <string name="notification_settings">Configuración de Notificaciones</string>
     <string name="change_password">Cambiar Contraseña</string>
     <string name="logout">Cerrar Sesión</string>
+    <string name="delete_account">Eliminar cuenta</string>
+    <string name="delete_account_title">¿Eliminar tu cuenta?</string>
+    <string name="delete_account_message">Esta acción desactiva tu cuenta y no podrás volver a iniciar sesión. Tus datos personales se eliminan; los registros de pagos se conservan por obligaciones legales.</string>
+    <string name="delete_account_reason_hint">Motivo (opcional)</string>
+    <string name="delete_account_confirm">Sí, eliminar</string>
 
     <!-- Billing & Payments -->
     <string name="my_invoices">Mis Facturas</string>
@@ -369,4 +374,11 @@
     <string name="no_invoices_for_filter">No se encontraron facturas para el filtro seleccionado.</string>
     <string name="share">Compartir</string>
     <string name="settings">Configuración</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_payments">Pagos</string>
+    <string name="nav_billboard">Cartelera</string>
+    <string name="nav_decisions">Votaciones</string>
+    <string name="nav_profile">Perfil</string>
 </resources>

@@ -29,9 +29,50 @@ import com.example.condominio.ui.screens.billboard.BillboardDetailScreen
 import com.example.condominio.ui.screens.register.QrScannerScreen
 import com.example.condominio.ui.screens.register.RegisterScreen
 import com.example.condominio.ui.screens.splash.SplashScreen
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.condominio.ui.components.AppBottomBar
+import com.example.condominio.ui.components.BottomTab
+
+// Rutas del flujo de autenticación/onboarding donde no se muestra el bottom bar
+private val routesWithoutBottomBar = setOf(
+        "splash",
+        "login",
+        "admin_blocked",
+        "pending_approval",
+        "unit_selection",
+        "register_scanner",
+        "register_form/{buildingId}"
+)
+
 @Composable
 fun CondominioNavGraph(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = "splash") {
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    Scaffold(
+            bottomBar = {
+                if (currentRoute != null && currentRoute !in routesWithoutBottomBar) {
+                    AppBottomBar(
+                            currentRoute = currentRoute,
+                            onTabSelected = { tab ->
+                                navController.navigate(tab.route) {
+                                    popUpTo("dashboard") { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                    )
+                }
+            }
+    ) { innerPadding ->
+        NavHost(
+                navController = navController,
+                startDestination = "splash",
+                modifier = Modifier.padding(innerPadding)
+        ) {
         composable("splash") {
             SplashScreen(
                 onFinished = {
@@ -249,6 +290,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     announcementId = id,
                     onBackClick = { navController.popBackStack() }
             )
+        }
         }
     }
 }

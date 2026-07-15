@@ -173,7 +173,7 @@ class RoomAuthRepository (
 
     override suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
         delay(500)
-        
+
         // In a real app, you would verify currentPassword against stored password
         // For this demo, we'll just validate the new password
         return if (newPassword.length >= 6) {
@@ -181,6 +181,15 @@ class RoomAuthRepository (
             Result.success(Unit)
         } else {
             Result.failure(Exception("Password must be at least 6 characters"))
+        }
+    }
+
+    override suspend fun deleteAccount(reason: String?): Result<Unit> {
+        return try {
+            userDao.getUser().firstOrNull()?.let { userDao.deleteUser(it) }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

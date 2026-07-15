@@ -98,6 +98,11 @@
     <string name="notification_settings">Notification Settings</string>
     <string name="change_password">Change Password</string>
     <string name="logout">Logout</string>
+    <string name="delete_account">Delete account</string>
+    <string name="delete_account_title">Delete your account?</string>
+    <string name="delete_account_message">This deactivates your account and you will not be able to sign in again. Your personal data is deleted; payment records are retained for legal obligations.</string>
+    <string name="delete_account_reason_hint">Reason (optional)</string>
+    <string name="delete_account_confirm">Yes, delete</string>
 
     <!-- Billing & Payments -->
     <string name="my_invoices">My Invoices</string>
@@ -395,4 +400,11 @@
     <string name="language_settings">Language</string>
     <string name="language_dialog_title">Select Language</string>
     <string name="language_current">Current language: %1$s</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_payments">Payments</string>
+    <string name="nav_billboard">Billboard</string>
+    <string name="nav_decisions">Votes</string>
+    <string name="nav_profile">Profile</string>
 </resources>

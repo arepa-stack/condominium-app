@@ -63,6 +63,13 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         }
     }
 
+    override suspend fun deleteAccount(reason: String?): Response<SuccessDto> = safeRequest {
+        client.delete("api/v1/app/users/me") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("reason" to (reason ?: "")))
+        }
+    }
+
     override suspend fun getBuildings(): Response<List<Building>> = safeRequest {
         client.get("api/v1/app/buildings")
     }

@@ -42,10 +42,26 @@ class ProfileViewModel (
             _uiState.update { it.copy(isLoggedOut = true) }
         }
     }
+
+    fun onDeleteAccountConfirm(reason: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isDeleting = true, deleteError = null) }
+            val result = authRepository.deleteAccount(reason.ifBlank { null })
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.copy(isDeleting = false, isLoggedOut = true)
+                } else {
+                    it.copy(isDeleting = false, deleteError = result.exceptionOrNull()?.message ?: "Error")
+                }
+            }
+        }
+    }
 }
 
 data class ProfileUiState(
     val user: User? = null,
     val isLoading: Boolean = true,
-    val isLoggedOut: Boolean = false
+    val isLoggedOut: Boolean = false,
+    val isDeleting: Boolean = false,
+    val deleteError: String? = null
 )

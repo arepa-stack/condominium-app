@@ -191,6 +191,22 @@ class RemoteAuthRepository
         return Result.failure(Exception("Change password not implemented in backend API yet"))
     }
 
+    override suspend fun deleteAccount(reason: String?): Result<Unit> {
+        return try {
+            val response = apiService.deleteAccount(reason)
+            if (response.isSuccessful) {
+                // Account is now banned server-side; clear local session too.
+                tokenManager.clearToken()
+                _currentUser.value = null
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to delete account"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private suspend fun enrichUserWithUnits(user: User): User {
         val enrichedUnits = mutableListOf<com.example.condominio.data.model.UserUnit>()
         for (unit in user.units) {

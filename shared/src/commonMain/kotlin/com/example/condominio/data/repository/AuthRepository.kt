@@ -16,6 +16,7 @@ interface AuthRepository {
     suspend fun fetchCurrentUser(): Result<User>
     suspend fun updateUser(user: User): Result<Unit>
     suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit>
+    suspend fun deleteAccount(reason: String?): Result<Unit>
     fun setCurrentUnit(unit: com.example.condominio.data.model.UserUnit)
     suspend fun hasValidSession(): Boolean
 }

@@ -2,4 +2,5 @@
 <resources>
     <color name="brand_orange">#FF6B00</color>
     <color name="splash_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#FE8438</color>
 </resources>

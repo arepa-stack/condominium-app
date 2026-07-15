@@ -9,6 +9,7 @@ interface ApiService {
     
     suspend fun getCurrentUser(): Response<UserProfile>
     suspend fun updateUser(updates: UpdateUserRequest): Response<UserProfile>
+    suspend fun deleteAccount(reason: String?): Response<SuccessDto>
 
     suspend fun getBuildings(): Response<List<Building>>
     suspend fun getBuilding(id: String): Response<Building>

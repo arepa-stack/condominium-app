@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -5,22 +7,37 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore/keystore.properties")
+    if (file.exists()) load(file.inputStream())
+}
+
 android {
     namespace = "com.example.condominio.android"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.condominio"
+        applicationId = "com.nibs.aptocondominios"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file(keystoreProperties["storeFile"] as? String ?: "keystore/apto-release.jks")
+            storePassword = keystoreProperties["storePassword"] as? String
+            keyAlias = keystoreProperties["keyAlias"] as? String
+            keyPassword = keystoreProperties["keyPassword"] as? String
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -44,6 +61,9 @@ dependencies {
 
     // Splash screen
     implementation(libs.core.splashscreen)
+
+    // Google AdMob
+    implementation(libs.play.services.ads)
 }
 
 kotlin {

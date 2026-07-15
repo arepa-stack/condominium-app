@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.dashboard
+﻿package com.example.condominio.ui.screens.dashboard
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -17,12 +17,6 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
@@ -72,10 +66,7 @@ fun DashboardScreen(
 
     Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = Color(0xFFF7F9FB), // pro-surface
-            bottomBar = {
-                BottomNavBar(onProfileClick = onProfileClick)
-            }
+            containerColor = Color(0xFFF7F9FB) // pro-surface
     ) { paddingValues ->
         if (uiState.isLoading && uiState.userName.isEmpty()) {
             Box(
@@ -594,116 +585,5 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = Color(0xFF09151A)
         )
-    }
-}
-
-@Composable
-fun BottomNavBar(
-    onProfileClick: () -> Unit = {},
-) {
-    val activeColor = Color(0xFFFF6B00) // brand orange
-    val inactiveColor = Color(0xFF9CA3AF) // gray-400
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
-        shadowElevation = 8.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF3F4F6))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Inicio (active)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { }
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Home,
-                    contentDescription = "Inicio",
-                    tint = activeColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Inicio",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    ),
-                    color = activeColor
-                )
-            }
-
-            // Alertas
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { }
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Alertas",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Alertas",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    ),
-                    color = inactiveColor
-                )
-            }
-
-            // Perfil
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable(onClick = onProfileClick)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
-                    contentDescription = "Perfil",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Perfil",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    ),
-                    color = inactiveColor
-                )
-            }
-
-            // Más
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Más",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Más",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    ),
-                    color = inactiveColor
-                )
-            }
-        }
     }
 }

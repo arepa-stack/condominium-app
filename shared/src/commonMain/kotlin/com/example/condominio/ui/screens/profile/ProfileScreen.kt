@@ -1,4 +1,4 @@
-package com.example.condominio.ui.screens.profile
+﻿package com.example.condominio.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,11 +44,24 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteReason by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.isLoggedOut) {
         if (uiState.isLoggedOut) {
             onLogoutSuccess()
         }
+    }
+
+    if (showDeleteDialog) {
+        DeleteAccountDialog(
+            reason = deleteReason,
+            onReasonChange = { deleteReason = it },
+            isDeleting = uiState.isDeleting,
+            errorMessage = uiState.deleteError,
+            onConfirm = { viewModel.onDeleteAccountConfirm(deleteReason) },
+            onDismiss = { if (!uiState.isDeleting) showDeleteDialog = false }
+        )
     }
 
     // Language selection dialog
@@ -95,12 +108,6 @@ fun ProfileScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = AptoBackground
                 )
-            )
-        },
-        bottomBar = {
-            ProfileBottomNavBar(
-                onHomeClick = onBackClick,
-                onProfileClick = {}
             )
         },
         containerColor = AptoBackground
@@ -310,9 +317,92 @@ fun ProfileScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Delete account (soft delete) — required for Google Play Data Safety.
+            TextButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = AptoError,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(Res.string.delete_account),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AptoError
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+}
+
+@Composable
+private fun DeleteAccountDialog(
+    reason: String,
+    onReasonChange: (String) -> Unit,
+    isDeleting: Boolean,
+    errorMessage: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(Res.string.delete_account_title),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = AptoError
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(Res.string.delete_account_message),
+                    fontSize = 14.sp,
+                    color = AptoOnSurface
+                )
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = onReasonChange,
+                    enabled = !isDeleting,
+                    label = { Text(stringResource(Res.string.delete_account_reason_hint)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (errorMessage != null) {
+                    Text(text = errorMessage, fontSize = 12.sp, color = AptoError)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isDeleting) {
+                if (isDeleting) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = AptoError, strokeWidth = 2.dp)
+                } else {
+                    Text(
+                        text = stringResource(Res.string.delete_account_confirm),
+                        fontWeight = FontWeight.Bold,
+                        color = AptoError
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) {
+                Text(text = stringResource(Res.string.cancel), color = AptoSecondary)
+            }
+        },
+        containerColor = AptoSurfaceContainerLowest,
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable
@@ -482,120 +572,3 @@ private fun LanguageSelectionDialog(
         shape = RoundedCornerShape(24.dp)
     )
 }
-
-@Composable
-private fun ProfileBottomNavBar(
-    onHomeClick: () -> Unit,
-    onProfileClick: () -> Unit
-) {
-    val activeColor = AptoSecondary
-    val inactiveColor = AptoOutline
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = AptoSurfaceContainerLowest,
-        shadowElevation = 8.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, AptoOutlineVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Home (not active, clicks navigates back to Dashboard)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable(onClick = onHomeClick)
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Home,
-                    contentDescription = "Inicio",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Home",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = inactiveColor
-                )
-            }
-
-            // Requests
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable { }
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Handyman,
-                    contentDescription = "Solicitudes",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Requests",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = inactiveColor
-                )
-            }
-
-            // Units
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable { }
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Domain,
-                    contentDescription = "Unidades",
-                    tint = inactiveColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Units",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = inactiveColor
-                )
-            }
-
-            // Profile (Active)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable(onClick = onProfileClick)
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = "Perfil",
-                    tint = activeColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Profile",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = activeColor
-                )
-            }
-        }
-    }
-}
-

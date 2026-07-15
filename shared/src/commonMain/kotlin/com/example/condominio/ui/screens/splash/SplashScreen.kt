@@ -6,10 +6,14 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.logo
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.ui.theme.BrandDark
@@ -59,20 +62,12 @@ fun SplashScreen(onFinished: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App icon
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(BrandOrange),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "🏢",
-                    fontSize = 48.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
+            // App logo
+            Image(
+                painter = painterResource(Res.drawable.logo),
+                contentDescription = "Apto",
+                modifier = Modifier.size(96.dp)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
