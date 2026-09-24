@@ -19,7 +19,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.content.PartData
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import io.ktor.utils.io.core.ByteReadPacket
+import io.ktor.utils.io.ByteReadChannel
 import kotlinx.serialization.json.JsonElement
 
 class ApiServiceImpl(private val client: HttpClient) : ApiService {
@@ -160,7 +160,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
 
         val allParts = if (proofImage != null && fileName != null) {
             basicParts + PartData.FileItem(
-                provider = { ByteReadPacket(proofImage) },
+                provider = { ByteReadChannel(proofImage) },
                 dispose = {},
                 partHeaders = Headers.build {
                     append(HttpHeaders.ContentType, "image/jpeg")
@@ -249,7 +249,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
             if (notes != null) append("notes", notes)
         }
         val allParts = basicParts + PartData.FileItem(
-            provider = { ByteReadPacket(fileBytes) },
+            provider = { ByteReadChannel(fileBytes) },
             dispose = {},
             partHeaders = Headers.build {
                 append(HttpHeaders.ContentType, mimeType)

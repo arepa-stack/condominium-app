@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Apto Condominios</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#FFFFFF">
+    <style>
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #FFFFFF; font-family: system-ui, sans-serif; }
+        #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #555; }
+        #loading img { width: 96px; height: 96px; border-radius: 22px; }
+    </style>
+</head>
+<body>
+<div id="loading">
+    <img src="icon-192.png" alt="">
+    <span id="loading-text">Cargando…</span>
+</div>
+<script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+    // Smallest module using a WasmGC type: Kotlin/Wasm needs WasmGC (Chrome 119+, Firefox 120+, Safari 18.2+).
+    const wasmGc = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]);
+    if (WebAssembly.validate(wasmGc)) {
+        const s = document.createElement('script');
+        s.src = 'shared.js';
+        document.body.appendChild(s);
+    } else {
+        document.getElementById('loading-text').textContent =
+            'Tu navegador no es compatible. Actualízalo (Chrome, Firefox o Safari 18.2+).';
+    }
+</script>
+</body>
+</html>

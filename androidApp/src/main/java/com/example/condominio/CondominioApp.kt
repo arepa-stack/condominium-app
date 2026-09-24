@@ -2,7 +2,7 @@ package com.example.condominio
 
 import android.app.Application
 import com.example.condominio.di.appModule
-import com.example.condominio.di.networkModule
+import com.example.condominio.di.sharedModule
 import com.google.android.gms.ads.MobileAds
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -16,7 +16,7 @@ class CondominioApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@CondominioApp)
-            modules(appModule, networkModule)
+            modules(sharedModule, appModule)
         }
 
         // AdMob SDK init fuera del hilo principal (recomendación de Google)

@@ -48,6 +48,7 @@ import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.formatArgs
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import condominio.shared.generated.resources.*
@@ -879,7 +880,7 @@ private fun TallyBar(
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                stringResource(Res.string.decisions_tally_votes_pct).format(votes, pct),
+                stringResource(Res.string.decisions_tally_votes_pct).formatArgs(votes, pct),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = AptoOnSurface

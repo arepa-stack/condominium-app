@@ -3,9 +3,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.androidx.room)
 }
 
 kotlin {
@@ -24,6 +22,12 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
     }
 
     sourceSets {
@@ -46,11 +50,8 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             implementation(libs.mikepenz.markdown.m3)
-            implementation(libs.androidx.datastore.preferences)
             implementation(libs.androidx.navigation.compose)
-
-            implementation(libs.androidx.room.runtime)
-            implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.androidx.lifecycle.runtime.compose)
 
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -65,13 +66,16 @@ kotlin {
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
-
-            implementation(libs.androidx.room.sqlite.wrapper)
+            implementation(libs.androidx.datastore.preferences)
 
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
             implementation(libs.androidx.camera.view)
             implementation(libs.mlkit.barcode.scanning)
+        }
+
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
     }
 
@@ -107,17 +111,7 @@ android {
     }
 }
 
-room {
-    schemaDirectory("$projectDir/schemas")
-}
-
 dependencies {
-    // Note: KSP isn't natively supported in commonMain elegantly inside dependencies block without specific setup,
-    // so we apply it to Android here for now while you prepare the KMP transition
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    add("kspIosX64", libs.androidx.room.compiler)
-    add("kspIosArm64", libs.androidx.room.compiler)
     debugImplementation(libs.androidx.ui.tooling)
 }
 

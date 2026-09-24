@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.savedstate.read
 // Estos imports deberán ser actualizados cuando movamos las pantallas a commonMain
 import com.example.condominio.ui.screens.auth.AdminBlockedScreen
 import com.example.condominio.ui.screens.auth.PendingApprovalScreen
@@ -50,7 +51,10 @@ private val routesWithoutBottomBar = setOf(
 )
 
 @Composable
-fun CondominioNavGraph(navController: NavHostController = rememberNavController()) {
+fun CondominioNavGraph(
+        navController: NavHostController = rememberNavController(),
+        registerCode: String? = null
+) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
@@ -81,6 +85,8 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     navController.navigate("login") {
                         popUpTo("splash") { inclusive = true }
                     }
+                    // Deep link from a building QR: land on registration, with login behind it.
+                    if (registerCode != null) navController.navigate("register_form/$registerCode")
                 }
             )
         }
@@ -170,7 +176,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             route = "register_form/{buildingId}",
             arguments = listOf(navArgument("buildingId") { type = NavType.StringType })
         ) { backStack ->
-            val buildingId = backStack.arguments?.getString("buildingId") ?: ""
+            val buildingId = backStack.arguments?.read { getStringOrNull("buildingId") } ?: ""
             RegisterScreen(
                 buildingId = buildingId,
                 onRegisterSuccess = {
@@ -291,7 +297,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                 route = "decision_detail/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
+            val id = backStackEntry.arguments?.read { getStringOrNull("id") } ?: ""
             DecisionDetailScreen(
                     decisionId = id,
                     onBackClick = { navController.popBackStack() }
@@ -307,7 +313,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                 route = "billboard_detail/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
+            val id = backStackEntry.arguments?.read { getStringOrNull("id") } ?: ""
             BillboardDetailScreen(
                     announcementId = id,
                     onBackClick = { navController.popBackStack() }

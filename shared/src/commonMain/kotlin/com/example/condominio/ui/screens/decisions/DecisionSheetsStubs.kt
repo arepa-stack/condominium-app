@@ -57,6 +57,7 @@ import com.example.condominio.data.utils.rememberDocumentPickerLauncher
 import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.utils.UiText
+import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -237,7 +238,7 @@ fun UploadQuoteSheet(
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         Text(
-                            text = "%.2f MB · ${stringResource(Res.string.decisions_upload_change_file_btn)}".format(sizeMb),
+                            text = "${formatCurrency(sizeMb)} MB · ${stringResource(Res.string.decisions_upload_change_file_btn)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )
@@ -363,7 +364,7 @@ fun VoteSheet(
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "$%.2f".format(quote.amount),
+                                text = "$${formatCurrency(quote.amount)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

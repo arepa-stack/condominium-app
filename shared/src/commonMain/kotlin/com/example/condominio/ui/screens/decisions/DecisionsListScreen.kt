@@ -31,6 +31,7 @@ import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import com.example.condominio.ui.utils.formatArgs
 import org.koin.compose.viewmodel.koinViewModel
 
 // ---------------------------------------------------------------------------
@@ -347,12 +348,12 @@ private fun buildDeadlineLabel(decision: DecisionDto): String {
 
     return when (decision.status) {
         DecisionStatus.RECEPTION ->
-            receptionFmt.format(formatDecisionDeadline(decision.receptionDeadline))
+            receptionFmt.formatArgs(formatDecisionDeadline(decision.receptionDeadline))
         DecisionStatus.VOTING,
         DecisionStatus.TIEBREAK_PENDING ->
-            votingFmt.format(formatDecisionDeadline(decision.votingDeadline))
+            votingFmt.formatArgs(formatDecisionDeadline(decision.votingDeadline))
         DecisionStatus.RESOLVED ->
-            resolvedFmt.format(
+            resolvedFmt.formatArgs(
                 decision.finalizedAt?.let { formatDecisionDate(it) }
                     ?: formatDecisionDeadline(decision.votingDeadline)
             )
