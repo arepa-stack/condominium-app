@@ -217,6 +217,7 @@ Gradle/build para wasm:
 | La distribución pesa ~38 MB de wasm | Se publicó el build de desarrollo | Ver §3; verificar ~8 MB antes de publicar |
 | Textos en blanco o error `padding option is set to PRESENT` | Recursos de Compose cacheados de otro build | Ver §5; recargar con Ctrl + Shift + R |
 | `.vercel/project.json` desapareció | `:shared:clean` borra `build/`, donde vive `.vercel/` | Repetir `npx vercel link` eligiendo el proyecto **existente** (los IDs ya están en los secretos de GitHub) |
+| CI: `Cannot find a Java installation ... matching: Compatible with Java 21, JetBrains` | `gradle/gradle-daemon-jvm.properties` exige JDK 21 de JetBrains | `actions/setup-java` con `distribution: jetbrains` (ya en `deploy-web.yml`) |
 | Vercel ofrece importar el repo de GitHub y "Deploy" | Vercel no puede compilar este proyecto (JDK 21 + Android SDK) y publicaría la raíz del repo | **No** usar la importación Git; el deploy lo hace GitHub Actions (§4) o `npx vercel deploy` desde el build |
 
 Verificar el ambiente de un build antes de publicar:

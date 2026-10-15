@@ -31,7 +31,7 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: jetbrains # gradle/gradle-daemon-jvm.properties pins a JetBrains JDK 21
           java-version: '21'
 
       - uses: gradle/actions/setup-gradle@v4
