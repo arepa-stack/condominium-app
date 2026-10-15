@@ -6,7 +6,7 @@
 # Each GitHub Environment (Settings → Environments) needs:
 #   secrets.VERCEL_TOKEN       Vercel access token
 #   secrets.VERCEL_ORG_ID      from .vercel/project.json after `vercel link`
-#   secrets.VERCEL_PROJECT_ID  one Vercel project per environment (e.g. apto-web-dev / apto-web)
+#   secrets.VERCEL_PROJECT_ID  one Vercel project per environment (e.g. condominium-app-dev-test / PROD)
 #   vars.API_URL               DEV: https://condominium-api-beta.nibs-tech.com/  PROD: https://condominium-api.nibs-tech.com/
 name: Deploy web
 
@@ -21,20 +21,20 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # pinned: ubuntu-latest moves to 26 on 2026-10-19
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     env:
       API_ENV: ${{ github.ref_name == 'main' && 'PROD' || 'DEV' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: jetbrains # gradle/gradle-daemon-jvm.properties pins a JetBrains JDK 21
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Build web distribution (${{ env.API_ENV }})
         env:

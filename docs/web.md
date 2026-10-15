@@ -106,23 +106,93 @@ aloja los archivos estáticos.
 - Cabeceras: `shared/src/wasmJsMain/resources/vercel.json` (se copia al build): `sw.js` e `index.html` sin cache, `.wasm`
   con `application/wasm` y cache inmutable (nombres con hash). Las rutas usan hash (`/#dashboard`): no hay rewrites.
 
+### Ambientes publicados
+
+| Ambiente | Proyecto Vercel | URL | GitHub Environment |
+|---|---|---|---|
+| DEV | `condominium-app-dev-test` (team `leip1493s-projects`) | https://condominium-app-dev-test.vercel.app | `dev` |
+| PROD | pendiente | pendiente | `prod` |
+
+Cada deploy tiene además su URL única (`condominium-app-dev-test-<hash>-leip1493s-projects.vercel.app`); el alias de arriba
+siempre apunta al último deploy de producción del proyecto.
+
 ### Configuración inicial (una vez por ambiente)
 
-1. Crear un proyecto de Vercel por ambiente (p. ej. `apto-web-dev` y `apto-web`) desde el build local:
+Se hizo así para DEV; PROD se repite igual con `-PapiEnv=PROD`, otro proyecto y el environment `prod`.
+
+**A. Crear el proyecto de Vercel desde un build local** (Vercel no compila nada: solo recibe la carpeta).
+
+1. Build y verificación del ambiente (comandos de §9): `ApiConfig` en `DEV` y URL beta dentro del wasm.
    ```bash
    ./gradlew :shared:wasmJsBrowserDistribution -PapiEnv=DEV
-   cd shared/build/dist/wasmJs/productionExecutable
-   npx vercel link              # elegir "create new project"; genera .vercel/project.json (orgId, projectId)
    ```
-   En cada proyecto: *Framework Preset* = **Other**, sin *Build Command*. Repetir `vercel link` para el de PROD
-   (borrar antes la carpeta `.vercel/` del build). Guardar `orgId`/`projectId`: `:shared:clean` borra `.vercel/`.
-   No usar *Import Git Repository* de Vercel (ver §9).
-2. Crear un token en Vercel → *Account Settings → Tokens*.
-3. En GitHub → *Settings → Environments* crear **`dev`** y **`prod`**, cada uno con:
-   - Secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (el del proyecto de ese ambiente).
-   - Variable: `API_URL` (DEV: `https://condominium-api-beta.nibs-tech.com/`, PROD: `https://condominium-api.nibs-tech.com/`).
-   - Opcional en `prod`: *Required reviewers* para aprobar cada deploy a producción.
-4. Primer deploy: push a `dev` (o *Run workflow* sobre `dev`).
+2. Desde la carpeta del build:
+   ```bash
+   cd shared/build/dist/wasmJs/productionExecutable
+   npx vercel login
+   npx vercel link
+   ```
+   Respuestas de `vercel link`:
+
+   | Pregunta | Respuesta |
+   |---|---|
+   | Which project? | *Create a new project* |
+   | Name? | nombre del proyecto (si se acepta el valor por defecto queda `production-executable`) |
+   | Connect this Git repository…? | **no** — si se conecta, Vercel intenta desplegar la raíz del repo en cada push |
+   | Code directory? | `./` |
+   | Customize settings? | no |
+
+   Si se conectó Git por error: `npx vercel git disconnect`. `vercel link` también deja un `.env.local` con un token OIDC:
+   borrarlo (`Remove-Item .env.local`) antes de desplegar.
+3. Primer deploy manual y IDs del proyecto:
+   ```bash
+   npx vercel deploy --prod
+   Get-Content .vercel/project.json      # orgId y projectId → secretos de GitHub
+   ```
+   Guardar los IDs: `:shared:clean` borra `build/` y con él `.vercel/`.
+4. En el dashboard de Vercel, en el proyecto:
+   - *Settings → General*: nombre definitivo (renombrar no cambia el `projectId`).
+   - *Settings → Git*: sin repositorio conectado.
+   - *Settings → Deployment Protection*: viene activa (*Vercel Authentication*) y solo deja entrar a miembros del team.
+     Para que los testers abran la web, desactivarla o dejarla solo en *Preview Deployments*.
+   - *Settings → Domains*: dominio `*.vercel.app` legible si el alias generado no sirve.
+   - No usar *Import Git Repository* de Vercel (ver §9).
+
+**B. Conectar GitHub Actions.**
+
+1. Token en Vercel → *Account Settings → Tokens → Create* (scope: el team del proyecto). Se muestra una sola vez.
+2. GitHub → *Settings → Environments → New environment* (`dev` / `prod`), cada uno con:
+
+   | Tipo | Nombre | Valor |
+   |---|---|---|
+   | Secret | `VERCEL_TOKEN` | token del paso 1 |
+   | Secret | `VERCEL_ORG_ID` | `orgId` de `.vercel/project.json` |
+   | Secret | `VERCEL_PROJECT_ID` | `projectId` del proyecto de ese ambiente |
+   | Variable | `API_URL` | DEV: `https://condominium-api-beta.nibs-tech.com/` · PROD: `https://condominium-api.nibs-tech.com/` |
+
+   Recomendado: *Deployment branches* limitado a `dev` / `main`; en `prod`, *Required reviewers*.
+   Alternativa por CLI (cada `secret set` sin `--body` pide el valor):
+   ```bash
+   gh secret set VERCEL_TOKEN --env dev --repo arepa-stack/condominium-app
+   gh secret set VERCEL_ORG_ID --env dev --repo arepa-stack/condominium-app
+   gh secret set VERCEL_PROJECT_ID --env dev --repo arepa-stack/condominium-app
+   gh variable set API_URL --env dev --repo arepa-stack/condominium-app --body https://condominium-api-beta.nibs-tech.com/
+   ```
+3. Primer deploy: push a `dev` (o *Run workflow* sobre `dev`). Tarda ~8 min (el primero algo más, sin cache de Gradle).
+
+### Seguir y depurar un deploy
+
+```bash
+gh run list --workflow "Deploy web" --limit 5                 # últimos runs
+gh run watch <run-id> --exit-status                            # seguir uno en vivo
+gh run view <run-id> --log-failed                              # solo el log del paso que falló
+gh workflow run "Deploy web" --ref dev                         # relanzar sin commit
+```
+
+Qué revisar en un run correcto:
+- *Verify API target* imprime el `ApiConfig` con el `ENV` y la `BASE_URL` del ambiente.
+- *Deploy to Vercel* termina con `Aliased https://<proyecto>.vercel.app` y `Ready`.
+- Errores conocidos (JDK, secretos, protección de Vercel): §9.
 
 La URL de la API también se puede pasar por variable de entorno o `-P<ENV>_API_URL=...`. Valores vacíos se ignoran; si
 falta para un ambiente que no sea PROD, el build **falla** (no cae a producción en silencio).
@@ -218,6 +288,8 @@ Gradle/build para wasm:
 | Textos en blanco o error `padding option is set to PRESENT` | Recursos de Compose cacheados de otro build | Ver §5; recargar con Ctrl + Shift + R |
 | `.vercel/project.json` desapareció | `:shared:clean` borra `build/`, donde vive `.vercel/` | Repetir `npx vercel link` eligiendo el proyecto **existente** (los IDs ya están en los secretos de GitHub) |
 | CI: `Cannot find a Java installation ... matching: Compatible with Java 21, JetBrains` | `gradle/gradle-daemon-jvm.properties` exige JDK 21 de JetBrains | `actions/setup-java` con `distribution: jetbrains` (ya en `deploy-web.yml`) |
+| La URL de Vercel pide iniciar sesión en Vercel | *Deployment Protection* activa por defecto | Proyecto → *Settings → Deployment Protection* (ver §4) |
+| CI: `Error: No existing credentials found` / proyecto no encontrado en *Deploy to Vercel* | Faltan secretos o se cargaron en otro environment | Revisar los 3 secretos dentro del environment `dev`/`prod` (§4) |
 | Vercel ofrece importar el repo de GitHub y "Deploy" | Vercel no puede compilar este proyecto (JDK 21 + Android SDK) y publicaría la raíz del repo | **No** usar la importación Git; el deploy lo hace GitHub Actions (§4) o `npx vercel deploy` desde el build |
 
 Verificar el ambiente de un build antes de publicar:
