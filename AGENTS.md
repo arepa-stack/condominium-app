@@ -8,6 +8,7 @@ App de condominio (residentes) en **Kotlin Multiplatform + Compose Multiplatform
 
 - `shared/` — UI, ViewModels, red (Ktor), DI (Koin) compartidos. Targets: Android, iOS y **web (`wasmJs`)**.
 - `androidApp/` — app Android (entrada, AdMob).
+- Configuración local: copiar `local.properties.example` a `local.properties` (no versionado).
 - API: URL por ambiente desde `local.properties` (`API_ENV`, `<ENV>_API_URL`); ver `docs/web.md` §2.
 
 ## Versión web

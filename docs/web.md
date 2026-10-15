@@ -26,7 +26,8 @@ Guía para trabajar con la versión web de la app. La web **no es otro proyecto*
 
 ## 2. Ambientes (DEV / PROD)
 
-La URL de la API se **fija al compilar** a partir de `local.properties` (no versionado):
+La URL de la API se **fija al compilar** a partir de `local.properties` (no versionado). Para empezar:
+`cp local.properties.example local.properties` y completar `sdk.dir`.
 
 ```properties
 API_ENV=DEV                     # DEV | PROD (o cualquier nombre con su <ENV>_API_URL). Por defecto DEV
