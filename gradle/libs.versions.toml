@@ -1,21 +1,18 @@
 [versions]
-agp = "8.6.1"
-kotlin = "2.3.10"
-ksp = "2.3.6"
-compose-multiplatform = "1.7.0"
+agp = "8.9.1"
+kotlin = "2.3.21"
+compose-multiplatform = "1.10.3"
 coreKtx = "1.13.1"
 lifecycleRuntimeKtx = "2.8.6"
-lifecycle = "2.8.7"
+lifecycle = "2.9.6"
 activityCompose = "1.9.2"
-koin = "4.0.0"
+koin = "4.2.0"
 navigationCompose = "2.9.2"
 okhttpLoggingInterceptor = "4.12.0"
-room = "2.8.4"
 coil = "3.4.0"
-ktor = "2.3.12"
-mikepenz-markdown = "0.31.0"
+ktor = "3.3.3"
+mikepenz-markdown = "0.41.0"
 datastorePreferences = "1.1.1"
-sqlite = "2.6.2"
 camerax = "1.4.0"
 mlkitBarcode = "17.3.0"
 coreSplashscreen = "1.0.1"
@@ -27,22 +24,20 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-navigation-compose = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 
-androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
-androidx-room-sqlite-wrapper = { module = "androidx.room:room-sqlite-wrapper", version.ref = "room" }
 
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
-coil-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor2", version.ref = "coil" }
+coil-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil" }
 mikepenz-markdown-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "mikepenz-markdown" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-js = { group = "io.ktor", name = "ktor-client-js", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttpLoggingInterceptor" }
 androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 
 # Koin dependencies
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
@@ -59,7 +54,7 @@ core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = 
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.7.3" }
-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.6.1" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.7.1" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -68,6 +63,4 @@ jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = 
 jetbrains-kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-androidx-room = { id = "androidx.room", version.ref = "room" }

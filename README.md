@@ -58,6 +58,23 @@ The app currently runs with **Mock Data** to facilitate testing without a backen
 -   **Email**: Any valid email (e.g., `admin@condo.com`)
 -   **Password**: Any string with **6+ characters**.
 
+## 🌐 Web / PWA (Kotlin/Wasm)
+
+The `shared` module also targets `wasmJs`; the same Compose UI runs in the browser and installs as a PWA.
+Full guide (environments, dev server, deploy, UI rules): **[docs/web.md](docs/web.md)**.
+
+```bash
+./gradlew :shared:wasmJsBrowserDistribution
+```
+
+Output: `shared/build/dist/wasmJs/productionExecutable/` (static files; deployed to Vercel via GitHub Actions — see docs/web.md §4).
+Local check: `python -m http.server 8080 -d shared/build/dist/wasmJs/productionExecutable`.
+
+- Web-only code lives in `shared/src/wasmJsMain` (entry `main.kt`, `index.html`, `manifest.webmanifest`, `sw.js`, icons).
+- Bump `CACHE` in `sw.js` on every deploy.
+- Requires WasmGC browsers: Chrome 119+, Firefox 120+, Safari/iOS 18.2+.
+- Building QR codes can encode `https://<web-app>/?code=COND-XXXX` to open registration directly.
+
 ## 🔧 Troubleshooting
 
 ### Compilation Errors with JDK 21

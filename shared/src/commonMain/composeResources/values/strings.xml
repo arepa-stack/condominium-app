@@ -284,8 +284,8 @@
     <string name="error_password_required">La contraseña actual es requerida</string>
 
     <!-- Decisions -->
-    <string name="decisions_title">Presupuesto</string>
-    <string name="decisions_empty">No hay presupuestos en tu edificio</string>
+    <string name="decisions_title">Votaciones</string>
+    <string name="decisions_empty">No hay votaciones en tu edificio</string>
     <string name="decisions_filter_all">Todos</string>
     <string name="decisions_filter_reception">Borradores</string>
     <string name="decisions_filter_voting">En Votación</string>
@@ -395,4 +395,20 @@
     <string name="nav_billboard">Cartelera</string>
     <string name="nav_decisions">Votaciones</string>
     <string name="nav_profile">Perfil</string>
+    <string name="web_profile_preferences">Preferencias</string>
+    <string name="web_profile_security">Seguridad</string>
+    <string name="web_profile_danger_zone">Zona de peligro</string>
+    <string name="web_payment_history_method">Método</string>
+    <string name="web_payment_history_amount">Monto</string>
+    <string name="web_payment_history_status">Estado</string>
+    <string name="web_invoices_col_due">Vencimiento</string>
+    <string name="web_invoices_col_status">Estado</string>
+    <string name="web_invoice_detail_applied">Aplicado</string>
+    <string name="web_invoice_detail_summary">Resumen</string>
+    <string name="web_invoice_detail_status">Estado</string>
+    <string name="web_invoice_detail_period">Periodo</string>
+    <string name="web_invoice_detail_due_date">Vencimiento</string>
+    <string name="web_dashboard_amount">Monto</string>
+    <string name="web_dashboard_status">Estado</string>
+    <string name="web_dashboard_no_transactions">Aún no hay transacciones registradas.</string>
 </resources>

@@ -320,8 +320,8 @@
     <string name="error_password_required">Current password is required</string>
 
     <!-- Decisions -->
-    <string name="decisions_title">Decisions</string>
-    <string name="decisions_empty">No decisions in your building</string>
+    <string name="decisions_title">Votes</string>
+    <string name="decisions_empty">No votes in your building</string>
     <string name="decisions_filter_all">All</string>
     <string name="decisions_filter_reception">Reception</string>
     <string name="decisions_filter_voting">Voting</string>
@@ -421,4 +421,20 @@
     <string name="nav_billboard">Billboard</string>
     <string name="nav_decisions">Votes</string>
     <string name="nav_profile">Profile</string>
+    <string name="web_profile_preferences">Preferences</string>
+    <string name="web_profile_security">Security</string>
+    <string name="web_profile_danger_zone">Danger zone</string>
+    <string name="web_payment_history_method">Method</string>
+    <string name="web_payment_history_amount">Amount</string>
+    <string name="web_payment_history_status">Status</string>
+    <string name="web_invoices_col_due">Due date</string>
+    <string name="web_invoices_col_status">Status</string>
+    <string name="web_invoice_detail_applied">Applied</string>
+    <string name="web_invoice_detail_summary">Summary</string>
+    <string name="web_invoice_detail_status">Status</string>
+    <string name="web_invoice_detail_period">Period</string>
+    <string name="web_invoice_detail_due_date">Due date</string>
+    <string name="web_dashboard_amount">Amount</string>
+    <string name="web_dashboard_status">Status</string>
+    <string name="web_dashboard_no_transactions">No transactions yet.</string>
 </resources>

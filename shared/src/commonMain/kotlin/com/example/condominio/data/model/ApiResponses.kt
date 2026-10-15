@@ -7,8 +7,8 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.Instant
-import kotlinx.datetime.Clock
+import kotlin.time.Instant
+import kotlin.time.Clock
 
 @Serializable
 data class RegistrationRequestBody(
@@ -150,7 +150,7 @@ fun InvoiceDto.toDomain(): Invoice {
     val date =
             try {
                 dueDate?.let {
-                    LocalDate.parse(it).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+                    LocalDate.parse(it.take(10)).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds() // calendar date at local midnight (UTC midnight shows the previous day west of UTC)
                 }
             } catch (e: Exception) {
                 null
@@ -174,6 +174,8 @@ data class PaymentDto(
         @SerialName("payment_id") val paymentId: String? = null,
         val amount: Double,
         val date: String? = null, // Made nullable to handle partial responses
+        // /billing/invoices/{id}/payments returns the date under this name instead of "date".
+        @SerialName("payment_date") val paymentDate: String? = null,
         val method: String? = null,
         val status: String? = null,
         val description: String? = null,
@@ -229,24 +231,15 @@ fun PaymentDto.toDomain(): Payment {
                 PaymentMethod.TRANSFER
             }
 
+    // date / payment_date are calendar dates (sometimes sent as "yyyy-MM-ddT00:00:00Z"): keep the day as-is
+    // at local midnight. created_at is a real instant. Shifting a UTC-midnight date to local time would
+    // show the previous day west of UTC.
     val dateObj =
-            try {
-                val dateStr = date ?: createdAt // Fallback to created_at if date is missing
-                dateStr?.let {
-                    try {
-                        LocalDate.parse(it).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
-                    } catch (e: Exception) {
-                        try {
-                            kotlinx.datetime.Instant.parse(it).toEpochMilliseconds()
-                        } catch (e2: Exception) {
-                            null
-                        }
-                    }
-                }
-                        ?: kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
-            } catch (e: Exception) {
-                kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            (date ?: paymentDate)?.take(10)?.let {
+                runCatching { LocalDate.parse(it).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds() }.getOrNull()
             }
+                    ?: createdAt?.let { runCatching { kotlin.time.Instant.parse(it).toEpochMilliseconds() }.getOrNull() }
+                    ?: kotlin.time.Clock.System.now().toEpochMilliseconds()
 
     // Determine description: prioritize notes, then backend description (which might be periods),
     // then fallback
@@ -273,7 +266,7 @@ fun PaymentDto.toDomain(): Payment {
             userName = user?.name,
             processedAt = processedAt?.let {
                 try {
-                    kotlinx.datetime.Instant.parse(it).toEpochMilliseconds()
+                    kotlin.time.Instant.parse(it).toEpochMilliseconds()
                 } catch (e: Exception) {
                     null
                 }

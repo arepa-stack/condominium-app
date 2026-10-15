@@ -1,11 +1,11 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.jetbrains.kotlin.multiplatform)
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.androidx.room)
 }
 
 kotlin {
@@ -16,7 +16,6 @@ kotlin {
     }
 
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -24,6 +23,14 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        // js()/JsAny interop is experimental in Kotlin 2.3; opt in once for the whole web target.
+        compilerOptions { optIn.add("kotlin.js.ExperimentalWasmJsInterop") }
+        browser()
+        binaries.executable()
     }
 
     sourceSets {
@@ -46,11 +53,8 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             implementation(libs.mikepenz.markdown.m3)
-            implementation(libs.androidx.datastore.preferences)
             implementation(libs.androidx.navigation.compose)
-
-            implementation(libs.androidx.room.runtime)
-            implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.androidx.lifecycle.runtime.compose)
 
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -65,13 +69,16 @@ kotlin {
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
-
-            implementation(libs.androidx.room.sqlite.wrapper)
+            implementation(libs.androidx.datastore.preferences)
 
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
             implementation(libs.androidx.camera.view)
             implementation(libs.mlkit.barcode.scanning)
+        }
+
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
     }
 
@@ -107,17 +114,56 @@ android {
     }
 }
 
-room {
-    schemaDirectory("$projectDir/schemas")
-}
-
 dependencies {
-    // Note: KSP isn't natively supported in commonMain elegantly inside dependencies block without specific setup,
-    // so we apply it to Android here for now while you prepare the KMP transition
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    add("kspIosX64", libs.androidx.room.compiler)
-    add("kspIosArm64", libs.androidx.room.compiler)
     debugImplementation(libs.androidx.ui.tooling)
 }
 
+
+// API endpoint per environment, read from local.properties (not versioned):
+//   API_ENV=DEV|PROD (default DEV; override with -PapiEnv=PROD), DEV_API_URL / PROD_API_URL, ENABLE_NETWORK_LOGS.
+// Generates com.example.condominio.ApiConfig for commonMain, so Android and web hit the same backend.
+// Release builds must use -PapiEnv=PROD (or API_ENV=PROD) to point at production.
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val apiEnv = ((findProperty("apiEnv") as String?) ?: localProps.getProperty("API_ENV") ?: System.getenv("API_ENV") ?: "DEV").uppercase()
+// URL lookup: local.properties → Gradle property (-PDEV_API_URL=...) → environment variable (CI).
+// Only PROD has a built-in fallback; any other env without a URL fails instead of silently hitting production.
+val apiUrlKey = "${apiEnv}_API_URL"
+// Blank values are ignored (CI passes "" when a repository variable is missing).
+val apiBaseUrl = localProps.getProperty(apiUrlKey)?.takeIf { it.isNotBlank() }
+    ?: providers.gradleProperty(apiUrlKey).orNull?.takeIf { it.isNotBlank() }
+    ?: providers.environmentVariable(apiUrlKey).orNull?.takeIf { it.isNotBlank() }
+    ?: if (apiEnv == "PROD") "https://condominium-api.nibs-tech.com/"
+       else error("Missing $apiUrlKey: set it in local.properties, -P$apiUrlKey=... or the $apiUrlKey environment variable")
+val networkLogs = localProps.getProperty("ENABLE_NETWORK_LOGS")?.toBoolean() ?: false
+
+val generateApiConfig by tasks.registering {
+    val outDir = layout.buildDirectory.dir("generated/apiConfig")
+    inputs.property("env", apiEnv)
+    inputs.property("url", apiBaseUrl)
+    inputs.property("logs", networkLogs)
+    outputs.dir(outDir)
+    doLast {
+        val file = outDir.get().file("com/example/condominio/ApiConfig.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            """
+            |package com.example.condominio
+            |
+            |// Generated from local.properties by :shared:generateApiConfig. Do not edit.
+            |object ApiConfig {
+            |    const val ENV = "$apiEnv"
+            |    const val BASE_URL = "$apiBaseUrl"
+            |    const val NETWORK_LOGS = $networkLogs
+            |}
+            |""".trimMargin()
+        )
+    }
+}
+kotlin.sourceSets.commonMain { kotlin.srcDir(generateApiConfig) }
+
+// Development and production web builds sync into the same build/wasm/packages dir. Without this, running
+// wasmJsBrowserDevelopmentRun and then wasmJsBrowserDistribution ships the unoptimized dev wasm (~38 MB vs ~8 MB).
+tasks.matching { it.name == "wasmJsProductionExecutableCompileSync" || it.name == "wasmJsDevelopmentExecutableCompileSync" }
+    .configureEach { outputs.upToDateWhen { false } }

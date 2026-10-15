@@ -1,92 +1,39 @@
 package com.example.condominio.di
 
-import androidx.room.Room
-import com.example.condominio.data.local.AppDatabase
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import com.example.condominio.ApiConfig
+import com.example.condominio.data.local.DataStoreTokenManager
 import com.example.condominio.data.local.TokenManager
-import com.example.condominio.data.repository.AuthRepository
-import com.example.condominio.data.repository.BuildingRepository
-import com.example.condominio.data.repository.PaymentRepository
-import com.example.condominio.data.repository.PettyCashRepository
-import com.example.condominio.data.repository.PettyCashRepositoryImpl
-import com.example.condominio.data.repository.RemoteAuthRepository
-import com.example.condominio.data.remote.ApiService
-import com.example.condominio.data.repository.*
 import com.example.condominio.data.utils.*
-import com.example.condominio.ui.screens.*
-import com.example.condominio.ui.screens.billing.*
-import com.example.condominio.ui.screens.dashboard.*
-import com.example.condominio.ui.screens.login.*
-import com.example.condominio.ui.screens.payment.*
-import com.example.condominio.ui.screens.profile.*
-import com.example.condominio.ui.screens.register.*
-import com.example.condominio.data.repository.DecisionsRepository
-import com.example.condominio.data.repository.RemoteDecisionsRepositoryImpl
-import com.example.condominio.data.repository.AnnouncementsRepository
-import com.example.condominio.data.repository.RemoteAnnouncementsRepositoryImpl
-import com.example.condominio.ui.screens.decisions.DecisionsListViewModel
-import com.example.condominio.ui.screens.decisions.DecisionDetailViewModel
-import com.example.condominio.ui.screens.billboard.BillboardListViewModel
-import com.example.condominio.ui.screens.billboard.BillboardDetailViewModel
-import com.example.condominio.domain.usecase.billboard.GetUnreadAnnouncementsCountUseCase
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.okhttp.OkHttp
+import okhttp3.logging.HttpLoggingInterceptor
 import okio.Path.Companion.toPath
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.*
 import org.koin.dsl.module
+import java.util.concurrent.TimeUnit
 
+/** Android bindings for [sharedModule]. */
 val appModule = module {
-    // Database
-    single {
-        Room.databaseBuilder(
-            androidContext(),
-            AppDatabase::class.java,
-            "condominio_db"
-        )
-        .fallbackToDestructiveMigration(dropAllTables = true)
-        .build()
-    }
-    
-    single { get<AppDatabase>().userDao() }
-    single { get<AppDatabase>().paymentDao() }
-    
-    // Services / Managers
-    singleOf(::TokenManager)
-    single<PlatformFileReader> { AndroidFileReader(androidContext()) }
-    single<PdfService> { PdfServiceImpl(get()) }
-    
-    // DataStore Preference provider
-    single<androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences>> {
-        androidx.datastore.preferences.core.PreferenceDataStoreFactory.createWithPath(
+    single<DataStore<Preferences>> {
+        PreferenceDataStoreFactory.createWithPath(
             produceFile = { androidContext().filesDir.resolve("auth_prefs.preferences_pb").absolutePath.toPath() }
         )
     }
-    
-    // Repositories
-    single<AuthRepository> { RemoteAuthRepository(get(), get()) }
-    single<PaymentRepository> { RemotePaymentRepository(get(), get()) }
-    single<BuildingRepository> { RemoteBuildingRepository(get()) }
-    single<OnboardingRepository> { RemoteOnboardingRepository(get()) }
-    single<PettyCashRepository> { PettyCashRepositoryImpl(get()) }
-    single<DecisionsRepository> { RemoteDecisionsRepositoryImpl(get(), get()) }
-    single<AnnouncementsRepository> { RemoteAnnouncementsRepositoryImpl(get()) }
-    factory { GetUnreadAnnouncementsCountUseCase(get()) }
+    single<TokenManager> { DataStoreTokenManager(get()) }
+    single<PlatformFileReader> { AndroidFileReader(androidContext()) }
+    single<PdfService> { PdfServiceImpl(get()) }
 
-    // ViewModels
-    viewModelOf(::LoginViewModel)
-    viewModelOf(::ForgotPasswordViewModel)
-    viewModelOf(::FirstLoginChangePasswordViewModel)
-    viewModelOf(::UnitSelectionViewModel)
-    viewModelOf(::InvoiceDetailViewModel)
-    viewModelOf(::InvoiceListViewModel)
-    viewModelOf(::DashboardViewModel)
-    viewModelOf(::CreatePaymentViewModel)
-    viewModelOf(::PaymentDetailViewModel)
-    viewModelOf(::PaymentHistoryViewModel)
-    viewModelOf(::ChangePasswordViewModel)
-    viewModelOf(::EditProfileViewModel)
-    viewModelOf(::ProfileViewModel)
-    viewModelOf(::RegisterViewModel)
-    viewModelOf(::DecisionsListViewModel)
-    viewModelOf(::DecisionDetailViewModel)
-    viewModelOf(::BillboardListViewModel)
-    viewModelOf(::BillboardDetailViewModel)
+    single<HttpClientEngine> {
+        OkHttp.create {
+            if (ApiConfig.NETWORK_LOGS) addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            config {
+                connectTimeout(30, TimeUnit.SECONDS)
+                readTimeout(30, TimeUnit.SECONDS)
+                writeTimeout(30, TimeUnit.SECONDS)
+            }
+        }
+    }
 }

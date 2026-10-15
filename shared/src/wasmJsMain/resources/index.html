@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Apto Condominios</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#FFFFFF">
+    <style>
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #FFFFFF; font-family: system-ui, sans-serif; }
+        #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #555; }
+        #loading img { width: 96px; height: 96px; border-radius: 22px; }
+    </style>
+</head>
+<body>
+<div id="loading">
+    <img src="icon-192.png" alt="">
+    <span id="loading-text">Cargando…</span>
+</div>
+<script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+    // Compose for Web types into a hidden <input> it creates per focused field. For password fields it only sets
+    // inputmode="password" (ignored by browsers) and autocorrect="on", so mobile keyboards treat the password as
+    // plain text: they suggest it and may learn it. Make that backing input a real password input.
+    // The input lives in the body's shadow root, is created on focus and gets its attributes afterwards, so watch
+    // that shadow root for new inputs / inputmode changes instead of listening to focus.
+    // ponytail: relies on Compose's backing-input markup; drop once Compose sets type=password itself.
+    const fixPasswordInput = el => {
+        if (el instanceof HTMLInputElement && el.getAttribute('inputmode') === 'password' && el.type !== 'password') {
+            el.type = 'password';
+            el.setAttribute('autocorrect', 'off');
+            el.setAttribute('autocomplete', 'current-password');
+        }
+    };
+    const shadowWait = setInterval(() => {
+        const root = document.body.shadowRoot;
+        if (!root) return;
+        clearInterval(shadowWait);
+        new MutationObserver(records => records.forEach(r => {
+            if (r.type === 'attributes') fixPasswordInput(r.target);
+            r.addedNodes.forEach(n => {
+                fixPasswordInput(n);
+                if (n.querySelectorAll) n.querySelectorAll('input').forEach(fixPasswordInput);
+            });
+        })).observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['inputmode'] });
+    }, 200);
+
+    // Smallest module using a WasmGC type: Kotlin/Wasm needs WasmGC (Chrome 119+, Firefox 120+, Safari 18.2+).
+    const wasmGc = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]);
+    if (WebAssembly.validate(wasmGc)) {
+        // Compose keeps its own resource cache (strings/images) with no versioning: after a deploy it
+        // would read new string offsets from the old strings file → blank texts. Drop it before booting.
+        // ponytail: re-downloads resources (~hundreds of KB) every load; key it by build id if that matters.
+        const boot = () => {
+            const s = document.createElement('script');
+            s.src = 'shared.js';
+            document.body.appendChild(s);
+        };
+        ('caches' in window ? caches.delete('compose_web_resources_cache').catch(() => {}) : Promise.resolve()).then(boot);
+    } else {
+        document.getElementById('loading-text').textContent =
+            'Tu navegador no es compatible. Actualízalo (Chrome, Firefox o Safari 18.2+).';
+    }
+</script>
+</body>
+</html>

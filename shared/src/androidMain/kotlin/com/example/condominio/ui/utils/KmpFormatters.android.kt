@@ -19,3 +19,4 @@ actual fun formatMonthYear(timestamp: Long): String {
     val formatter = SimpleDateFormat("MMMM", Locale.forLanguageTag("es-ES"))
     return formatter.format(date).replaceFirstChar { it.uppercase() }
 }
+actual val platformRendersEmoji: Boolean = true

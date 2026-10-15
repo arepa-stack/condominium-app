@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.savedstate.read
 // Estos imports deberán ser actualizados cuando movamos las pantallas a commonMain
 import com.example.condominio.ui.screens.auth.AdminBlockedScreen
 import com.example.condominio.ui.screens.auth.PendingApprovalScreen
@@ -29,12 +30,48 @@ import com.example.condominio.ui.screens.billboard.BillboardDetailScreen
 import com.example.condominio.ui.screens.register.QrScannerScreen
 import com.example.condominio.ui.screens.register.RegisterScreen
 import com.example.condominio.ui.screens.splash.SplashScreen
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.example.condominio.ui.components.AppNavRail
+import com.example.condominio.ui.components.AppSidebar
+import com.example.condominio.ui.components.AptoWebCanvas
+import com.example.condominio.ui.components.AuthBrandPanel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import com.example.condominio.ui.components.LocalShowBack
+import com.example.condominio.ui.components.LocalLoginFormVisible
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import com.example.condominio.ui.components.LocalWidthClass
+import com.example.condominio.ui.components.WidthClass
+import com.example.condominio.ui.components.WebContainerWidth
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.condominio.ui.components.AppBottomBar
 import com.example.condominio.ui.components.BottomTab
+
+// Every app page shares ONE container (same max width, same left edge) so the page title never
+// jumps when navigating. Narrow content (settings forms) is capped inside the page, left-aligned
+// (see WebLayout.formWidth). Auth screens keep their own centered card / brand split.
+private val tabRootRoutes = setOf("dashboard", "invoice_list", "billboard_list", "decisions_list", "profile")
+
+private fun maxContentWidth(route: String?): Dp = when {
+    route == null || route == "splash" -> Dp.Unspecified
+    route in routesWithoutBottomBar -> 560.dp
+    else -> WebContainerWidth
+}
 
 // Rutas del flujo de autenticación/onboarding donde no se muestra el bottom bar
 private val routesWithoutBottomBar = setOf(
@@ -50,30 +87,71 @@ private val routesWithoutBottomBar = setOf(
 )
 
 @Composable
-fun CondominioNavGraph(navController: NavHostController = rememberNavController()) {
+fun CondominioNavGraph(
+        navController: NavHostController = rememberNavController(),
+        registerCode: String? = null
+) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val showNav = currentRoute != null && currentRoute !in routesWithoutBottomBar
+    val onTabSelected: (BottomTab) -> Unit = { tab ->
+        if (tab == BottomTab.HOME) {
+            // Home is the stack root: just pop back to it. Navigating with popUpTo(dashboard){saveState} +
+            // restoreState would save whatever sits above it (e.g. Perfil opened from the avatar) as Home's
+            // state and restore it immediately, leaving the user stuck.
+            if (!navController.popBackStack("dashboard", inclusive = false)) navController.navigate("dashboard")
+        } else {
+            navController.navigate(tab.route) {
+                popUpTo("dashboard") { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+    val widthClass = when {
+        maxWidth < 600.dp -> WidthClass.Compact
+        maxWidth < 1024.dp -> WidthClass.Medium
+        else -> WidthClass.Expanded
+    }
+    val wide = widthClass != WidthClass.Compact
+    val isAuth = currentRoute in routesWithoutBottomBar && currentRoute != "splash"
+    // Desktop auth/onboarding: brand panel left, the mobile form centered on the right.
+    val loginFormVisible = remember { mutableStateOf(false) }
+    // unit_selection is also reached from the dashboard while logged in: no "sign in" brand panel there.
+    val split = isAuth && widthClass == WidthClass.Expanded && currentRoute != "unit_selection" &&
+        (currentRoute != "login" || loginFormVisible.value)
+    CompositionLocalProvider(
+        LocalWidthClass provides widthClass,
+        LocalLoginFormVisible provides loginFormVisible,
+        // Sidebar/rail replaces the back arrow on top-level sections.
+        LocalShowBack provides !(wide && currentRoute in tabRootRoutes)
+    ) {
+    Row(Modifier.fillMaxSize().background(if (wide) AptoWebCanvas else Color.Unspecified)) {
+    if (showNav && widthClass == WidthClass.Expanded) AppSidebar(currentRoute = currentRoute, onTabSelected = onTabSelected)
+    if (showNav && widthClass == WidthClass.Medium) AppNavRail(currentRoute = currentRoute, onTabSelected = onTabSelected)
     Scaffold(
+            modifier = Modifier.weight(1f),
+            containerColor = if (wide) AptoWebCanvas else MaterialTheme.colorScheme.background,
             bottomBar = {
-                if (currentRoute != null && currentRoute !in routesWithoutBottomBar) {
-                    AppBottomBar(
-                            currentRoute = currentRoute,
-                            onTabSelected = { tab ->
-                                navController.navigate(tab.route) {
-                                    popUpTo("dashboard") { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
-                    )
-                }
+                if (showNav && !wide) AppBottomBar(currentRoute = currentRoute, onTabSelected = onTabSelected)
             }
     ) { innerPadding ->
+        val navHost = @Composable {
         NavHost(
                 navController = navController,
                 startDestination = "splash",
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+                        .widthIn(max = when {
+                            split -> 480.dp
+                            // Login still checking the session: keep full width so the splash fades out unclipped.
+                            currentRoute == "login" && !loginFormVisible.value -> Dp.Unspecified
+                            else -> maxContentWidth(currentRoute)
+                        })
         ) {
         composable("splash") {
             SplashScreen(
@@ -81,6 +159,8 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     navController.navigate("login") {
                         popUpTo("splash") { inclusive = true }
                     }
+                    // Deep link from a building QR: land on registration, with login behind it.
+                    if (registerCode != null) navController.navigate("register_form/$registerCode")
                 }
             )
         }
@@ -170,7 +250,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
             route = "register_form/{buildingId}",
             arguments = listOf(navArgument("buildingId") { type = NavType.StringType })
         ) { backStack ->
-            val buildingId = backStack.arguments?.getString("buildingId") ?: ""
+            val buildingId = backStack.arguments?.read { getStringOrNull("buildingId") } ?: ""
             RegisterScreen(
                 buildingId = buildingId,
                 onRegisterSuccess = {
@@ -195,11 +275,11 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                     onPaymentClick = { paymentId ->
                         navController.navigate("payment_detail/$paymentId")
                     },
-                    onProfileClick = { navController.navigate("profile") },
+                    onProfileClick = { onTabSelected(BottomTab.PROFILE) },
                     onUnitClick = { navController.navigate("unit_selection") },
-                    onSeeAllInvoicesClick = { navController.navigate("invoice_list") },
-                    onDecisionsClick = { navController.navigate("decisions_list") },
-                    onBillboardClick = { navController.navigate("billboard_list") }
+                    onSeeAllInvoicesClick = { onTabSelected(BottomTab.PAYMENTS) },
+                    onDecisionsClick = { onTabSelected(BottomTab.DECISIONS) },
+                    onBillboardClick = { onTabSelected(BottomTab.BILLBOARD) }
             )
         }
         composable("invoice_list") {
@@ -291,7 +371,7 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                 route = "decision_detail/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
+            val id = backStackEntry.arguments?.read { getStringOrNull("id") } ?: ""
             DecisionDetailScreen(
                     decisionId = id,
                     onBackClick = { navController.popBackStack() }
@@ -307,12 +387,21 @@ fun CondominioNavGraph(navController: NavHostController = rememberNavController(
                 route = "billboard_detail/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
+            val id = backStackEntry.arguments?.read { getStringOrNull("id") } ?: ""
             BillboardDetailScreen(
                     announcementId = id,
                     onBackClick = { navController.popBackStack() }
             )
         }
         }
+        }
+        // Same call site for navHost in both branches so the NavHost is never recreated.
+        Row(Modifier.fillMaxSize()) {
+            if (split) AuthBrandPanel(Modifier.weight(1f).fillMaxHeight())
+            Box(Modifier.weight(1f).fillMaxHeight().background(if (split) Color.White else Color.Unspecified)) { navHost() }
+        }
+    }
+    }
+    }
     }
 }

@@ -32,3 +32,4 @@ actual fun formatMonthYear(timestamp: Long): String {
     }
     return formatter.stringFromDate(date).replaceFirstChar { it.uppercase() }
 }
+actual val platformRendersEmoji: Boolean = true
