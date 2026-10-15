@@ -67,7 +67,7 @@ Full guide (environments, dev server, deploy, UI rules): **[docs/web.md](docs/we
 ./gradlew :shared:wasmJsBrowserDistribution
 ```
 
-Output: `shared/build/dist/wasmJs/productionExecutable/` (static files; serve over HTTPS, e.g. Cloudflare Pages).
+Output: `shared/build/dist/wasmJs/productionExecutable/` (static files; deployed to Vercel via GitHub Actions — see docs/web.md §4).
 Local check: `python -m http.server 8080 -d shared/build/dist/wasmJs/productionExecutable`.
 
 - Web-only code lives in `shared/src/wasmJsMain` (entry `main.kt`, `index.html`, `manifest.webmanifest`, `sw.js`, icons).

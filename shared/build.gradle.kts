@@ -16,7 +16,6 @@ kotlin {
     }
 
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -28,6 +27,8 @@ kotlin {
 
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
+        // js()/JsAny interop is experimental in Kotlin 2.3; opt in once for the whole web target.
+        compilerOptions { optIn.add("kotlin.js.ExperimentalWasmJsInterop") }
         browser()
         binaries.executable()
     }
@@ -125,8 +126,16 @@ dependencies {
 val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
-val apiEnv = ((findProperty("apiEnv") as String?) ?: localProps.getProperty("API_ENV") ?: "DEV").uppercase()
-val apiBaseUrl = localProps.getProperty("${apiEnv}_API_URL") ?: "https://condominium-api.nibs-tech.com/"
+val apiEnv = ((findProperty("apiEnv") as String?) ?: localProps.getProperty("API_ENV") ?: System.getenv("API_ENV") ?: "DEV").uppercase()
+// URL lookup: local.properties → Gradle property (-PDEV_API_URL=...) → environment variable (CI).
+// Only PROD has a built-in fallback; any other env without a URL fails instead of silently hitting production.
+val apiUrlKey = "${apiEnv}_API_URL"
+// Blank values are ignored (CI passes "" when a repository variable is missing).
+val apiBaseUrl = localProps.getProperty(apiUrlKey)?.takeIf { it.isNotBlank() }
+    ?: providers.gradleProperty(apiUrlKey).orNull?.takeIf { it.isNotBlank() }
+    ?: providers.environmentVariable(apiUrlKey).orNull?.takeIf { it.isNotBlank() }
+    ?: if (apiEnv == "PROD") "https://condominium-api.nibs-tech.com/"
+       else error("Missing $apiUrlKey: set it in local.properties, -P$apiUrlKey=... or the $apiUrlKey environment variable")
 val networkLogs = localProps.getProperty("ENABLE_NETWORK_LOGS")?.toBoolean() ?: false
 
 val generateApiConfig by tasks.registering {
@@ -153,3 +162,8 @@ val generateApiConfig by tasks.registering {
     }
 }
 kotlin.sourceSets.commonMain { kotlin.srcDir(generateApiConfig) }
+
+// Development and production web builds sync into the same build/wasm/packages dir. Without this, running
+// wasmJsBrowserDevelopmentRun and then wasmJsBrowserDistribution ships the unoptimized dev wasm (~38 MB vs ~8 MB).
+tasks.matching { it.name == "wasmJsProductionExecutableCompileSync" || it.name == "wasmJsDevelopmentExecutableCompileSync" }
+    .configureEach { outputs.upToDateWhen { false } }

@@ -16,7 +16,7 @@ Guía para trabajar con la versión web de la app. La web **no es otro proyecto*
 | UI, ViewModels, red, DI común | `shared/src/commonMain/` |
 | Código solo web (entrada, `actual`s) | `shared/src/wasmJsMain/kotlin/` |
 | Punto de entrada web | `shared/src/wasmJsMain/kotlin/main.kt` (Koin + `ComposeViewport` + navegación del navegador + títulos de pestaña) |
-| HTML, PWA, service worker, íconos | `shared/src/wasmJsMain/resources/` (`index.html`, `manifest.webmanifest`, `sw.js`, `icon-*.png`, `_headers`) |
+| HTML, PWA, service worker, íconos, Vercel | `shared/src/wasmJsMain/resources/` (`index.html`, `manifest.webmanifest`, `sw.js`, `icon-*.png`, `vercel.json`) |
 | Implementaciones web | `LocalStorageTokenManager` (JWT en `localStorage`), `WebFiles.kt` (selector de archivos), `Pickers.wasmJs.kt`, `KmpFormatters.wasmJs.kt`, `PlatformLocaleEffect.wasmJs.kt`, `QrScannerView.wasmJs.kt` |
 | Layout adaptable (web/tablet) | `shared/src/commonMain/kotlin/com/example/condominio/ui/components/WebLayout.kt`, `AppShell.kt`, `TopBarWithBack.kt` |
 | Armazón y anchos por ruta | `ui/navigation/CondominioNavGraph.kt` |
@@ -60,6 +60,8 @@ Lo genera la tarea `:shared:generateApiConfig` (en `shared/build.gradle.kts`), c
   completa** (se pierde el estado de pantalla; la sesión se mantiene).
 - No es *hot reload* con estado: Compose Hot Reload solo existe para el target de escritorio (JVM), que este proyecto no tiene.
 - Build de desarrollo sin optimizar (~37 MB de wasm): solo para trabajar, nunca para publicar.
+  Desarrollo y producción comparten `build/wasm/packages/`; `shared/build.gradle.kts` fuerza la copia en cada build para
+  que una distribución hecha después del modo desarrollo no publique el wasm sin optimizar (verificar: ~8 MB, no ~38 MB).
 - Si al cortar con Ctrl+C el puerto 8080 queda ocupado, matar el proceso `node` que lo usa.
 
 ### Build de producción + servidor estático
@@ -80,22 +82,59 @@ login hasta volver a mostrarla. No es un bug de la app.
 
 ---
 
-## 4. Deploy
+## 4. Ramas, ambientes y deploy (Vercel)
 
-1. `./gradlew :shared:wasmJsBrowserDistribution -PapiEnv=PROD`
-2. Subir `shared/build/dist/wasmJs/productionExecutable/` a un hosting estático con HTTPS (p. ej. Cloudflare Pages).
-   - Las rutas usan hash (`/#dashboard`): no se necesitan rewrites.
-   - `_headers` ya marca `sw.js` e `index.html` como `no-cache`.
-   - El servidor debe entregar `.wasm` como `application/wasm`.
-3. Subir `CACHE` en `sw.js` solo si cambia la **estrategia** de cache (no hace falta en cada deploy).
-4. CORS de la API: debe permitir el origen del sitio (hoy `*` en DEV y PROD).
+### Flujo de ramas
 
----
+| Rama | Ambiente | Publica |
+|---|---|---|
+| `feature/*` | — | trabajo diario; PR hacia `dev` |
+| `dev` | **DEV** (API beta) | web de pruebas (Vercel, proyecto DEV) |
+| `main` | **PROD** (API producción) | web de producción (Vercel, proyecto PROD) y releases de Android |
+
+Release = PR de `dev` → `main`. Recomendado: proteger `main` y `dev` en GitHub (sin push directo, PR obligatorio).
+
+### Cómo despliega
+
+Workflow único: `.github/workflows/deploy-web.yml`. El build corre en **GitHub Actions** (JDK 21, ~4 GB RAM) y Vercel solo
+aloja los archivos estáticos.
+
+- Push a `dev` → compila con `-PapiEnv=DEV` y publica en el proyecto Vercel de DEV.
+- Push a `main` → compila con `-PapiEnv=PROD` y publica en el proyecto Vercel de PROD.
+- También se puede lanzar a mano (Actions → *Deploy web* → *Run workflow*): la rama elegida decide el ambiente.
+- El workflow verifica que el `ApiConfig` generado coincida con el ambiente antes de publicar.
+- Cabeceras: `shared/src/wasmJsMain/resources/vercel.json` (se copia al build): `sw.js` e `index.html` sin cache, `.wasm`
+  con `application/wasm` y cache inmutable (nombres con hash). Las rutas usan hash (`/#dashboard`): no hay rewrites.
+
+### Configuración inicial (una vez por ambiente)
+
+1. Crear un proyecto de Vercel por ambiente (p. ej. `apto-web-dev` y `apto-web`) desde el build local:
+   ```bash
+   ./gradlew :shared:wasmJsBrowserDistribution -PapiEnv=DEV
+   cd shared/build/dist/wasmJs/productionExecutable
+   npx vercel link              # elegir "create new project"; genera .vercel/project.json (orgId, projectId)
+   ```
+   En cada proyecto: *Framework Preset* = **Other**, sin *Build Command*. Repetir `vercel link` para el de PROD
+   (borrar antes la carpeta `.vercel/` del build). Guardar `orgId`/`projectId`: `:shared:clean` borra `.vercel/`.
+   No usar *Import Git Repository* de Vercel (ver §9).
+2. Crear un token en Vercel → *Account Settings → Tokens*.
+3. En GitHub → *Settings → Environments* crear **`dev`** y **`prod`**, cada uno con:
+   - Secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (el del proyecto de ese ambiente).
+   - Variable: `API_URL` (DEV: `https://condominium-api-beta.nibs-tech.com/`, PROD: `https://condominium-api.nibs-tech.com/`).
+   - Opcional en `prod`: *Required reviewers* para aprobar cada deploy a producción.
+4. Primer deploy: push a `dev` (o *Run workflow* sobre `dev`).
+
+La URL de la API también se puede pasar por variable de entorno o `-P<ENV>_API_URL=...`. Valores vacíos se ignoran; si
+falta para un ambiente que no sea PROD, el build **falla** (no cae a producción en silencio).
+
+### Android
+Los releases para la Play Store salen de `main` con `./gradlew :androidApp:bundleRelease -PapiEnv=PROD`.
 
 ## 5. PWA y caches (importante)
 
 - `sw.js`: `.wasm` (nombres con hash) → *cache-first*; todo lo demás → *network-first* con `fetch(url, { cache: 'no-cache' })`.
   Así un deploy nuevo se ve en la **primera** recarga. Usa la URL (no el `Request`) porque las navegaciones rechazan `init`.
+- Cabeceras HTTP en Vercel: `vercel.json` (ver §4).
 - `index.html` borra `compose_web_resources_cache` antes de arrancar: Compose cachea sus recursos (textos/imágenes) sin
   versión, y mezclar un `strings.cvr` viejo con un build nuevo produce textos en blanco y el error
   `The padding option is set to PRESENT, but the input is not properly padded`.
@@ -167,7 +206,32 @@ Gradle/build para wasm:
 
 ---
 
-## 9. Checklist antes de publicar un cambio web
+## 9. Problemas comunes
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| Compilé con `-PapiEnv=DEV` y el `ApiConfig` (o la web) sigue en PROD | Otro build de Gradle corrió a la vez (IDE, otra terminal, un agente) y sobrescribió `build/` | Un solo build a la vez. Verificar siempre (abajo). Si persiste: `./gradlew --stop` y build con `:shared:clean` |
+| `e: java.nio.file.NoSuchFileException: ...\build\classes\kotlin\wasmJs\main\default\linkdata\module` en `compileProductionExecutableKotlinWasmJs` | klib de wasm a medio escribir (builds concurrentes o build cortado) | `./gradlew --stop` y `./gradlew :shared:clean :shared:wasmJsBrowserDistribution -PapiEnv=DEV` (~6 min) |
+| `KMP Dependencies Resolution Failure` con líneas `e:` sobre `iosX64` (no rompe el build) | markdown-renderer 0.41 ya no publica `iosX64` | Ya resuelto: el proyecto no declara `iosX64()` (solo Apple Silicon / dispositivos) |
+| Avisos `ExperimentalWasmJsInterop` al compilar web | `js()`/`JsAny` son experimentales en Kotlin 2.3 | Ya resuelto: `optIn` en el bloque `wasmJs` de `shared/build.gradle.kts` |
+| La distribución pesa ~38 MB de wasm | Se publicó el build de desarrollo | Ver §3; verificar ~8 MB antes de publicar |
+| Textos en blanco o error `padding option is set to PRESENT` | Recursos de Compose cacheados de otro build | Ver §5; recargar con Ctrl + Shift + R |
+| `.vercel/project.json` desapareció | `:shared:clean` borra `build/`, donde vive `.vercel/` | Repetir `npx vercel link` eligiendo el proyecto **existente** (los IDs ya están en los secretos de GitHub) |
+| Vercel ofrece importar el repo de GitHub y "Deploy" | Vercel no puede compilar este proyecto (JDK 21 + Android SDK) y publicaría la raíz del repo | **No** usar la importación Git; el deploy lo hace GitHub Actions (§4) o `npx vercel deploy` desde el build |
+
+Verificar el ambiente de un build antes de publicar:
+
+```powershell
+Get-Content shared/build/generated/apiConfig/com/example/condominio/ApiConfig.kt          # ENV y BASE_URL esperados
+Get-ChildItem shared/build/dist/wasmJs/productionExecutable/*.wasm | Select-Object Name, Length   # ~7.7 MB + ~8.6 MB (skiko)
+Select-String -Path shared/build/dist/wasmJs/productionExecutable/*.wasm -Pattern "condominium-api-beta" -SimpleMatch -List  # DEV: hay coincidencia; PROD: ninguna
+```
+
+El nombre del wasm de la app es un hash del contenido: si cambia el ambiente, el nombre debe cambiar.
+
+---
+
+## 10. Checklist antes de publicar un cambio web
 
 1. `./gradlew :androidApp:assembleDebug :shared:wasmJsBrowserDistribution` sin errores.
 2. Probar en escritorio (≥ 1024px), tablet (~900px) y móvil (375px) que el layout cambie y que **móvil quede igual**.
