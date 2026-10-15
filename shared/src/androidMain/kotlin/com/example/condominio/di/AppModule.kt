@@ -3,6 +3,7 @@ package com.example.condominio.di
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import com.example.condominio.ApiConfig
 import com.example.condominio.data.local.DataStoreTokenManager
 import com.example.condominio.data.local.TokenManager
 import com.example.condominio.data.utils.*
@@ -27,7 +28,7 @@ val appModule = module {
 
     single<HttpClientEngine> {
         OkHttp.create {
-            addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            if (ApiConfig.NETWORK_LOGS) addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
             config {
                 connectTimeout(30, TimeUnit.SECONDS)
                 readTimeout(30, TimeUnit.SECONDS)

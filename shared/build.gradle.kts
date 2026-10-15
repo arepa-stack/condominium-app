@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.jetbrains.kotlin.multiplatform)
     alias(libs.plugins.android.library)
@@ -115,3 +117,39 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
 }
 
+
+// API endpoint per environment, read from local.properties (not versioned):
+//   API_ENV=DEV|PROD (default DEV; override with -PapiEnv=PROD), DEV_API_URL / PROD_API_URL, ENABLE_NETWORK_LOGS.
+// Generates com.example.condominio.ApiConfig for commonMain, so Android and web hit the same backend.
+// Release builds must use -PapiEnv=PROD (or API_ENV=PROD) to point at production.
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val apiEnv = ((findProperty("apiEnv") as String?) ?: localProps.getProperty("API_ENV") ?: "DEV").uppercase()
+val apiBaseUrl = localProps.getProperty("${apiEnv}_API_URL") ?: "https://condominium-api.nibs-tech.com/"
+val networkLogs = localProps.getProperty("ENABLE_NETWORK_LOGS")?.toBoolean() ?: false
+
+val generateApiConfig by tasks.registering {
+    val outDir = layout.buildDirectory.dir("generated/apiConfig")
+    inputs.property("env", apiEnv)
+    inputs.property("url", apiBaseUrl)
+    inputs.property("logs", networkLogs)
+    outputs.dir(outDir)
+    doLast {
+        val file = outDir.get().file("com/example/condominio/ApiConfig.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            """
+            |package com.example.condominio
+            |
+            |// Generated from local.properties by :shared:generateApiConfig. Do not edit.
+            |object ApiConfig {
+            |    const val ENV = "$apiEnv"
+            |    const val BASE_URL = "$apiBaseUrl"
+            |    const val NETWORK_LOGS = $networkLogs
+            |}
+            |""".trimMargin()
+        )
+    }
+}
+kotlin.sourceSets.commonMain { kotlin.srcDir(generateApiConfig) }

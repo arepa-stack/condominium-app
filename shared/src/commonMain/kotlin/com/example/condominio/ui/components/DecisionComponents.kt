@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.DecisionStatus
 import com.example.condominio.ui.theme.*
 import condominio.shared.generated.resources.*
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource

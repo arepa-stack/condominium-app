@@ -7,6 +7,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +31,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,7 +45,14 @@ import com.example.condominio.data.model.QuoteDto
 import com.example.condominio.data.model.ResultingType
 import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
+import com.example.condominio.ui.components.AdaptiveColumns
 import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.WebCard
+import com.example.condominio.ui.components.WebEmptyFrame
+import com.example.condominio.ui.components.isExpanded
+import com.example.condominio.ui.components.isWide
+import com.example.condominio.ui.components.pagePadding
+import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.TopBarWithBack
@@ -49,8 +60,8 @@ import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatArgs
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -72,19 +83,31 @@ fun DecisionDetailScreen(
         viewModel.loadDetail(decisionId)
     }
 
+    val wide = isWide()
+
     Scaffold(
-        containerColor = AptoBackground,
+        containerColor = screenBackground(AptoBackground),
         topBar = {
             TopBarWithBack(
                 title = uiState.detail?.decision?.title
                     ?: stringResource(Res.string.decisions_detail_fallback_title),
                 onBackClick = onBackClick,
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
+                    IconButton(
+                        onClick = { viewModel.refresh() },
+                        modifier = if (wide) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier
+                    ) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    if (wide) {
+                        WebHeaderPrimaryAction(
+                            detail = uiState.detail,
+                            onUploadClick = { viewModel.openUploadSheet() },
+                            onVoteClick = { viewModel.openVoteSheet() }
                         )
                     }
                 }
@@ -92,7 +115,8 @@ fun DecisionDetailScreen(
         },
         bottomBar = {
             val status = uiState.detail?.decision?.status
-            if (status == DecisionStatus.RECEPTION) {
+            // On wide layouts the primary action lives in the page header and the side column.
+            if (status == DecisionStatus.RECEPTION && !wide) {
                 Surface(
                     color = AptoSurface,
                     shadowElevation = 8.dp
@@ -113,6 +137,18 @@ fun DecisionDetailScreen(
         when {
             uiState.isLoading && detail == null -> {
                 LoadingState(modifier = Modifier.padding(paddingValues))
+            }
+
+            uiState.error != null && detail == null && wide -> {
+                // Wide: compact card under the header, on the container's left edge.
+                Box(Modifier.padding(paddingValues)) {
+                    WebEmptyFrame {
+                        Text(
+                            text = uiState.error!!.asString(),
+                            color = AptoStatusError
+                        )
+                    }
+                }
             }
 
             uiState.error != null && detail == null -> {
@@ -141,7 +177,18 @@ fun DecisionDetailScreen(
                 val showRank = detail.decision.status == DecisionStatus.VOTING ||
                         detail.decision.status == DecisionStatus.TIEBREAK_PENDING ||
                         detail.decision.status == DecisionStatus.RESOLVED
-                LazyColumn(
+                if (wide) {
+                    DecisionDetailWide(
+                        detail = detail,
+                        currentUserId = uiState.currentUserId,
+                        rankByQuoteId = rankByQuoteId,
+                        showRank = showRank,
+                        modifier = Modifier.padding(paddingValues),
+                        onDeleteQuote = { quoteId -> viewModel.deleteOwnQuote(quoteId) },
+                        onUploadClick = { viewModel.openUploadSheet() },
+                        onVoteClick = { viewModel.openVoteSheet() }
+                    )
+                } else LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
@@ -246,6 +293,226 @@ fun DecisionDetailScreen(
                 onConfirm = { quoteId -> viewModel.submitVote(quoteId) }
             )
         }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Wide (web/tablet) layout — only used when isWide(); phone layout above is untouched.
+// ---------------------------------------------------------------------------
+
+/** Primary page action for the web header: upload (reception) or vote (voting, not yet voted). */
+@Composable
+private fun WebHeaderPrimaryAction(
+    detail: DecisionDetailDto?,
+    onUploadClick: () -> Unit,
+    onVoteClick: () -> Unit
+) {
+    if (detail == null) return
+    val status = detail.decision.status
+    when {
+        status == DecisionStatus.RECEPTION -> {
+            Spacer(Modifier.width(8.dp))
+            Button(
+                onClick = onUploadClick,
+                modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AptoSecondaryContainer,
+                    contentColor = AptoOnSecondary
+                )
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(Res.string.decisions_upload_quote_btn), fontWeight = FontWeight.SemiBold)
+            }
+        }
+        status == DecisionStatus.VOTING && detail.myVote == null -> {
+            Spacer(Modifier.width(8.dp))
+            Button(
+                onClick = onVoteClick,
+                modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AptoSecondaryContainer,
+                    contentColor = AptoOnSecondary
+                )
+            ) {
+                Icon(Icons.Default.HowToVote, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(Res.string.decisions_vote_btn), fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+/**
+ * Wide layout: left = description/photo, winner, quotes grid; right = deadline, phase,
+ * timeline (reception/voting/finalized dates), results/tally, my vote and actions.
+ * Expanded → two columns via [AdaptiveColumns]; Medium → stacked cards with 24dp gaps.
+ */
+@Composable
+private fun DecisionDetailWide(
+    detail: DecisionDetailDto,
+    currentUserId: String?,
+    rankByQuoteId: Map<String, Int>,
+    showRank: Boolean,
+    modifier: Modifier,
+    onDeleteQuote: (String) -> Unit,
+    onUploadClick: () -> Unit,
+    onVoteClick: () -> Unit
+) {
+    val decision = detail.decision
+    val status = decision.status
+
+    val main: @Composable ColumnScope.() -> Unit = {
+        WebCard {
+            HeaderSection(decision)
+            if (!decision.photoUrl.isNullOrEmpty()) {
+                Spacer(Modifier.height(20.dp))
+                PhotoSection(decision.photoUrl!!)
+            }
+        }
+
+        if (status == DecisionStatus.RESOLVED) {
+            val winnerQuote = detail.quotes.find { it.id == decision.winnerQuoteId }
+            if (winnerQuote != null) {
+                WinnerHeroCard(decision = decision, winner = winnerQuote, tally = detail.tally)
+            }
+        }
+
+        WebCard {
+            Text(
+                text = stringResource(Res.string.decisions_quotes_section_title, detail.quotes.size),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = AptoOnSurface
+            )
+            Spacer(Modifier.height(16.dp))
+            if (detail.quotes.isEmpty()) {
+                QuotesEmptyState()
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    detail.quotes.chunked(2).forEach { rowQuotes ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            rowQuotes.forEach { quote ->
+                                Box(Modifier.weight(1f)) {
+                                    QuoteItem(
+                                        quote = quote,
+                                        currentUserId = currentUserId,
+                                        status = status,
+                                        rank = if (showRank) rankByQuoteId[quote.id] else null,
+                                        isWinner = decision.winnerQuoteId == quote.id &&
+                                                status == DecisionStatus.RESOLVED,
+                                        onDelete = { onDeleteQuote(quote.id) }
+                                    )
+                                }
+                            }
+                            if (rowQuotes.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val side: @Composable ColumnScope.() -> Unit = {
+        val showDeadline = status == DecisionStatus.RECEPTION ||
+                status == DecisionStatus.VOTING ||
+                status == DecisionStatus.TIEBREAK_PENDING
+        if (showDeadline) DeadlineCard(decision)
+
+        WebCard(contentPadding = 20.dp) {
+            DecisionStatusBadge(status = status)
+            Spacer(Modifier.height(16.dp))
+            DecisionTimeline(decision)
+            if (status == DecisionStatus.RECEPTION || status == DecisionStatus.VOTING) {
+                Spacer(Modifier.height(16.dp))
+                PhaseInfoCard(status)
+            }
+            if (status == DecisionStatus.RECEPTION) {
+                Spacer(Modifier.height(16.dp))
+                PrimaryButton(
+                    text = stringResource(Res.string.decisions_upload_quote_btn),
+                    onClick = onUploadClick,
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    icon = Icons.Default.Add,
+                    containerColor = AptoSecondaryContainer,
+                    contentColor = AptoOnSecondary
+                )
+            }
+        }
+
+        VoteSectionByState(detail = detail, onVoteClick = onVoteClick)
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = pagePadding())
+            .padding(top = 8.dp)
+    ) {
+        if (isExpanded()) {
+            AdaptiveColumns(main = main, side = side)
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                main()
+                side()
+            }
+        }
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+/** Key dates of the decision; the row for the active phase is highlighted. */
+@Composable
+private fun DecisionTimeline(decision: DecisionDto) {
+    val status = decision.status
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        TimelineRow(
+            text = stringResource(Res.string.decisions_reception_until, formatDecisionDeadline(decision.receptionDeadline)),
+            active = status == DecisionStatus.RECEPTION,
+            done = status != DecisionStatus.RECEPTION
+        )
+        TimelineRow(
+            text = stringResource(Res.string.decisions_voting_until, formatDecisionDeadline(decision.votingDeadline)),
+            active = status == DecisionStatus.VOTING || status == DecisionStatus.TIEBREAK_PENDING,
+            done = status == DecisionStatus.RESOLVED
+        )
+        decision.finalizedAt?.let { iso ->
+            TimelineRow(
+                text = stringResource(Res.string.decisions_finalized_on, formatDecisionDeadline(iso)),
+                active = false,
+                done = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimelineRow(text: String, active: Boolean, done: Boolean) {
+    val dotColor = when {
+        active -> AptoSecondaryContainer
+        done -> AptoSuccess
+        else -> AptoOutlineVariant
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .background(dotColor, CircleShape)
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (active) AptoOnSurface else AptoOnSurfaceVariant
+        )
     }
 }
 

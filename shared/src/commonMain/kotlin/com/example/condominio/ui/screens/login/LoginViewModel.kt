@@ -29,6 +29,11 @@ open class LoginViewModel(
             if (hasSession) {
                 // Fetch user data to populate currentUser flow
                 val result = authRepository.fetchCurrentUser()
+                if (result.isFailure) {
+                    // Saved token no longer works (expired, or API unreachable): ask to log in again.
+                    _uiState.update { it.copy(isCheckingSession = false) }
+                    return@launch
+                }
                 val mustChange = result.getOrNull()?.mustChangePassword == true
                 _uiState.update {
                     it.copy(

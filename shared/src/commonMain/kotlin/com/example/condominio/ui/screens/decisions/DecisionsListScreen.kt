@@ -1,5 +1,10 @@
 package com.example.condominio.ui.screens.decisions
 
+import com.example.condominio.ui.components.WebEmptyFrame
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.graphics.Color
@@ -26,6 +31,12 @@ import com.example.condominio.ui.components.FilterPillChip
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
+import com.example.condominio.ui.components.isExpanded
+import com.example.condominio.ui.components.isWide
+import com.example.condominio.ui.components.pagePadding
+import com.example.condominio.ui.components.screenBackground
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import com.example.condominio.ui.components.formatDecisionDate
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
@@ -53,17 +64,35 @@ fun DecisionsListScreen(
                 title = stringResource(Res.string.decisions_title),
                 onBackClick = onBackClick,
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(Res.string.refresh),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    if (isExpanded()) {
+                        // Web: labeled action in the page header
+                        OutlinedButton(
+                            onClick = { viewModel.refresh() },
+                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                            border = BorderStroke(1.dp, AptoOutlineVariant),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoOnSurface)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(Res.string.refresh))
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.refresh() }) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = stringResource(Res.string.refresh),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             )
         },
-        containerColor = AptoBackground
+        containerColor = screenBackground(AptoBackground)
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -80,7 +109,7 @@ fun DecisionsListScreen(
                     LoadingState()
                 }
 
-                uiState.error != null && uiState.decisions.isEmpty() -> {
+                uiState.error != null && uiState.decisions.isEmpty() -> WebEmptyFrame {
                     Box(
                         modifier = Modifier.fillMaxSize().padding(32.dp),
                         contentAlignment = Alignment.Center
@@ -106,7 +135,7 @@ fun DecisionsListScreen(
                     }
                 }
 
-                uiState.decisions.isEmpty() -> {
+                uiState.decisions.isEmpty() -> WebEmptyFrame {
                     Box(
                         modifier = Modifier.fillMaxSize().padding(32.dp),
                         contentAlignment = Alignment.Center
@@ -121,18 +150,28 @@ fun DecisionsListScreen(
                 }
 
                 else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    val wide = isWide()
+                    val gridSpacing = if (wide) 24.dp else 16.dp
+                    val cardModifier = if (wide) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(340.dp),
+                        contentPadding = if (wide) {
+                            PaddingValues(start = pagePadding(), end = pagePadding(), top = 8.dp, bottom = 32.dp)
+                        } else {
+                            PaddingValues(16.dp)
+                        },
+                        verticalArrangement = Arrangement.spacedBy(gridSpacing),
+                        horizontalArrangement = Arrangement.spacedBy(gridSpacing)
                     ) {
                         items(uiState.decisions) { decision ->
                             DecisionCard(
                                 decision = decision,
-                                onClick = { onDecisionClick(decision.id) }
+                                onClick = { onDecisionClick(decision.id) },
+                                modifier = cardModifier
                             )
                         }
                         if (uiState.isLoading) {
-                            item {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
                                 LoadingState(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                                     size = 24.dp,
@@ -156,6 +195,45 @@ private fun DecisionFilterRow(
     selected: DecisionStatus?,
     onSelect: (DecisionStatus?) -> Unit
 ) {
+    if (isWide()) {
+        // Web: every chip visible in one static row, aligned with the page content
+        val hand = Modifier.pointerHoverIcon(PointerIcon.Hand)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                // 8dp under the header; + the grid's / WebEmptyFrame's 8dp top = 16dp to the content.
+                .padding(start = pagePadding(), end = pagePadding(), top = 8.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_all),
+                selected = selected == null,
+                onClick = { onSelect(null) },
+                modifier = hand
+            )
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_voting),
+                selected = selected == DecisionStatus.VOTING || selected == DecisionStatus.TIEBREAK_PENDING,
+                onClick = { onSelect(if (selected == DecisionStatus.VOTING) null else DecisionStatus.VOTING) },
+                modifier = hand
+            )
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_resolved),
+                selected = selected == DecisionStatus.RESOLVED,
+                onClick = { onSelect(if (selected == DecisionStatus.RESOLVED) null else DecisionStatus.RESOLVED) },
+                modifier = hand
+            )
+            FilterPillChip(
+                label = stringResource(Res.string.decisions_filter_reception),
+                selected = selected == DecisionStatus.RECEPTION,
+                onClick = { onSelect(if (selected == DecisionStatus.RECEPTION) null else DecisionStatus.RECEPTION) },
+                modifier = hand
+            )
+        }
+        return
+    }
+
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -204,13 +282,14 @@ private fun DecisionFilterRow(
 @Composable
 private fun DecisionCard(
     decision: DecisionDto,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isActive = decision.status == DecisionStatus.VOTING ||
             decision.status == DecisionStatus.RECEPTION ||
             decision.status == DecisionStatus.TIEBREAK_PENDING
 
-    ListItemCard(onClick = onClick) {
+    ListItemCard(onClick = onClick, modifier = modifier) {
         Column(modifier = Modifier.weight(1f)) {
 
             // Header: title + status badge

@@ -9,6 +9,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -18,14 +24,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.condominio.ui.components.isWide
+import com.example.condominio.ui.components.pagePadding
+import com.example.condominio.ui.components.screenBackground
+import com.example.condominio.ui.theme.AptoOnSurface
+import com.example.condominio.ui.theme.AptoOnSurfaceVariant
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 private val ViewfinderSize = 280.dp
+private val WideViewfinderSize = 220.dp
 private val CornerSize = 40.dp
 private val CornerThickness = 4.dp
 private val ViewfinderShape = RoundedCornerShape(24.dp)
@@ -46,6 +67,11 @@ fun QrScannerScreen(
                 onScanned(code)
             }
         }
+    }
+
+    if (isWide()) {
+        WideQrScannerContent(onBack = onBack, onCode = handleScan)
+        return
     }
 
     Scaffold(
@@ -194,8 +220,119 @@ fun QrScannerScreen(
     }
 }
 
+/**
+ * Wide (tablet / desktop web) layout: light page with title, a smaller viewfinder and the
+ * manual code entry always visible (no dialog). Enter submits.
+ */
 @Composable
-private fun ScanLine() {
+private fun WideQrScannerContent(
+    onBack: () -> Unit,
+    onCode: (String) -> Unit
+) {
+    var code by remember { mutableStateOf("") }
+    val submit = { if (code.isNotBlank()) onCode(code.trim()) }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = screenBackground(Color.Black)
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = pagePadding(), vertical = 24.dp)
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .offset(x = (-12).dp)
+                    .pointerHoverIcon(PointerIcon.Hand)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = AptoOnSurface)
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(Res.string.qr_scan_title),
+                color = AptoOnSurface,
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(Res.string.qr_scan_subtitle),
+                color = AptoOnSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(Modifier.height(32.dp))
+
+            // Viewfinder (camera on tablets, "not available" notice on web)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .size(WideViewfinderSize)
+                    .clip(ViewfinderShape)
+                    .background(Color.Black)
+            ) {
+                QrScannerView(
+                    modifier = Modifier.fillMaxSize(),
+                    onQrScanned = onCode
+                )
+                ScanLine(travel = WideViewfinderSize)
+                ScannerCorners()
+            }
+            Spacer(Modifier.height(32.dp))
+
+            // Manual entry, always visible
+            Text(
+                text = stringResource(Res.string.qr_manual_dialog_title),
+                color = AptoOnSurface,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it },
+                    placeholder = { Text(stringResource(Res.string.qr_manual_dialog_hint)) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .onPreviewKeyEvent { event ->
+                            if (event.type == KeyEventType.KeyDown &&
+                                (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                            ) {
+                                submit()
+                                true
+                            } else {
+                                false
+                            }
+                        },
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { submit() })
+                )
+                Button(
+                    onClick = submit,
+                    enabled = code.isNotBlank(),
+                    modifier = Modifier
+                        .height(56.dp)
+                        .pointerHoverIcon(PointerIcon.Hand),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(stringResource(Res.string.accept), color = MaterialTheme.colorScheme.onPrimary)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScanLine(travel: Dp = ViewfinderSize) {
     val infiniteTransition = rememberInfiniteTransition(label = "scanLine")
     val offsetFraction by infiniteTransition.animateFloat(
         initialValue = 0.10f,
@@ -213,7 +350,7 @@ private fun ScanLine() {
                 .fillMaxWidth()
                 .height(2.dp)
                 .align(Alignment.TopStart)
-                .offset(y = ViewfinderSize * offsetFraction)
+                .offset(y = travel * offsetFraction)
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(

@@ -1,5 +1,6 @@
 package com.example.condominio.ui.screens.decisions
 
+import com.example.condominio.ui.utils.emojiSafe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -45,17 +47,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.condominio.data.model.QuoteDto
 import com.example.condominio.data.utils.PlatformFileReader
 import com.example.condominio.data.utils.rememberDocumentPickerLauncher
 import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.PrimaryButton
+import com.example.condominio.ui.components.WebCard
+import com.example.condominio.ui.components.isWide
 import com.example.condominio.ui.utils.UiText
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
@@ -124,11 +132,11 @@ fun UploadQuoteSheet(
     val amountFocus = remember { FocusRequester() }
     val notesFocus = remember { FocusRequester() }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val wide = isWide()
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
+    AdaptiveSheet(
+        onDismiss = onDismiss,
+        skipPartiallyExpanded = true
     ) {
         Column(
             modifier = Modifier
@@ -216,7 +224,8 @@ fun UploadQuoteSheet(
                     .clickable {
                         focusManager.clearFocus()
                         pickFile()
-                    },
+                    }
+                    .then(if (wide) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -308,10 +317,7 @@ fun VoteSheet(
 
     val activeQuotes = quotes.filter { it.deletedAt == null }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState()
-    ) {
+    AdaptiveSheet(onDismiss = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -332,7 +338,7 @@ fun VoteSheet(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = stringResource(Res.string.decisions_vote_final_warning),
+                    text = stringResource(Res.string.decisions_vote_final_warning).emojiSafe(),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(12.dp)
                 )
@@ -409,6 +415,44 @@ fun VoteSheet(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// AdaptiveSheet — ModalBottomSheet on phone; centered ~520dp Dialog (WebCard) on wide layouts.
+// Same content and callbacks either way.
+// ---------------------------------------------------------------------------
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AdaptiveSheet(
+    onDismiss: () -> Unit,
+    skipPartiallyExpanded: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    if (isWide()) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            WebCard(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .widthIn(max = 520.dp),
+                contentPadding = 0.dp
+            ) {
+                Box(Modifier.padding(top = 12.dp, start = 4.dp, end = 4.dp, bottom = 4.dp)) {
+                    content()
+                }
+            }
+        }
+    } else {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)
+        ) {
+            content()
         }
     }
 }

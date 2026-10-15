@@ -1,5 +1,6 @@
 ﻿package com.example.condominio.ui.screens.profile
 
+import com.example.condominio.ui.utils.emojiSafe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,8 +24,19 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import com.example.condominio.data.model.User
+import com.example.condominio.ui.components.AdaptiveColumns
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
+import com.example.condominio.ui.components.WebCard
+import com.example.condominio.ui.components.isExpanded
+import com.example.condominio.ui.components.isWide
+import com.example.condominio.ui.components.pagePadding
+import com.example.condominio.ui.components.screenBackground
+import com.example.condominio.ui.theme.AptoOnSurfaceVariant
+import com.example.condominio.ui.theme.AptoOutlineVariant
 import com.example.condominio.ui.locale.AppLanguage
 import com.example.condominio.ui.locale.LocaleManager
 import androidx.compose.ui.unit.sp
@@ -89,10 +101,24 @@ fun ProfileScreen(
                 onBackClick = onBackClick
             )
         },
-        containerColor = AptoBackground
+        containerColor = screenBackground(AptoBackground)
     ) { paddingValues ->
         if (uiState.isLoading && uiState.user == null) {
             LoadingState(modifier = Modifier.padding(paddingValues))
+            return@Scaffold
+        }
+
+        if (isWide()) {
+            ProfileWideContent(
+                user = uiState.user,
+                modifier = Modifier.padding(paddingValues),
+                onEditProfileClick = onEditProfileClick,
+                onNotificationSettingsClick = onNotificationSettingsClick,
+                onLanguageClick = { showLanguageDialog = true },
+                onChangePasswordClick = onChangePasswordClick,
+                onLogoutClick = viewModel::onLogoutClick,
+                onDeleteAccountClick = { showDeleteDialog = true }
+            )
             return@Scaffold
         }
 
@@ -240,7 +266,7 @@ fun ProfileScreen(
                     ProfileActionButton(
                         icon = Icons.Default.Language,
                         text = stringResource(Res.string.language_settings),
-                        subtitle = "${LocaleManager.currentLanguage.flag} ${LocaleManager.currentLanguage.displayName}",
+                        subtitle = "${LocaleManager.currentLanguage.flag.emojiSafe()} ${LocaleManager.currentLanguage.displayName}",
                         onClick = { showLanguageDialog = true }
                     )
 
@@ -307,6 +333,261 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+}
+
+/**
+ * Wide (Medium/Expanded) profile: identity card on the left, settings groups on the right
+ * (stacked on Medium). Phone layout lives in [ProfileScreen] untouched.
+ */
+@Composable
+private fun ProfileWideContent(
+    user: User?,
+    modifier: Modifier,
+    onEditProfileClick: () -> Unit,
+    onNotificationSettingsClick: () -> Unit,
+    onLanguageClick: () -> Unit,
+    onChangePasswordClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onDeleteAccountClick: () -> Unit
+) {
+    val identity: @Composable ColumnScope.() -> Unit = { ProfileIdentityCard(user) }
+    val settings: @Composable ColumnScope.() -> Unit = {
+        ProfileSettingsCard(title = stringResource(Res.string.account_info_title)) {
+            ProfileActionButton(
+                icon = Icons.Default.Edit,
+                text = stringResource(Res.string.edit_profile),
+                onClick = onEditProfileClick
+            )
+        }
+        ProfileSettingsCard(title = stringResource(Res.string.web_profile_preferences)) {
+            ProfileActionButton(
+                icon = Icons.Default.Notifications,
+                text = stringResource(Res.string.notification_settings),
+                onClick = onNotificationSettingsClick
+            )
+            WideDivider()
+            ProfileActionButton(
+                icon = Icons.Default.Language,
+                text = stringResource(Res.string.language_settings),
+                subtitle = "${LocaleManager.currentLanguage.flag.emojiSafe()} ${LocaleManager.currentLanguage.displayName}",
+                onClick = onLanguageClick
+            )
+        }
+        ProfileSettingsCard(title = stringResource(Res.string.web_profile_security)) {
+            ProfileActionButton(
+                icon = Icons.Default.Lock,
+                text = stringResource(Res.string.change_password),
+                onClick = onChangePasswordClick
+            )
+        }
+        ProfileSettingsCard(
+            title = stringResource(Res.string.web_profile_danger_zone),
+            titleColor = AptoError
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = onDeleteAccountClick,
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = AptoError,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(Res.string.delete_account),
+                        fontWeight = FontWeight.SemiBold,
+                        color = AptoError
+                    )
+                }
+                Button(
+                    onClick = onLogoutClick,
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(Res.string.logout),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = pagePadding())
+            .padding(top = 8.dp, bottom = 32.dp)
+    ) {
+        if (isExpanded()) {
+            AdaptiveColumns(mainWeight = 2f, sideWeight = 3f, main = identity, side = settings)
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                identity()
+                settings()
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileIdentityCard(user: User?) {
+    WebCard {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(AptoGradientGold, MaterialTheme.colorScheme.primary)
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = user?.name?.firstOrNull()?.uppercase() ?: "U",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = user?.name ?: stringResource(Res.string.loading),
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = AptoOnSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = user?.email ?: "-",
+                style = MaterialTheme.typography.bodyMedium,
+                color = AptoOnSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(9999.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(horizontal = 14.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.apt_label, user?.apartmentUnit?.ifBlank { null } ?: "-"),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        HorizontalDivider(color = AptoOutlineVariant, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        IdentityDetailRow(Icons.Default.Person, stringResource(Res.string.full_name), user?.name ?: "-")
+        IdentityDetailRow(Icons.Default.Email, stringResource(Res.string.email), user?.email ?: "-")
+        IdentityDetailRow(
+            Icons.Default.Home,
+            stringResource(Res.string.apartment_unit_label),
+            user?.apartmentUnit?.ifBlank { null } ?: "-"
+        )
+        IdentityDetailRow(
+            Icons.Default.Apartment,
+            stringResource(Res.string.building_tower),
+            user?.currentUnit?.buildingName?.ifBlank { null } ?: "-"
+        )
+    }
+}
+
+@Composable
+private fun IdentityDetailRow(icon: ImageVector, label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                color = AptoOnSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = AptoOnSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileSettingsCard(
+    title: String,
+    titleColor: Color = AptoOnSurface,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    WebCard(contentPadding = 0.dp) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = titleColor,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 4.dp)
+        )
+        content()
+    }
+}
+
+@Composable
+private fun WideDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 20.dp),
+        color = AptoOutlineVariant,
+        thickness = 1.dp
+    )
 }
 
 @Composable
@@ -427,6 +708,7 @@ private fun ProfileActionButton(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .pointerHoverIcon(PointerIcon.Hand)
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -496,7 +778,7 @@ private fun LanguageSelectionDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = language.flag,
+                            text = language.flag.emojiSafe(),
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Spacer(modifier = Modifier.width(16.dp))

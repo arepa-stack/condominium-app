@@ -61,6 +61,7 @@ The app currently runs with **Mock Data** to facilitate testing without a backen
 ## 🌐 Web / PWA (Kotlin/Wasm)
 
 The `shared` module also targets `wasmJs`; the same Compose UI runs in the browser and installs as a PWA.
+Full guide (environments, dev server, deploy, UI rules): **[docs/web.md](docs/web.md)**.
 
 ```bash
 ./gradlew :shared:wasmJsBrowserDistribution

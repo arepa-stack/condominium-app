@@ -1,13 +1,7 @@
 package com.example.condominio
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
@@ -45,12 +39,7 @@ fun App(
     // and triggers recomposition when the language is changed from ProfileScreen.
     ProvideAppLocale {
         CondominioTheme {
-            // Phone-first layout: cap the width on desktop browsers/tablets.
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-                Box(Modifier.widthIn(max = 600.dp).fillMaxSize()) {
-                    CondominioNavGraph(navController = navController, registerCode = registerCode)
-                }
-            }
+            CondominioNavGraph(navController = navController, registerCode = registerCode)
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.example.condominio.ui.utils
 
 import com.example.condominio.ui.locale.LocaleManager
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -29,3 +29,5 @@ actual fun formatDate(timestamp: Long, formatString: String): String {
 
 actual fun formatMonthYear(timestamp: Long): String =
     monthName(timestamp.toDouble(), "es-ES", "long").replaceFirstChar { it.uppercase() }
+
+actual val platformRendersEmoji: Boolean = false

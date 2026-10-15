@@ -1,5 +1,6 @@
 package com.example.condominio.di
 
+import com.example.condominio.ApiConfig
 import com.example.condominio.data.local.TokenManager
 import com.example.condominio.data.remote.ApiService
 import com.example.condominio.data.remote.ApiServiceImpl
@@ -48,7 +49,7 @@ val sharedModule = module {
                 })
             }
             defaultRequest {
-                url("https://condominium-api.nibs-tech.com/")
+                url(ApiConfig.BASE_URL) // from local.properties (API_ENV)
             }
         }
     }

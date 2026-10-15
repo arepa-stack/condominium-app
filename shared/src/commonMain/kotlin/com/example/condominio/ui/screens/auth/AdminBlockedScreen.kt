@@ -7,7 +7,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import com.example.condominio.ui.components.PrimaryButton
+import com.example.condominio.ui.components.isWide
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -40,7 +43,9 @@ fun AdminBlockedScreen(
 
         PrimaryButton(
             text = stringResource(Res.string.back_to_login),
-            onClick = onBackToLogin
+            onClick = onBackToLogin,
+            // Wide: natural-width button with hand cursor; phone keeps the full-width default.
+            modifier = if (isWide()) Modifier.width(IntrinsicSize.Max).pointerHoverIcon(PointerIcon.Hand) else Modifier
         )
     }
 }

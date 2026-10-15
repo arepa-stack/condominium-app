@@ -22,12 +22,44 @@
 <script>
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
+    // Compose for Web types into a hidden <input> it creates per focused field. For password fields it only sets
+    // inputmode="password" (ignored by browsers) and autocorrect="on", so mobile keyboards treat the password as
+    // plain text: they suggest it and may learn it. Make that backing input a real password input.
+    // The input lives in the body's shadow root, is created on focus and gets its attributes afterwards, so watch
+    // that shadow root for new inputs / inputmode changes instead of listening to focus.
+    // ponytail: relies on Compose's backing-input markup; drop once Compose sets type=password itself.
+    const fixPasswordInput = el => {
+        if (el instanceof HTMLInputElement && el.getAttribute('inputmode') === 'password' && el.type !== 'password') {
+            el.type = 'password';
+            el.setAttribute('autocorrect', 'off');
+            el.setAttribute('autocomplete', 'current-password');
+        }
+    };
+    const shadowWait = setInterval(() => {
+        const root = document.body.shadowRoot;
+        if (!root) return;
+        clearInterval(shadowWait);
+        new MutationObserver(records => records.forEach(r => {
+            if (r.type === 'attributes') fixPasswordInput(r.target);
+            r.addedNodes.forEach(n => {
+                fixPasswordInput(n);
+                if (n.querySelectorAll) n.querySelectorAll('input').forEach(fixPasswordInput);
+            });
+        })).observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['inputmode'] });
+    }, 200);
+
     // Smallest module using a WasmGC type: Kotlin/Wasm needs WasmGC (Chrome 119+, Firefox 120+, Safari 18.2+).
     const wasmGc = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]);
     if (WebAssembly.validate(wasmGc)) {
-        const s = document.createElement('script');
-        s.src = 'shared.js';
-        document.body.appendChild(s);
+        // Compose keeps its own resource cache (strings/images) with no versioning: after a deploy it
+        // would read new string offsets from the old strings file → blank texts. Drop it before booting.
+        // ponytail: re-downloads resources (~hundreds of KB) every load; key it by build id if that matters.
+        const boot = () => {
+            const s = document.createElement('script');
+            s.src = 'shared.js';
+            document.body.appendChild(s);
+        };
+        ('caches' in window ? caches.delete('compose_web_resources_cache').catch(() => {}) : Promise.resolve()).then(boot);
     } else {
         document.getElementById('loading-text').textContent =
             'Tu navegador no es compatible. Actualízalo (Chrome, Firefox o Safari 18.2+).';

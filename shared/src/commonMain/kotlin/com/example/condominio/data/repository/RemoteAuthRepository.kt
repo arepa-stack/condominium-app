@@ -153,6 +153,8 @@ class RemoteAuthRepository
                 _currentUser.value = user
                 Result.success(user)
             } else {
+                // Expired/invalid token: drop it so the app shows login instead of an empty dashboard.
+                if (response.code == 401) tokenManager.clearToken()
                 Result.failure(Exception("Failed to fetch user"))
             }
         } catch (e: Exception) {

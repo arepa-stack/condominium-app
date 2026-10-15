@@ -1,5 +1,10 @@
 package com.example.condominio.ui.screens.billboard
 
+import com.example.condominio.ui.components.WebEmptyFrame
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,6 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -20,6 +27,9 @@ import com.example.condominio.ui.components.EmptyState
 import com.example.condominio.ui.components.FilterPillChip
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
+import com.example.condominio.ui.components.isWide
+import com.example.condominio.ui.components.pagePadding
+import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.components.announcementCategoryLabel
 import com.example.condominio.ui.theme.*
 import condominio.shared.generated.resources.*
@@ -39,40 +49,68 @@ fun BillboardListScreen(
         uiState.announcements.sortedByDescending { it.isPinned }
     }
 
+    val wide = isWide()
+
     Scaffold(
         topBar = {
             TopBarWithBack(
                 title = stringResource(Res.string.billboard_title),
                 onBackClick = onBackClick,
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(Res.string.refresh),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    if (wide) {
+                        // Web header action: labelled button on the right of the page title.
+                        OutlinedButton(
+                            onClick = { viewModel.refresh() },
+                            enabled = !uiState.isLoading,
+                            border = BorderStroke(1.dp, AptoOutlineVariant),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoOnSurface),
+                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(Res.string.refresh))
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.refresh() }) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = stringResource(Res.string.refresh),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             )
         },
-        containerColor = AptoBackground
+        containerColor = screenBackground(AptoBackground)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            BillboardFilterRow(
-                selected = uiState.categoryFilter,
-                onSelect = { viewModel.setCategoryFilter(it) }
-            )
+            if (wide) {
+                WideBillboardFilterRow(
+                    selected = uiState.categoryFilter,
+                    onSelect = { viewModel.setCategoryFilter(it) }
+                )
+            } else {
+                BillboardFilterRow(
+                    selected = uiState.categoryFilter,
+                    onSelect = { viewModel.setCategoryFilter(it) }
+                )
+            }
 
             when {
                 uiState.isLoading && uiState.announcements.isEmpty() -> {
                     LoadingState()
                 }
 
-                uiState.error != null && uiState.announcements.isEmpty() -> {
+                uiState.error != null && uiState.announcements.isEmpty() -> WebEmptyFrame {
                     Box(
                         modifier = Modifier.fillMaxSize().padding(32.dp),
                         contentAlignment = Alignment.Center
@@ -99,22 +137,29 @@ fun BillboardListScreen(
                 }
 
                 sortedAnnouncements.isEmpty() -> {
-                    EmptyState(title = stringResource(Res.string.billboard_empty))
+                    WebEmptyFrame { EmptyState(title = stringResource(Res.string.billboard_empty)) }
                 }
 
                 else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(340.dp),
+                        contentPadding = if (wide) {
+                            PaddingValues(start = pagePadding(), end = pagePadding(), top = 8.dp, bottom = 32.dp)
+                        } else {
+                            PaddingValues(16.dp)
+                        },
+                        verticalArrangement = Arrangement.spacedBy(if (wide) 24.dp else 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(if (wide) 24.dp else 16.dp)
                     ) {
                         items(sortedAnnouncements, key = { it.id }) { announcement ->
                             AnnouncementCard(
                                 announcement = announcement,
-                                onClick = { onAnnouncementClick(announcement.id) }
+                                onClick = { onAnnouncementClick(announcement.id) },
+                                modifier = if (wide) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier
                             )
                         }
                         if (uiState.isLoading) {
-                            item {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
                                 LoadingState(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                                     size = 24.dp,
@@ -150,6 +195,39 @@ private fun BillboardFilterRow(
                 label = announcementCategoryLabel(category),
                 selected = selected == category,
                 onClick = { onSelect(if (selected == category) null else category) }
+            )
+        }
+    }
+}
+
+/** Wide layouts: chips wrap in a row aligned with the page content (no horizontal scroll). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun WideBillboardFilterRow(
+    selected: AnnouncementCategory?,
+    onSelect: (AnnouncementCategory?) -> Unit
+) {
+    val hand = Modifier.pointerHoverIcon(PointerIcon.Hand)
+    FlowRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            // 8dp under the header; + the grid's / WebEmptyFrame's 8dp top = 16dp to the content.
+            .padding(start = pagePadding(), end = pagePadding(), top = 8.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FilterPillChip(
+            label = stringResource(Res.string.billboard_filter_all),
+            selected = selected == null,
+            onClick = { onSelect(null) },
+            modifier = hand
+        )
+        AnnouncementCategory.entries.forEach { category ->
+            FilterPillChip(
+                label = announcementCategoryLabel(category),
+                selected = selected == category,
+                onClick = { onSelect(if (selected == category) null else category) },
+                modifier = hand
             )
         }
     }

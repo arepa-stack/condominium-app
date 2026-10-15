@@ -1,5 +1,8 @@
 # Handoff: versión Web + PWA (Kotlin/Wasm) — cambios y cómo probarlos
 
+> ⚠️ Documento histórico de la migración inicial. Para trabajar hoy con la web (ambientes, servidor, deploy, reglas de UI,
+> versiones vigentes) usa **[docs/web.md](web.md)**.
+
 > Documento para el agente/dev que continúa este trabajo. Léelo completo antes de tocar código.
 
 ## 0. Estado y reglas

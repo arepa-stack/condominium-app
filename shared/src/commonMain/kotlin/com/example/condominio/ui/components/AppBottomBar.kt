@@ -1,6 +1,7 @@
 package com.example.condominio.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,9 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,7 +75,7 @@ enum class BottomTab(val route: String) {
     }
 }
 
-private val BottomTab.label: StringResource
+internal val BottomTab.label: StringResource
     get() = when (this) {
         BottomTab.HOME -> Res.string.nav_home
         BottomTab.PAYMENTS -> Res.string.nav_payments
@@ -80,7 +84,7 @@ private val BottomTab.label: StringResource
         BottomTab.PROFILE -> Res.string.nav_profile
     }
 
-private fun BottomTab.icon(active: Boolean): ImageVector = when (this) {
+internal fun BottomTab.icon(active: Boolean): ImageVector = when (this) {
     BottomTab.HOME -> if (active) Icons.Filled.Home else Icons.Outlined.Home
     BottomTab.PAYMENTS -> if (active) Icons.Filled.ReceiptLong else Icons.Outlined.ReceiptLong
     BottomTab.BILLBOARD -> if (active) Icons.Filled.Campaign else Icons.Outlined.Campaign
@@ -141,6 +145,45 @@ fun AppBottomBar(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Variante lateral de [AppBottomBar] para pantallas anchas (tablet, navegador de escritorio).
+ * Mismas pestañas y colores; el NavGraph decide cuál mostrar según el ancho disponible.
+ */
+@Composable
+fun AppNavRail(
+    currentRoute: String?,
+    onTabSelected: (BottomTab) -> Unit,
+) {
+    val activeColor = Color(0xFFFF6B00) // brand orange
+    val inactiveColor = Color(0xFF9CA3AF) // gray-400
+    val activeTab = BottomTab.fromRoute(currentRoute)
+
+    NavigationRail(
+        containerColor = Color.White,
+        modifier = Modifier.border(BorderStroke(1.dp, Color(0xFFF3F4F6)))
+    ) {
+        Spacer(modifier = Modifier.height(24.dp))
+        BottomTab.entries.forEach { tab ->
+            val active = tab == activeTab
+            val label = stringResource(tab.label)
+            NavigationRailItem(
+                selected = active,
+                onClick = { if (!active) onTabSelected(tab) },
+                icon = { Icon(imageVector = tab.icon(active), contentDescription = label) },
+                label = { Text(text = label, fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                colors = NavigationRailItemDefaults.colors(
+                    selectedIconColor = activeColor,
+                    selectedTextColor = activeColor,
+                    indicatorColor = activeColor.copy(alpha = 0.12f),
+                    unselectedIconColor = inactiveColor,
+                    unselectedTextColor = inactiveColor
+                ),
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
         }
     }
 }

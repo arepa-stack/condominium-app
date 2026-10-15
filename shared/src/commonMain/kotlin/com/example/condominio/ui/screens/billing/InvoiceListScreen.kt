@@ -1,7 +1,18 @@
 package com.example.condominio.ui.screens.billing
 
+import com.example.condominio.ui.components.isWide
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,7 +27,10 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.Invoice
@@ -26,8 +40,14 @@ import com.example.condominio.ui.components.EmptyState
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
+import com.example.condominio.ui.components.WebCard
+import com.example.condominio.ui.components.WebEmptyFrame
+import com.example.condominio.ui.components.isExpanded
+import com.example.condominio.ui.components.pagePadding
+import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.formatDate
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -64,21 +84,53 @@ fun InvoiceListScreen(
                 title = stringResource(Res.string.invoices_title),
                 onBackClick = onBackClick,
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = stringResource(Res.string.refresh),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    if (isWide()) {
+                        // Same labelled header action as Cartelera / Votaciones on web.
+                        OutlinedButton(
+                            onClick = { viewModel.refresh() },
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AptoOutlineVariant),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoOnSurface),
+                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(Res.string.refresh))
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.refresh() }) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = stringResource(Res.string.refresh),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             )
         },
-        containerColor = AptoBackground
+        containerColor = screenBackground(AptoBackground)
     ) { paddingValues ->
+        if (isExpanded()) {
+            InvoiceWebContent(
+                modifier = Modifier.padding(paddingValues),
+                tabs = tabs,
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                isLoading = uiState.isLoading,
+                error = uiState.error?.asString(),
+                invoices = filteredInvoices,
+                onInvoiceClick = onInvoiceClick,
+                onPayNowClick = onPayNowClick
+            )
+            return@Scaffold
+        }
+        // Compact (phone) and Medium (tablet) share this path; on Medium the tabs, grid and
+        // empty/error states align with the page header at pagePadding() (phone unchanged).
+        val wide = isWide()
         Column(modifier = Modifier.padding(paddingValues)) {
             TabRow(
                 selectedTabIndex = selectedTab,
+                modifier = if (wide) Modifier.padding(horizontal = pagePadding()) else Modifier,
                 containerColor = AptoSurface,
                 contentColor = AptoSecondaryContainer,
                 indicator = { tabPositions ->
@@ -112,17 +164,20 @@ fun InvoiceListScreen(
                 uiState.isLoading -> {
                     LoadingState()
                 }
-                uiState.error != null -> {
+                uiState.error != null -> WebEmptyFrame {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(text = uiState.error!!.asString(), color = AptoStatusError)
                     }
                 }
-                filteredInvoices.isEmpty() -> InvoiceEmptyState()
+                filteredInvoices.isEmpty() -> WebEmptyFrame { InvoiceEmptyState() }
                 else -> {
-                    LazyColumn(
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(340.dp),
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        // pagePadding() is 16dp on phone, so Compact stays PaddingValues(16.dp).
+                        contentPadding = PaddingValues(horizontal = pagePadding(), vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(filteredInvoices) { invoice ->
                             InvoiceItem(
@@ -252,6 +307,219 @@ fun InvoiceItem(
                         text = stringResource(Res.string.pay_now).uppercase(),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Expanded (desktop web): filter chips + invoice table inside a WebCard.
+// Compact/Medium keep the original TabRow + grid above.
+// ---------------------------------------------------------------------------
+
+private const val COL_CONCEPT = 2.4f
+private const val COL_DUE = 1.2f
+private const val COL_AMOUNT = 1.1f
+private const val COL_REMAINING = 1.1f
+private const val COL_STATUS = 1.1f
+private const val COL_ACTION = 1.3f
+
+@Composable
+private fun InvoiceWebContent(
+    modifier: Modifier,
+    tabs: List<String>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    isLoading: Boolean,
+    error: String?,
+    invoices: List<Invoice>,
+    onInvoiceClick: (Invoice) -> Unit,
+    onPayNowClick: (Invoice) -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = pagePadding())
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            tabs.forEachIndexed { index, title ->
+                val selected = selectedTab == index
+                FilterChip(
+                    selected = selected,
+                    onClick = { onTabSelected(index) },
+                    label = {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    shape = CircleShape,
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = AptoSurfaceContainerLowest,
+                        labelColor = AptoOnSurfaceVariant,
+                        selectedContainerColor = AptoSecondaryContainer,
+                        selectedLabelColor = AptoOnSecondary
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = selected,
+                        borderColor = AptoOutlineVariant,
+                        selectedBorderColor = AptoSecondaryContainer
+                    ),
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                )
+            }
+        }
+
+        when {
+            isLoading -> LoadingState()
+            error != null -> WebCard {
+                Box(Modifier.fillMaxWidth().height(320.dp), contentAlignment = Alignment.Center) {
+                    Text(text = error, color = AptoStatusError)
+                }
+            }
+            // Fixed height: EmptyState fills its parent, which would stretch the card to the whole page.
+            invoices.isEmpty() -> WebCard { Box(Modifier.fillMaxWidth().height(320.dp)) { InvoiceEmptyState() } }
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = 32.dp)
+                ) {
+                    WebCard(contentPadding = 0.dp) {
+                        InvoiceTableHeader()
+                        invoices.forEach { invoice ->
+                            HorizontalDivider(color = AptoOutlineVariant)
+                            InvoiceTableRow(
+                                invoice = invoice,
+                                onClick = { onInvoiceClick(invoice) },
+                                onPayNow = { onPayNowClick(invoice) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InvoiceTableHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AptoSurfaceContainerLow)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        InvoiceHeaderCell(stringResource(Res.string.description_label), Modifier.weight(COL_CONCEPT))
+        InvoiceHeaderCell(stringResource(Res.string.web_invoices_col_due), Modifier.weight(COL_DUE))
+        InvoiceHeaderCell(stringResource(Res.string.total_label), Modifier.weight(COL_AMOUNT), TextAlign.End)
+        InvoiceHeaderCell(stringResource(Res.string.remaining_label), Modifier.weight(COL_REMAINING), TextAlign.End)
+        Spacer(Modifier.width(24.dp))
+        InvoiceHeaderCell(stringResource(Res.string.web_invoices_col_status), Modifier.weight(COL_STATUS))
+        Spacer(Modifier.weight(COL_ACTION))
+    }
+}
+
+@Composable
+private fun InvoiceHeaderCell(text: String, modifier: Modifier, textAlign: TextAlign = TextAlign.Start) {
+    Text(
+        text = text.uppercase(),
+        modifier = modifier,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = AptoOnSurfaceVariant,
+        textAlign = textAlign
+    )
+}
+
+@Composable
+private fun InvoiceTableRow(
+    invoice: Invoice,
+    onClick: () -> Unit,
+    onPayNow: () -> Unit
+) {
+    val isActionable = invoice.remaining > 0 &&
+            invoice.status != InvoiceStatus.PAID &&
+            invoice.status != InvoiceStatus.CANCELLED
+    val interactionSource = remember { MutableInteractionSource() }
+    val hovered by interactionSource.collectIsHoveredAsState()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (hovered) AptoSurfaceContainerLow else AptoSurfaceContainerLowest)
+            .hoverable(interactionSource)
+            .clickable(onClick = onClick)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(COL_CONCEPT).padding(end = 16.dp)) {
+            Text(
+                text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = AptoOnSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = stringResource(Res.string.period_label, invoice.period),
+                style = MaterialTheme.typography.bodySmall,
+                color = AptoOnSurfaceVariant
+            )
+        }
+        Text(
+            text = invoice.dueDate?.let { formatDate(it) } ?: "—",
+            modifier = Modifier.weight(COL_DUE),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (invoice.status == InvoiceStatus.OVERDUE) AptoStatusError else AptoOnSurfaceVariant
+        )
+        Text(
+            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.amount)),
+            modifier = Modifier.weight(COL_AMOUNT),
+            style = MaterialTheme.typography.bodyMedium,
+            color = AptoOnSurface,
+            textAlign = TextAlign.End
+        )
+        Text(
+            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
+            modifier = Modifier.weight(COL_REMAINING),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (invoice.remaining <= 0) AptoStatusSuccess else AptoSecondaryContainer,
+            textAlign = TextAlign.End
+        )
+        Spacer(Modifier.width(24.dp))
+        Box(modifier = Modifier.weight(COL_STATUS)) {
+            InvoiceStatusBadge(status = invoice.status)
+        }
+        Box(modifier = Modifier.weight(COL_ACTION), contentAlignment = Alignment.CenterEnd) {
+            if (isActionable) {
+                Button(
+                    onClick = onPayNow,
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AptoSecondaryContainer,
+                        contentColor = AptoOnSecondary
+                    )
+                ) {
+                    Text(
+                        text = stringResource(Res.string.pay_now),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
                 }
             }
