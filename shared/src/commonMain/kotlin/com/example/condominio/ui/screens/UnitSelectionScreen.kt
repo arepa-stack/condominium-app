@@ -6,6 +6,9 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import com.example.condominio.ui.components.formWidth
+import androidx.compose.ui.graphics.compositeOver
+import com.example.condominio.ui.utils.isWebPlatform
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
@@ -383,7 +386,8 @@ private fun WideUnitSelection(
                         )
                     }
 
-                    AdaptiveTileGrid(items = uiState.buildings, minCellWidth = 190.dp) { group ->
+                    // Tiles and the units card share one width (formWidth): nothing jumps when a building expands.
+                    AdaptiveTileGrid(items = uiState.buildings, minCellWidth = 190.dp, modifier = Modifier.formWidth()) { group ->
                         BuildingTile(
                             group = group,
                             isSelected = group.buildingId == uiState.expandedBuildingId,
@@ -397,7 +401,7 @@ private fun WideUnitSelection(
                         exit = shrinkVertically()
                     ) {
                         if (selectedGroup != null) {
-                            WebCard {
+                            WebCard(modifier = Modifier.formWidth()) {
                                 Text(
                                     text = selectedGroup.buildingName,
                                     style = MaterialTheme.typography.titleMedium,
@@ -423,16 +427,20 @@ private fun WideUnitSelection(
     }
 }
 
-/** Two columns when both fit at [minCellWidth], one otherwise; cells in a row share height. */
+/**
+ * Two columns when both fit at [minCellWidth], one otherwise; cells in a row share height.
+ * A single item takes the whole row, so it lines up with the full-width card below it.
+ */
 @Composable
 private fun <T> AdaptiveTileGrid(
     items: List<T>,
     minCellWidth: Dp,
+    modifier: Modifier = Modifier,
     spacing: Dp = 12.dp,
     cell: @Composable (T) -> Unit
 ) {
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= minCellWidth * 2 + spacing) 2 else 1
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val columns = if (items.size > 1 && maxWidth >= minCellWidth * 2 + spacing) 2 else 1
         Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
             items.chunked(columns).forEach { rowItems ->
                 Row(
@@ -474,17 +482,19 @@ private fun BuildingTile(
             .pointerHoverIcon(PointerIcon.Hand),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) AptoSecondaryFixed.copy(alpha = 0.35f) else AptoSurfaceContainerLowest
+            containerColor = if (isSelected) AptoSecondaryFixed.copy(alpha = 0.35f).compositeOver(Color.White) else AptoSurfaceContainerLowest
         ),
         border = BorderStroke(
             width = if (isSelected) 2.dp else 1.dp,
             color = when {
                 isSelected -> AptoSecondaryContainer
-                isHovered -> AptoOutline
+                isHovered -> if (isWebPlatform) AptoSecondaryContainer.copy(alpha = 0.4f) else AptoOutline
                 else -> AptoOutlineVariant
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isHovered && !isSelected) 3.dp else 0.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isHovered && !isSelected) (if (isWebPlatform) 1.dp else 3.dp) else 0.dp
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -569,7 +579,8 @@ private fun UnitTile(unit: UserUnit, onClick: () -> Unit) {
             .pointerHoverIcon(PointerIcon.Hand),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isHovered) AptoSecondaryFixed.copy(alpha = 0.35f) else AptoSurfaceContainerLow
+            // Opaque on purpose: Card adds a hover shadow, which shows through a translucent container.
+            containerColor = if (isHovered) AptoSecondaryFixed.copy(alpha = 0.35f).compositeOver(Color.White) else AptoSurfaceContainerLow
         ),
         border = BorderStroke(1.dp, if (isHovered) AptoSecondaryContainer else AptoOutlineVariant)
     ) {

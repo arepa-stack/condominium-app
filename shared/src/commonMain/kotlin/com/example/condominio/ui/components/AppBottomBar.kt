@@ -61,7 +61,8 @@ enum class BottomTab(val route: String) {
         /** Resuelve la pestaña activa a partir de la ruta actual (patrón del NavDestination). */
         fun fromRoute(route: String?): BottomTab? = when {
             route == null -> null
-            route.startsWith("dashboard") -> HOME
+            // unit_selection opened from the dashboard (wide layouts keep the sidebar there).
+            route.startsWith("dashboard") || route == "unit_selection" -> HOME
             route.startsWith("invoice") ||
                 route.startsWith("payment") ||
                 route.startsWith("create_payment") -> PAYMENTS
@@ -173,7 +174,7 @@ fun AppNavRail(
             val label = stringResource(tab.label)
             NavigationRailItem(
                 selected = active,
-                onClick = { if (!active) onTabSelected(tab) },
+                onClick = { if (!active || currentRoute == "unit_selection") onTabSelected(tab) },
                 icon = { Icon(imageVector = tab.icon(active), contentDescription = label) },
                 label = { Text(text = label, fontWeight = FontWeight.Bold, fontSize = 11.sp) },
                 colors = NavigationRailItemDefaults.colors(

@@ -1,12 +1,17 @@
 package com.example.condominio.ui.navigation
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.navigation.compose.composable as navComposable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.savedstate.read
@@ -34,6 +39,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.Alignment
@@ -74,6 +80,43 @@ private fun maxContentWidth(route: String?): Dp = when {
 }
 
 // Rutas del flujo de autenticación/onboarding donde no se muestra el bottom bar
+/** Max width of one page. Desktop auth/onboarding pages sit in the 480dp column next to the brand panel. */
+@Composable
+private fun pageMaxWidth(route: String, inApp: Boolean): Dp {
+    val loginFormVisible = LocalLoginFormVisible.current.value
+    val split = LocalWidthClass.current == WidthClass.Expanded && route in routesWithoutBottomBar &&
+        route != "splash" && route != "unit_selection" && (route != "login" || loginFormVisible)
+    return when {
+        split -> 480.dp
+        // Login still checking the session: keep full width so the splash fades out unclipped.
+        route == "login" && !loginFormVisible -> Dp.Unspecified
+        // Opened from the dashboard: a regular app page (same container as the rest).
+        inApp -> WebContainerWidth
+        else -> maxContentWidth(route)
+    }
+}
+
+/** True while unit_selection was opened from inside the app (dashboard below it), not from login. */
+private val LocalInAppUnitSelection = compositionLocalOf { false }
+
+/**
+ * Shadows navigation's composable(): wraps every destination in its own width cap, so the cap
+ * travels with the page during transitions (instead of the NavHost resizing for the new route).
+ */
+private fun NavGraphBuilder.composable(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) = navComposable(route, arguments) { entry ->
+    val scope = this
+    // Captured once per entry: the page keeps its width while fading out, even after the route changes.
+    val inAppNow = route == "unit_selection" && LocalInAppUnitSelection.current
+    val inApp = remember(entry) { inAppNow }
+    Box(Modifier.fillMaxSize().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = pageMaxWidth(route, inApp)).fillMaxWidth()) {
+        scope.content(entry)
+    }
+}
+
 private val routesWithoutBottomBar = setOf(
         "splash",
         "login",
@@ -117,6 +160,11 @@ fun CondominioNavGraph(
     }
     val wide = widthClass != WidthClass.Compact
     val isAuth = currentRoute in routesWithoutBottomBar && currentRoute != "splash"
+    // Switching building from the dashboard: keep the sidebar/rail on wide layouts so the shell doesn't
+    // jump. From login (no dashboard below) it stays a standalone onboarding page. Phones unchanged.
+    val inAppUnitSelection = currentRoute == "unit_selection" &&
+        navController.previousBackStackEntry?.destination?.route == "dashboard"
+    val showSideNav = showNav || (wide && inAppUnitSelection)
     // Desktop auth/onboarding: brand panel left, the mobile form centered on the right.
     val loginFormVisible = remember { mutableStateOf(false) }
     // unit_selection is also reached from the dashboard while logged in: no "sign in" brand panel there.
@@ -126,11 +174,12 @@ fun CondominioNavGraph(
         LocalWidthClass provides widthClass,
         LocalLoginFormVisible provides loginFormVisible,
         // Sidebar/rail replaces the back arrow on top-level sections.
-        LocalShowBack provides !(wide && currentRoute in tabRootRoutes)
+        LocalShowBack provides !(wide && currentRoute in tabRootRoutes),
+        LocalInAppUnitSelection provides inAppUnitSelection
     ) {
     Row(Modifier.fillMaxSize().background(if (wide) AptoWebCanvas else Color.Unspecified)) {
-    if (showNav && widthClass == WidthClass.Expanded) AppSidebar(currentRoute = currentRoute, onTabSelected = onTabSelected)
-    if (showNav && widthClass == WidthClass.Medium) AppNavRail(currentRoute = currentRoute, onTabSelected = onTabSelected)
+    if (showSideNav && widthClass == WidthClass.Expanded) AppSidebar(currentRoute = currentRoute, onTabSelected = onTabSelected)
+    if (showSideNav && widthClass == WidthClass.Medium) AppNavRail(currentRoute = currentRoute, onTabSelected = onTabSelected)
     Scaffold(
             modifier = Modifier.weight(1f),
             containerColor = if (wide) AptoWebCanvas else MaterialTheme.colorScheme.background,
@@ -143,15 +192,10 @@ fun CondominioNavGraph(
                 navController = navController,
                 startDestination = "splash",
                 modifier = Modifier
+                // No max width here: each page caps its own (see composable() below), so a page fading
+                // out keeps its width instead of being squeezed into the next route's (dashboard → unit_selection).
                         .padding(innerPadding)
                         .fillMaxSize()
-                        .wrapContentWidth(Alignment.CenterHorizontally)
-                        .widthIn(max = when {
-                            split -> 480.dp
-                            // Login still checking the session: keep full width so the splash fades out unclipped.
-                            currentRoute == "login" && !loginFormVisible.value -> Dp.Unspecified
-                            else -> maxContentWidth(currentRoute)
-                        })
         ) {
         composable("splash") {
             SplashScreen(
@@ -405,3 +449,4 @@ fun CondominioNavGraph(
     }
     }
 }
+
