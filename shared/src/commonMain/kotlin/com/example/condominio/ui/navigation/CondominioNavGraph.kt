@@ -39,8 +39,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.Alignment
@@ -80,7 +80,6 @@ private fun maxContentWidth(route: String?): Dp = when {
     else -> WebContainerWidth
 }
 
-// Rutas del flujo de autenticación/onboarding donde no se muestra el bottom bar
 /** Max width of one page. Desktop auth/onboarding pages sit in the 480dp column next to the brand panel. */
 @Composable
 private fun pageMaxWidth(route: String, inApp: Boolean): Dp {
@@ -118,6 +117,7 @@ private fun NavGraphBuilder.composable(
     }
 }
 
+// Rutas del flujo de autenticación/onboarding donde no se muestra el bottom bar
 private val routesWithoutBottomBar = setOf(
         "splash",
         "login",
@@ -160,12 +160,12 @@ fun CondominioNavGraph(
         else -> WidthClass.Expanded
     }
     val wide = widthClass != WidthClass.Compact
-    val isAuth = currentRoute in routesWithoutBottomBar && currentRoute != "splash"
     // Switching building from the dashboard: keep the sidebar/rail on wide layouts so the shell doesn't
     // jump. From login (no dashboard below) it stays a standalone onboarding page. Phones unchanged.
     val inAppUnitSelection = currentRoute == "unit_selection" &&
         navController.previousBackStackEntry?.destination?.route == "dashboard"
     val showSideNav = showNav || (wide && inAppUnitSelection)
+    val isAuth = currentRoute in routesWithoutBottomBar && currentRoute != "splash"
     // Desktop auth/onboarding: brand panel left, the mobile form centered on the right.
     val loginFormVisible = remember { mutableStateOf(false) }
     // unit_selection is also reached from the dashboard while logged in: no "sign in" brand panel there.
@@ -192,9 +192,9 @@ fun CondominioNavGraph(
         NavHost(
                 navController = navController,
                 startDestination = "splash",
-                modifier = Modifier
                 // No max width here: each page caps its own (see composable() below), so a page fading
                 // out keeps its width instead of being squeezed into the next route's (dashboard → unit_selection).
+                modifier = Modifier
                         .padding(innerPadding)
                         // Screens have their own Scaffold/TopAppBar: mark the bars already padded here as consumed,
                         // or edge-to-edge (targetSdk 36) adds the status bar height twice on Android.

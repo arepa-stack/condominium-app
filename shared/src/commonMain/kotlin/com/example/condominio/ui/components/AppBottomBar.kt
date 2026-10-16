@@ -8,10 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -36,11 +37,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.example.condominio.ui.theme.brand
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.condominio.ui.theme.brand
 import condominio.shared.generated.resources.Res
 import condominio.shared.generated.resources.nav_billboard
 import condominio.shared.generated.resources.nav_decisions
@@ -121,9 +122,9 @@ fun AppBottomBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
                 // Edge-to-edge: keep the tabs above the gesture/3-button bar (the white surface still fills behind it).
                 .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -133,7 +134,11 @@ fun AppBottomBar(
                 val label = stringResource(tab.label)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { if (!active) onTabSelected(tab) }
+                    // Unbounded round ripple (like Material's NavigationBar) instead of the default square one.
+                    modifier = Modifier.clickable(
+                        interactionSource = null,
+                        indication = ripple(bounded = false, radius = 32.dp)
+                    ) { if (!active) onTabSelected(tab) }
                 ) {
                     Icon(
                         imageVector = tab.icon(active),

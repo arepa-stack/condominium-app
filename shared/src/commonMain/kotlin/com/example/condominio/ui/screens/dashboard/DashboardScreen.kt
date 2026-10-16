@@ -359,7 +359,7 @@ fun HeaderSection(
         }
         // Avatar - Clickable to open profile
         Surface(
-                modifier = Modifier.size(48.dp).clickable(onClick = onProfileClick),
+                modifier = Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onProfileClick),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
