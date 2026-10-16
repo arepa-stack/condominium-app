@@ -37,6 +37,7 @@ import com.example.condominio.ui.screens.register.RegisterScreen
 import com.example.condominio.ui.screens.splash.SplashScreen
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -195,6 +196,9 @@ fun CondominioNavGraph(
                 // No max width here: each page caps its own (see composable() below), so a page fading
                 // out keeps its width instead of being squeezed into the next route's (dashboard → unit_selection).
                         .padding(innerPadding)
+                        // Screens have their own Scaffold/TopAppBar: mark the bars already padded here as consumed,
+                        // or edge-to-edge (targetSdk 36) adds the status bar height twice on Android.
+                        .consumeWindowInsets(innerPadding)
                         .fillMaxSize()
         ) {
         composable("splash") {
