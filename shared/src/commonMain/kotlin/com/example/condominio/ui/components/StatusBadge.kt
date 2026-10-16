@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.ui.theme.*
+import com.example.condominio.ui.utils.isWebPlatform
 
 @Composable
 fun StatusBadge(
@@ -20,8 +21,8 @@ fun StatusBadge(
     statusColor: Color,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = statusColor.copy(alpha = 0.1f)
-    val borderColor = statusColor.copy(alpha = 0.2f)
+    val bgColor = badgeBg(statusColor.copy(alpha = 0.1f), statusColor)
+    val borderColor = statusColor.copy(alpha = if (isWebPlatform) 0.3f else 0.2f)
 
     Box(
         modifier = modifier

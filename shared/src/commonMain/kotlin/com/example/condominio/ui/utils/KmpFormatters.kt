@@ -20,3 +20,6 @@ expect val platformRendersEmoji: Boolean
 fun String.emojiSafe(): String = if (platformRendersEmoji) this else buildString {
     for (c in this@emojiSafe) if (!c.isSurrogate() && c !in '\u2600'..'\u27BF' && c != '\uFE0F') append(c)
 }.trim()
+
+/** True on the web target: used to try web-only visual variants (e.g. the admin palette POC). */
+expect val isWebPlatform: Boolean

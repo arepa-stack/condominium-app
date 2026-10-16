@@ -415,7 +415,7 @@ private fun InvoiceTableHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AptoSurfaceContainerLow)
+            .background(TableHeaderBg)
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -567,9 +567,10 @@ fun InvoiceStatusBadge(status: InvoiceStatus) {
     }
 
     Surface(
-        color = containerColor,
+        color = badgeBg(containerColor, contentColor),
         contentColor = contentColor,
-        shape = CircleShape
+        shape = CircleShape,
+        border = badgeBorder(contentColor)
     ) {
         Text(
             text = text,

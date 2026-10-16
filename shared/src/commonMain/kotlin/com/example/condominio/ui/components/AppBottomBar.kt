@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.condominio.ui.theme.brand
 import condominio.shared.generated.resources.Res
 import condominio.shared.generated.resources.nav_billboard
 import condominio.shared.generated.resources.nav_decisions
@@ -103,7 +104,7 @@ fun AppBottomBar(
     currentRoute: String?,
     onTabSelected: (BottomTab) -> Unit,
 ) {
-    val activeColor = Color(0xFFFF6B00) // brand orange
+    val activeColor = brand(0xFFFF6B00, 0xFFB45309) // brand orange
     val inactiveColor = Color(0xFF9CA3AF) // gray-400
     val activeTab = BottomTab.fromRoute(currentRoute)
 
@@ -158,12 +159,12 @@ fun AppNavRail(
     currentRoute: String?,
     onTabSelected: (BottomTab) -> Unit,
 ) {
-    val activeColor = Color(0xFFFF6B00) // brand orange
+    val activeColor = brand(0xFFFF6B00, 0xFFB45309) // brand orange
     val inactiveColor = Color(0xFF9CA3AF) // gray-400
     val activeTab = BottomTab.fromRoute(currentRoute)
 
     NavigationRail(
-        containerColor = Color.White,
+        containerColor = brand(0xFFFFFFFF, 0xFFF9F8F6), // web POC: condominium-admin --sidebar
         modifier = Modifier.border(BorderStroke(1.dp, Color(0xFFF3F4F6)))
     ) {
         Spacer(modifier = Modifier.height(24.dp))

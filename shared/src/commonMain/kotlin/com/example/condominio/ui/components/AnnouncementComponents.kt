@@ -32,10 +32,10 @@ import com.example.condominio.ui.theme.*
 
 fun announcementCategoryAccent(category: AnnouncementCategory): Color = when (category) {
     AnnouncementCategory.URGENT -> AptoStatusError
-    AnnouncementCategory.FINANCIAL -> Color(0xFF1565C0)
-    AnnouncementCategory.MAINTENANCE -> Color(0xFF2E7D32)
-    AnnouncementCategory.NEWS -> Color(0xFF00695C)
-    AnnouncementCategory.INFO -> Color(0xFF546066)
+    AnnouncementCategory.FINANCIAL -> brand(0xFF1565C0, 0xFF0369A1)
+    AnnouncementCategory.MAINTENANCE -> brand(0xFF2E7D32, 0xFF15803D)
+    AnnouncementCategory.NEWS -> brand(0xFF00695C, 0xFF0F766E)
+    AnnouncementCategory.INFO -> brand(0xFF546066, 0xFF6A6662)
 }
 
 fun announcementCategoryLabel(category: AnnouncementCategory): String = when (category) {
@@ -62,7 +62,7 @@ private fun categoryBadgeTextColor(category: AnnouncementCategory): Color = when
 }
 
 fun announcementCardBackground(category: AnnouncementCategory): Color = when (category) {
-    AnnouncementCategory.URGENT -> Color(0xFFFFF5F2)
+    AnnouncementCategory.URGENT -> brand(0xFFFFF5F2, 0xFFFAEFEA)
     else -> AptoSurfaceContainerLowest
 }
 
@@ -80,9 +80,11 @@ fun AnnouncementCategoryBadge(
     category: AnnouncementCategory,
     modifier: Modifier = Modifier
 ) {
+    val accent = announcementCategoryAccent(category)
     Surface(
-        color = categoryBadgeBg(category),
-        shape = RoundedCornerShape(8.dp),
+        color = badgeBg(categoryBadgeBg(category), accent),
+        shape = badgeShape(RoundedCornerShape(8.dp)),
+        border = badgeBorder(accent),
         modifier = modifier
     ) {
         Text(
@@ -90,7 +92,7 @@ fun AnnouncementCategoryBadge(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
-            color = categoryBadgeTextColor(category)
+            color = badgeText(categoryBadgeTextColor(category), accent)
         )
     }
 }

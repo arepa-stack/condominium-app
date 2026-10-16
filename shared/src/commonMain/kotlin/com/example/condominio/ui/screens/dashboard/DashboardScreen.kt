@@ -1,4 +1,4 @@
-﻿package com.example.condominio.ui.screens.dashboard
+package com.example.condominio.ui.screens.dashboard
 
 import com.example.condominio.ui.utils.emojiSafe
 import androidx.compose.animation.core.*
@@ -62,6 +62,14 @@ import com.example.condominio.ui.theme.AptoSuccess
 import com.example.condominio.ui.theme.AptoSuccessContainer
 import com.example.condominio.ui.theme.AptoWarning
 import com.example.condominio.ui.theme.AptoWarningContainer
+import androidx.compose.foundation.BorderStroke
+import com.example.condominio.ui.utils.isWebPlatform
+import com.example.condominio.ui.theme.badgeBg
+import com.example.condominio.ui.theme.badgeShape
+import com.example.condominio.ui.theme.badgeBorder
+import com.example.condominio.ui.theme.TableHeaderBg
+import com.example.condominio.ui.theme.statCardBg
+import com.example.condominio.ui.theme.statCardBorder
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
@@ -615,7 +623,10 @@ private fun PaymentStatusBadge(status: PaymentStatus) {
     }
 
     Box(
-        modifier = Modifier.background(statusBg, RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)
+        modifier = Modifier
+            .background(badgeBg(statusBg, statusColor), badgeShape(RoundedCornerShape(4.dp)))
+            .then(badgeBorder(statusColor)?.let { Modifier.border(it, CircleShape) } ?: Modifier)
+            .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
                 text = statusLabel,
@@ -883,7 +894,12 @@ private fun WebKpiCard(
         iconBackground: Color = iconTint.copy(alpha = 0.1f),
         footer: @Composable () -> Unit
 ) {
-    WebCard(modifier = modifier) {
+    WebCard(
+        modifier = modifier,
+        color = statCardBg(AptoSurfaceContainerLowest),
+        border = statCardBorder(BorderStroke(1.dp, AptoOutlineVariant)),
+        shadowElevation = if (isWebPlatform) 2.dp else 0.dp
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                     modifier = Modifier.size(36.dp).background(iconBackground, RoundedCornerShape(10.dp)),
@@ -987,7 +1003,7 @@ private fun WebTransactionsTable(
 
         // Column header
         Row(
-                modifier = Modifier.fillMaxWidth().background(AptoSurfaceContainerLow).padding(horizontal = 24.dp, vertical = 10.dp),
+                modifier = Modifier.fillMaxWidth().background(TableHeaderBg).padding(horizontal = 24.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
         ) {
             WebTableHeader(stringResource(Res.string.date_label), Modifier.weight(1.2f))

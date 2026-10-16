@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,6 +39,9 @@ import com.example.condominio.ui.theme.AptoOnSurface
 import com.example.condominio.ui.theme.AptoOnSurfaceVariant
 import com.example.condominio.ui.theme.AptoOutlineVariant
 import com.example.condominio.ui.theme.AptoSecondaryContainer
+import com.example.condominio.ui.theme.brand
+import com.example.condominio.ui.theme.AdminLogoMark
+import com.example.condominio.ui.utils.isWebPlatform
 import condominio.shared.generated.resources.Res
 import condominio.shared.generated.resources.login_subtitle
 import condominio.shared.generated.resources.logo
@@ -58,12 +62,13 @@ fun AppSidebar(
         modifier = Modifier
             .width(248.dp)
             .fillMaxHeight()
-            .background(Color.White)
-            .border(BorderStroke(1.dp, AptoOutlineVariant))
+            .background(brand(0xFFFFFFFF, 0xFFF9F8F6)) // web POC: condominium-admin --sidebar
+            .border(BorderStroke(1.dp, brand(0xFFE6E8EA, 0xFFE8E5DD)))
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 32.dp)) {
-            Image(painterResource(Res.drawable.logo), contentDescription = null, modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)))
+            if (isWebPlatform) AdminLogoMark(36.dp)
+            else Image(painterResource(Res.drawable.logo), contentDescription = null, modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)))
             Spacer(Modifier.width(12.dp))
             Column {
                 Text("Apto", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = AptoOnSurface)
@@ -78,9 +83,10 @@ fun AppSidebar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 2.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(if (isWebPlatform) 12.dp else 10.dp))
                     .background(if (active) AptoSecondaryContainer.copy(alpha = 0.10f) else Color.Transparent)
-                    .clickable { if (!active) onTabSelected(tab) }
+                    .then(if (active && isWebPlatform) Modifier.border(1.dp, AptoSecondaryContainer.copy(alpha = 0.15f), RoundedCornerShape(12.dp)) else Modifier)
+                    .clickable(interactionSource = null, indication = ripple(color = if (isWebPlatform) AptoSecondaryContainer else Color.Unspecified)) { if (!active || currentRoute == "unit_selection") onTabSelected(tab) }
                     .pointerHoverIcon(PointerIcon.Hand)
                     .padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
@@ -88,7 +94,7 @@ fun AppSidebar(
                 Spacer(Modifier.width(14.dp))
                 Text(
                     label,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = if (active) FontWeight.Bold else FontWeight.Medium),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = if (active && !isWebPlatform) FontWeight.Bold else FontWeight.Medium),
                     color = if (active) AptoSecondaryContainer else AptoOnSurface
                 )
             }

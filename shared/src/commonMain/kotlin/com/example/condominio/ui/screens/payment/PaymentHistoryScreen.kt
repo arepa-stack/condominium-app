@@ -324,7 +324,7 @@ private fun PaymentTableHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AptoSurfaceContainerLow)
+            .background(TableHeaderBg)
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -25,7 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 // ---------------------------------------------------------------------------
 
 fun decisionStatusAccent(status: DecisionStatus): Color = when (status) {
-    DecisionStatus.RECEPTION -> Color(0xFF1565C0)
+    DecisionStatus.RECEPTION -> brand(0xFF1565C0, 0xFF0369A1)
     DecisionStatus.VOTING -> AptoSecondary
     DecisionStatus.TIEBREAK_PENDING -> AptoStatusWarning
     DecisionStatus.RESOLVED -> AptoStatusSuccess
@@ -62,9 +62,11 @@ fun DecisionStatusBadge(status: DecisionStatus, modifier: Modifier = Modifier) {
         DecisionStatus.CANCELLED -> stringResource(Res.string.decisions_status_cancelled)
     }
 
+    val accent = decisionStatusAccent(status)
     Surface(
-        color = decisionStatusBg(status),
-        shape = RoundedCornerShape(4.dp),
+        color = badgeBg(decisionStatusBg(status), accent),
+        shape = badgeShape(RoundedCornerShape(4.dp)),
+        border = badgeBorder(accent),
         modifier = modifier
     ) {
         Text(
@@ -72,7 +74,7 @@ fun DecisionStatusBadge(status: DecisionStatus, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = decisionStatusTextColor(status),
+            color = badgeText(decisionStatusTextColor(status), accent),
             letterSpacing = TextUnit(0.8f, TextUnitType.Sp)
         )
     }

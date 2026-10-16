@@ -2,7 +2,12 @@ package com.example.condominio.ui.theme
 
 // TODO: Re-enable when a real dark palette is designed for Apto.
 // import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
+import androidx.compose.runtime.CompositionLocalProvider
+import com.example.condominio.ui.utils.isWebPlatform
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -51,6 +56,7 @@ private val DarkColorScheme = darkColorScheme(
     onError = Color.White,
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CondominioTheme(
     darkTheme: Boolean = false,
@@ -60,7 +66,13 @@ fun CondominioTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+        typography = platformTypography(),
+    ) {
+        // Web POC: hover/press state layers tinted with the brand (admin look) instead of Material's gray.
+        if (isWebPlatform) {
+            CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration(color = AptoSecondaryContainer), content = content)
+        } else {
+            content()
+        }
+    }
 }

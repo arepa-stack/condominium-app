@@ -134,3 +134,7 @@ val Typography = Typography(
         letterSpacing = 0.5.sp
     ),
 )
+
+/** Web POC: Outfit + DM Serif Display (condominium-admin). Android/iOS return [Typography] unchanged. */
+@androidx.compose.runtime.Composable
+internal expect fun platformTypography(): Typography

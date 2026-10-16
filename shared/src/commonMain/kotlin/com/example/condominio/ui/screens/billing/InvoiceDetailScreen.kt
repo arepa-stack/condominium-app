@@ -546,7 +546,8 @@ private fun InvoiceWideHeader(invoice: Invoice) {
 private fun InvoiceStatusPill(text: String, color: Color) {
     Surface(
         shape = CircleShape,
-        color = color.copy(alpha = 0.12f)
+        color = badgeBg(color.copy(alpha = 0.12f), color),
+        border = badgeBorder(color)
     ) {
         Text(
             text = text,
@@ -593,7 +594,7 @@ private fun InvoicePaymentsTable(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AptoSurfaceContainerLow)
+            .background(TableHeaderBg)
             .padding(horizontal = 24.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
