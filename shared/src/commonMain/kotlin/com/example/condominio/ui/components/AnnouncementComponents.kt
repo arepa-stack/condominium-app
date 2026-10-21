@@ -3,12 +3,13 @@ package com.example.condominio.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Visibility
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -266,18 +268,25 @@ fun FilterPillChip(
     val containerColor = if (selected) AptoSecondaryContainer else AptoSurfaceContainerLow
     val contentColor = if (selected) AptoOnSecondary else AptoOnSurfaceVariant
 
-    Box(
+    Row(
         modifier = modifier
+            // 48dp touch target around the 36dp pill (the pill itself keeps its size).
+            .minimumInteractiveComponentSize()
             .clip(CircleShape)
             .background(containerColor, CircleShape)
             .then(
                 if (!selected) Modifier.border(1.dp, AptoOutlineVariant, CircleShape)
                 else Modifier
             )
-            .clickable(onClick = onClick)
+            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
             .padding(horizontal = 24.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        // Check mark: selection is not shown by color alone.
+        if (selected) {
+            Icon(Icons.Default.Check, contentDescription = null, tint = contentColor, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,

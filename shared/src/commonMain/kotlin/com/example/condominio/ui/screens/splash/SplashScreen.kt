@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.condominio.ui.utils.rememberReducedMotion
 import kotlinx.coroutines.delay
 
 @Composable
@@ -114,16 +115,19 @@ private fun LoadingBar() {
     val totalWidth = 140.dp
     val barWidth = 42.dp
 
-    val infiniteTransition = rememberInfiniteTransition(label = "loadingBar")
-    val offsetFraction by infiniteTransition.animateFloat(
-        initialValue = -0.3f,
-        targetValue = 1.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1800, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "loadingBarOffset"
-    )
+    // Reduced motion: the bar rests centered in the track.
+    val offsetFraction = if (rememberReducedMotion()) (1f - barWidth / totalWidth) / 2f else {
+        val infiniteTransition = rememberInfiniteTransition(label = "loadingBar")
+        infiniteTransition.animateFloat(
+            initialValue = -0.3f,
+            targetValue = 1.3f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1800, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "loadingBarOffset"
+        ).value
+    }
 
     Box(
         modifier = Modifier

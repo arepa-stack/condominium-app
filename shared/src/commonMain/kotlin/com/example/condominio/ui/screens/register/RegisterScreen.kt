@@ -206,7 +206,7 @@ private fun RegisterFormBody(
     // Unit selector
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = stringResource(Res.string.register_select_unit_label),
+            text = stringResource(Res.string.register_select_unit_label).uppercase(),
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 4.dp)
@@ -263,14 +263,14 @@ private fun RegisterFormBody(
         LabeledOutlinedField(
             value = uiState.firstName,
             onValueChange = viewModel::onFirstNameChange,
-            label = stringResource(Res.string.register_first_name_label),
+            label = stringResource(Res.string.register_first_name_label).uppercase(),
             placeholder = stringResource(Res.string.register_first_name_hint),
             modifier = Modifier.weight(1f)
         )
         LabeledOutlinedField(
             value = uiState.lastName,
             onValueChange = viewModel::onLastNameChange,
-            label = stringResource(Res.string.register_last_name_label),
+            label = stringResource(Res.string.register_last_name_label).uppercase(),
             placeholder = stringResource(Res.string.register_last_name_hint),
             modifier = Modifier.weight(1f)
         )
@@ -279,7 +279,7 @@ private fun RegisterFormBody(
     LabeledOutlinedField(
         value = uiState.email,
         onValueChange = viewModel::onEmailChange,
-        label = stringResource(Res.string.register_email_label),
+        label = stringResource(Res.string.register_email_label).uppercase(),
         placeholder = stringResource(Res.string.register_email_hint),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
     )
@@ -289,7 +289,7 @@ private fun RegisterFormBody(
         LabeledOutlinedField(
             value = uiState.documentId,
             onValueChange = viewModel::onDocumentIdChange,
-            label = stringResource(Res.string.register_document_id_label),
+            label = stringResource(Res.string.register_document_id_label).uppercase(),
             placeholder = stringResource(Res.string.register_document_id_hint),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = {
@@ -300,7 +300,7 @@ private fun RegisterFormBody(
         LabeledOutlinedField(
             value = uiState.documentId,
             onValueChange = viewModel::onDocumentIdChange,
-            label = stringResource(Res.string.register_document_id_label),
+            label = stringResource(Res.string.register_document_id_label).uppercase(),
             placeholder = stringResource(Res.string.register_document_id_hint)
         )
     }
@@ -363,7 +363,7 @@ private fun BuildingCard(name: String) {
         }
         Column {
             Text(
-                text = "EDIFICIO",
+                text = stringResource(Res.string.register_building_label).uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

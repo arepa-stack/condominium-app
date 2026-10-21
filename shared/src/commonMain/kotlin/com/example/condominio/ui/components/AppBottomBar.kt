@@ -2,7 +2,8 @@ package com.example.condominio.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -37,11 +40,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.example.condominio.ui.theme.AptoNavInactive
 import com.example.condominio.ui.theme.brand
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import condominio.shared.generated.resources.Res
 import condominio.shared.generated.resources.nav_billboard
 import condominio.shared.generated.resources.nav_decisions
@@ -109,8 +113,8 @@ fun AppBottomBar(
     currentRoute: String?,
     onTabSelected: (BottomTab) -> Unit,
 ) {
-    val activeColor = brand(0xFFFF6B00, 0xFFB45309) // brand orange
-    val inactiveColor = Color(0xFF9CA3AF) // gray-400
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = AptoNavInactive
     val activeTab = BottomTab.fromRoute(currentRoute)
 
     Surface(
@@ -124,7 +128,9 @@ fun AppBottomBar(
                 .fillMaxWidth()
                 // Edge-to-edge: keep the tabs above the gesture/3-button bar (the white surface still fills behind it).
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                // 8dp + 48dp tabs + 8dp: same 64dp bar as before, with a 48dp touch target per tab.
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .selectableGroup(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -134,25 +140,28 @@ fun AppBottomBar(
                 val label = stringResource(tab.label)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                     // Unbounded round ripple (like Material's NavigationBar) instead of the default square one.
-                    modifier = Modifier.clickable(
-                        interactionSource = null,
-                        indication = ripple(bounded = false, radius = 32.dp)
-                    ) { if (!active) onTabSelected(tab) }
+                    modifier = Modifier
+                        .selectable(
+                            selected = active,
+                            interactionSource = null,
+                            indication = ripple(bounded = false, radius = 32.dp),
+                            role = Role.Tab
+                        ) { if (!active) onTabSelected(tab) }
+                        .heightIn(min = 48.dp)
+                        .widthIn(min = 48.dp)
                 ) {
                     Icon(
                         imageVector = tab.icon(active),
-                        contentDescription = label,
+                        contentDescription = null, // the label below names the tab
                         tint = color,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp
-                        ),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = color
                     )
                 }
@@ -170,8 +179,8 @@ fun AppNavRail(
     currentRoute: String?,
     onTabSelected: (BottomTab) -> Unit,
 ) {
-    val activeColor = brand(0xFFFF6B00, 0xFFB45309) // brand orange
-    val inactiveColor = Color(0xFF9CA3AF) // gray-400
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = AptoNavInactive
     val activeTab = BottomTab.fromRoute(currentRoute)
 
     NavigationRail(
@@ -185,8 +194,9 @@ fun AppNavRail(
             NavigationRailItem(
                 selected = active,
                 onClick = { if (!active || currentRoute == "unit_selection") onTabSelected(tab) },
-                icon = { Icon(imageVector = tab.icon(active), contentDescription = label) },
-                label = { Text(text = label, fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                // NavigationRailItem already exposes Role.Tab + selected; the label names it, so the icon is decorative.
+                icon = { Icon(imageVector = tab.icon(active), contentDescription = null) },
+                label = { Text(text = label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)) },
                 colors = NavigationRailItemDefaults.colors(
                     selectedIconColor = activeColor,
                     selectedTextColor = activeColor,

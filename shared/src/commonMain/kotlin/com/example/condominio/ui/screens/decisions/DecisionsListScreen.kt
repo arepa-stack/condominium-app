@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,6 +42,7 @@ import com.example.condominio.ui.components.formatDecisionDate
 import com.example.condominio.ui.components.formatDecisionDeadline
 import com.example.condominio.ui.theme.*
 import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.example.condominio.ui.utils.formatArgs
 import org.koin.compose.viewmodel.koinViewModel
@@ -201,6 +203,7 @@ private fun DecisionFilterRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .selectableGroup()
                 // 8dp under the header; + the grid's / WebEmptyFrame's 8dp top = 16dp to the content.
                 .padding(start = pagePadding(), end = pagePadding(), top = 8.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -235,7 +238,9 @@ private fun DecisionFilterRow(
     }
 
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.selectableGroup(),
+        // 6dp + the chips' 48dp touch target = the previous 12dp + 36dp pill: same row height.
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
@@ -406,7 +411,7 @@ private fun DecisionQuoteChip(count: Int, resolved: Boolean) {
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = stringResource(Res.string.decisions_quote_count, count),
+                text = pluralStringResource(Res.plurals.decisions_quote_count, count, count),
                 style = MaterialTheme.typography.labelLarge,
                 color = contentColor
             )

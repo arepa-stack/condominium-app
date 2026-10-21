@@ -25,10 +25,10 @@ import com.example.condominio.ui.utils.isWebPlatform
 // Delete this file + its call sites to drop the POC.
 // =============================================================================
 
-// --- Badges: pill, accent/20 fill, accent/30 border, accent text ---------------
+// --- Badges: pill, accent/20 fill, accent/30 border, darkened accent text (AA) -----
 fun badgeShape(native: Shape): Shape = if (isWebPlatform) CircleShape else native
 fun badgeBg(native: Color, accent: Color): Color = if (isWebPlatform) accent.copy(alpha = 0.2f) else native
-fun badgeText(native: Color, accent: Color): Color = if (isWebPlatform) accent else native
+fun badgeText(native: Color, accent: Color): Color = if (isWebPlatform) onStatusContainer(accent) else native
 fun badgeBorder(accent: Color): BorderStroke? = if (isWebPlatform) BorderStroke(1.dp, accent.copy(alpha = 0.3f)) else null
 
 // --- Tables: transparent header row (admin) instead of a filled band ------------

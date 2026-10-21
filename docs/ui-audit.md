@@ -6,7 +6,8 @@ adaptadas a Compose Multiplatform (en web todo se dibuja en un `<canvas>`, así 
 se traducen a `contentDescription`, `semantics`, `KeyboardOptions`, `maxLines`, etc.).
 
 - **Método:** 9 revisiones por pantalla, leyendo el código completo. **Sin ejecución**: los hallazgos
-  de producto (bloque A) deben reproducirse en la app antes de corregirse.
+  de producto (bloque A) están confirmados en código (2026-10-21), pero conviene reproducirlos en la app
+  al corregirlos.
 - **Alcance:** Android, iOS y web comparten este código; salvo que se indique, cada hallazgo aplica a todas
   las plataformas.
 - **Total aproximado:** ~480 hallazgos. Este documento lista los relevantes con ID; el resto queda como
@@ -28,10 +29,10 @@ Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit)
 
 | Bloque | Ítems | 🔍 | ⬜ | 🔄 | ✅ |
 |---|---|---|---|---|---|
-| A. Errores de producto | 14 | 14 | 0 | 0 | 0 |
-| B. Componentes compartidos | 10 | 0 | 10 | 0 | 0 |
-| C. Textos e i18n | 9 | 0 | 9 | 0 | 0 |
-| D. Contraste | 6 | 0 | 6 | 0 | 0 |
+| A. Errores de producto | 15 | 0 | 14 | 0 | 1 |
+| B. Componentes compartidos | 10 | 0 | 0 | 0 | 10 |
+| C. Textos e i18n | 9 | 0 | 4 | 1 | 4 |
+| D. Contraste | 6 | 0 | 2 | 0 | 4 |
 | E. Por pantalla (prioritarios) | 37 | 0 | 37 | 0 | 0 |
 
 ---
@@ -40,60 +41,61 @@ Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit)
 
 | ID | Pantalla | Problema | Dónde | Estado | Ref |
 |---|---|---|---|---|---|
-| A-01 | Pagos | El monto con coma decimal ("150,50") da "Monto inválido": se parsea con `toDoubleOrNull()` | `CreatePaymentScreen.kt:774`, `CreatePaymentViewModel.kt:117` | 🔍 Verificar | |
-| A-02 | Pagos (iOS) | `formatCurrency` en iOS devuelve separador de miles; al volver a parsearlo, montos ≥ 1000 dan "Monto inválido" | `CreatePaymentViewModel.kt:110`, `KmpFormatters.ios.kt:15` | 🔍 Verificar | |
-| A-03 | Pagos | Marcar/desmarcar facturas sobrescribe sin aviso el monto que escribió el usuario | `CreatePaymentViewModel.kt:110` | 🔍 Verificar | |
-| A-04 | Votaciones | Presupuesto "1.500" (miles en es) se envía como 1.5 sin avisar; "1500,50" se rechaza | `DecisionSheetsStubs.kt:121` | 🔍 Verificar | |
-| A-05 | Dashboard | Muestra "¡Estás al día!" cuando el saldo aún carga o falló (`totalDebt` por defecto 0.0) | `DashboardScreen.kt:219, 801`, `DashboardViewModel.kt:69-80` | 🔍 Verificar | |
-| A-06 | Dashboard | Doble carga al abrir (`init` + `ON_RESUME`) y `refresh()` no cancela el job anterior → datos viejos / de otra unidad | `DashboardViewModel.kt:29, 93-96`, `DashboardScreen.kt:97` | 🔍 Verificar | |
-| A-07 | Varias | Errores de red mostrados como vacío o pantalla en blanco, sin reintentar: historial de pagos, crear pago ("No tienes recibos pendientes"), detalle de pago, detalle de factura ("No se encontraron facturas"), dashboard, selector de propiedad | `PaymentHistoryViewModel.kt:53`, `CreatePaymentViewModel.kt:56`, `PaymentDetailScreen.kt:241`, `InvoiceDetailScreen.kt:163-184`, `DashboardScreen.kt:108`, `UnitSelectionViewModel.kt:49` | 🔍 Verificar | |
-| A-08 | Facturas | El error de la lista nunca se limpia: tras un refresh exitoso sigue mostrándose | `InvoiceListViewModel.kt:29, 37` | 🔍 Verificar | |
-| A-09 | Perfil | Preferencias de notificación solo en memoria: no se guardan ni se envían a la API | `NotificationSettingsScreen.kt:31-33` | 🔍 Verificar | |
-| A-10 | Perfil | Editar perfil: la unidad es editable pero no se envía (solo `name`); además bloquea guardar si no hay unidad | `EditProfileScreen.kt:85-90`, `EditProfileViewModel.kt:159-171` | 🔍 Verificar | |
-| A-11 | Perfil | Cambiar contraseña pide la actual pero el backend no la verifica (solo envía `newPassword`) | `ChangePasswordScreen.kt:232`, `RemoteAuthRepository.kt:226-228` | 🔍 Verificar | |
-| A-12 | Pagos / Facturas | Botones que no hacen nada: "Descargar recibo" (solo `println`), "Descargar factura" (TODO), "Contactar soporte" (onClick vacío) | `PaymentDetailScreen.kt:71-75, 117, 354`, `CondominioNavGraph.kt:351` | 🔍 Verificar | |
-| A-13 | Votaciones | Porcentajes sin formato ("33.333333333333336%"); empates reciben #1/#2 y "Liderando" pese al aviso "Empate técnico" | `DecisionDetailScreen.kt:1150, 170-175, 1082-1091` | 🔍 Verificar | |
-| A-14 | Primer login | Sin salida: no se puede cerrar sesión ni volver si el usuario no cambia la contraseña | `FirstLoginChangePasswordScreen.kt:48-86` | 🔍 Verificar | |
+| A-01 | Pagos | El monto con coma decimal ("150,50") da "Monto inválido": se parsea con `toDoubleOrNull()` | `CreatePaymentScreen.kt:774`, `CreatePaymentViewModel.kt:117` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-02 | Pagos (iOS) | `formatCurrency` en iOS devuelve separador de miles; al volver a parsearlo, montos ≥ 1000 dan "Monto inválido" | `CreatePaymentViewModel.kt:110`, `KmpFormatters.ios.kt:15` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-03 | Pagos | Marcar/desmarcar facturas sobrescribe sin aviso el monto que escribió el usuario | `CreatePaymentViewModel.kt:110` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-04 | Votaciones | Presupuesto "1.500" (miles en es) se envía como 1.5 sin avisar; "1500,50" se rechaza | `DecisionSheetsStubs.kt:121` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-05 | Dashboard | Muestra "¡Estás al día!" cuando el saldo aún carga o falló (`totalDebt` por defecto 0.0) | `DashboardScreen.kt:219, 801`, `DashboardViewModel.kt:69-80` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-06 | Dashboard | Doble carga al abrir (`init` + `ON_RESUME`) y `refresh()` no cancela el job anterior → datos viejos / de otra unidad | `DashboardViewModel.kt:29, 93-96`, `DashboardScreen.kt:97` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-07 | Varias | Errores de red mostrados como vacío o pantalla en blanco, sin reintentar: historial de pagos, crear pago ("No tienes recibos pendientes"), detalle de pago, detalle de factura ("No se encontraron facturas"), dashboard, selector de propiedad | `PaymentHistoryViewModel.kt:53`, `CreatePaymentViewModel.kt:56`, `PaymentDetailScreen.kt:241`, `InvoiceDetailScreen.kt:163-184`, `DashboardScreen.kt:108`, `UnitSelectionViewModel.kt:49` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-08 | Facturas | El error de la lista nunca se limpia: tras un refresh exitoso sigue mostrándose | `InvoiceListViewModel.kt:29, 37` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-09 | Perfil | Preferencias de notificación solo en memoria: no se guardan ni se envían a la API | `NotificationSettingsScreen.kt:31-33` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-10 | Perfil | Editar perfil: la unidad es editable pero no se envía (solo `name`); además bloquea guardar si no hay unidad | `EditProfileScreen.kt:85-90`, `EditProfileViewModel.kt:53-75`, `RemoteAuthRepository.kt:204-210` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-11 | Perfil | Cambiar contraseña pide la actual pero el backend no la verifica (solo envía `newPassword`) | `ChangePasswordScreen.kt:232`, `RemoteAuthRepository.kt:226-228` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-12 | Pagos / Facturas | Botones que no hacen nada: "Descargar recibo" (solo `println`), "Descargar factura" (TODO), "Contactar soporte" (onClick vacío) | `PaymentDetailScreen.kt:71-75, 117, 354`, `CondominioNavGraph.kt:351` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-13 | Votaciones | Porcentajes sin formato ("33.333333333333336%"); empates reciben #1/#2 y "Liderando" pese al aviso "Empate técnico" | `DecisionDetailScreen.kt:1150, 170-175, 1082-1091` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-14 | Primer login | Sin salida: no se puede cerrar sesión ni volver si el usuario no cambia la contraseña | `FirstLoginChangePasswordScreen.kt:48-86` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-15 | Votaciones | Detalle de votación muestra error de JSON si un presupuesto no tiene archivo (`file_url` null) | `DecisionModels.kt:61` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — `fileUrl: String?`; sin archivo se oculta "Ver archivo" |
 
 ## B. Componentes compartidos — un arreglo corrige todas las pantallas
 
 | ID | Componente | Problema | Dónde | Estado | Ref |
 |---|---|---|---|---|---|
-| B-01 | `TopBarWithBack` | Botón atrás sin nombre accesible (`Res.string.back` ya existe); título sin `heading()` ni ellipsis | `TopBarWithBack.kt:49, 79, 55-72` | ⬜ Pendiente | |
-| B-02 | `LabeledOutlinedField` | La etiqueta es un `Text` aparte, no asociado al campo; no expone `isError`, `supportingText` ni `contentType` (autofill) | `LabeledOutlinedField.kt:47-71` | ⬜ Pendiente | |
-| B-03 | `AppSidebar` | Ítems sin `selectable(role = Role.Tab)` ni `selectableGroup()`: no se anuncia la sección activa | `AppShell.kt:61, 89` | ⬜ Pendiente | |
-| B-04 | `AppBottomBar` / `AppNavRail` | Sin `Role.Tab`/selected; `contentDescription = label` duplica el texto; área táctil ~38dp; `fontSize` 10/11sp fijo | `AppBottomBar.kt:135-154, 188-189` | ⬜ Pendiente | |
-| B-05 | `StatusBadge` / `AdminWebStyle` | Texto del color de estado sobre el mismo color al 10–20%: contraste 2–3.8:1. Falta un token `on*Container` por estado | `StatusBadge.kt:35`, `AdminWebStyle.kt:30-31` | ⬜ Pendiente | |
-| B-06 | `LoadingState` / `CondoButtons` | Spinners sin semántica: no se anuncia la carga y el botón queda sin nombre | `LoadingState.kt:29`, `CondoButtons.kt:41-42` | ⬜ Pendiente | |
-| B-07 | `Type.kt` | Ningún estilo con `fontFeatureSettings = "tnum"`: montos y tablas desalineados | `Type.kt:21-136` | ⬜ Pendiente | |
-| B-08 | `FilterPillChip` | Sin `Role.Tab`/selected, ~36dp de alto, selección solo por color | `AnnouncementComponents.kt:266-278` | ⬜ Pendiente | |
-| B-09 | `NavGraph` | Transición fade de 700 ms, no respeta "reducir movimiento" | `CondominioNavGraph.kt:192-203` | ⬜ Pendiente | |
-| B-10 | `ShimmerEffect` / animaciones infinitas | No respetan reduced motion (shimmer, escáner QR, barra del splash) | `ShimmerEffect.kt:19-27`, `QrScannerScreen.kt:151`, `SplashScreen.kt:117` | ⬜ Pendiente | |
+| B-01 | `TopBarWithBack` | Botón atrás sin nombre accesible (`Res.string.back` ya existe); título con `maxLines = 1` pero sin `overflow = Ellipsis` ni `heading()` | `TopBarWithBack.kt:49, 79, 55-72` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| B-02 | `LabeledOutlinedField` | La etiqueta es un `Text` aparte, no asociado al campo; no expone `contentType` (autofill). `isError` y `supportingText` ya existen, pero las pantallas no los usan (ver E-L4, E-P1) | `LabeledOutlinedField.kt:47-71` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — `contentType` disponible; aplicarlo en las pantallas es E-L1 |
+| B-03 | `AppSidebar` | Ítems sin `selectable(role = Role.Tab)` ni `selectableGroup()`: no se anuncia la sección activa | `AppShell.kt:61, 89` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| B-04 | `AppBottomBar` / `AppNavRail` | Sin `Role.Tab`/selected; `contentDescription = label` duplica el texto; área táctil ~38dp; `fontSize` 10/11sp fijo | `AppBottomBar.kt:135-154, 188-189` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| B-05 | `StatusBadge` / `AdminWebStyle` | Texto del color de estado sobre el mismo color al 10–20%: contraste 2–3.8:1. Falta un token `on*Container` por estado | `StatusBadge.kt:35`, `AdminWebStyle.kt:30-31` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — `onStatusContainer()` + `AptoOnWarningContainer` (`Color.kt`) |
+| B-06 | `LoadingState` / `CondoButtons` | Spinners sin semántica: no se anuncia la carga y el botón queda sin nombre | `LoadingState.kt:29`, `CondoButtons.kt:41-42` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| B-07 | `Type.kt` | Ningún estilo con `fontFeatureSettings = "tnum"`: montos y tablas desalineados | `Type.kt:21-136` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| B-08 | `FilterPillChip` | Sin `Role.Tab`/selected, ~36dp de alto, selección solo por color | `AnnouncementComponents.kt:266-278` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| B-09 | `NavGraph` | Transición fade de 700 ms (la de por defecto de `NavHost`: no hay `enterTransition`/`exitTransition` propios), no respeta "reducir movimiento" | `CondominioNavGraph.kt:192-203` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — fade 200 ms; sin transición con reducir movimiento (`ui/utils/ReducedMotion.kt`) |
+| B-10 | `ShimmerEffect` / animaciones infinitas | No respetan reduced motion (shimmer, escáner QR, barra del splash) | `ShimmerEffect.kt:19-27`, `QrScannerScreen.kt:151`, `SplashScreen.kt:117` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
 
 ## C. Textos e i18n
 
 | ID | Problema | Dónde | Estado | Ref |
 |---|---|---|---|---|
 | C-01 | ~60 textos visibles hardcodeados en Kotlin (muchos ya existen en `strings.xml`): sobre todo Pagos (~30), Cartelera, splash/marca ("Tu condominio, en orden.", "VIVIENDA ELEVADA", "Apto by Nibs") | `PaymentHistoryScreen.kt`, `PaymentDetailScreen.kt`, `CreatePaymentScreen.kt`, `BillboardDetailScreen.kt`, `AnnouncementComponents.kt:41-47, 176`, `AppShell.kt:74-133`, `SplashScreen.kt` | ⬜ Pendiente | |
-| C-02 | Claves faltantes en `values-en`: `download_invoice`, `no_invoices_for_filter`, `billboard_detail_title`, `decisions_see_detail`, `decisions_urgent`, `decisions_finalized_on` | `values-en/strings.xml` | ⬜ Pendiente | |
-| C-03 | Title Case en español ("Deuda Total", "Iniciar Sesión", "Cerrar Sesión", "Historial de Pagos"…): pasar a sentence case | `values/strings.xml` | ⬜ Pendiente | |
-| C-04 | Mayúsculas dentro del texto ("GANADOR", "CORREO ELECTRÓNICO", estados): aplicar con estilo, no en el recurso | `values/strings.xml`, `RegisterScreen.kt` | ⬜ Pendiente | |
+| C-02 | Claves faltantes en `values-en`: `download_invoice`, `no_invoices_for_filter`, `billboard_detail_title`, `decisions_see_detail`, `decisions_urgent`, `decisions_finalized_on` (y `settings`, `share`, sin uso). A la inversa, `values-en` tiene 36 claves que no existen en `values` (caja chica: `cat_*`, `category_*`, `register_expense`…), todas sin uso: borrar | `values-en/strings.xml` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — 36 claves en-only borradas (sin uso verificado); 8 traducciones añadidas |
+| C-03 | Title Case en español ("Deuda Total", "Iniciar Sesión", "Cerrar Sesión", "Historial de Pagos"…): pasar a sentence case | `values/strings.xml` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| C-04 | Mayúsculas dentro del texto ("GANADOR", "CORREO ELECTRÓNICO", estados): aplicar con estilo, no en el recurso | `values/strings.xml`, `RegisterScreen.kt` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
 | C-05 | Tono mezclado tú / usted / vos ("Seleccione", "acérquese", "Debés") | `values/strings.xml:144`, `CreatePaymentScreen.kt:500` | ⬜ Pendiente | |
-| C-06 | "..." en vez de "…" (`loading`, `qr_scan_scanning`) y falta de ortografía "Registrate" | `values*/strings.xml:24, 79` | ⬜ Pendiente | |
-| C-07 | Plurales armados a mano ("1 presupuestos", "entendido(s)"): usar `<plurals>` | `values*/strings.xml` | ⬜ Pendiente | |
+| C-06 | "..." en vez de "…" (`loading`, `qr_scan_scanning`) y falta de ortografía "Registrate" | `values*/strings.xml:24, 79` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
+| C-07 | Plurales armados a mano ("1 presupuestos", "entendido(s)", "recibo(s) seleccionado(s)"): usar `<plurals>` | `values*/strings.xml`, `CreatePaymentScreen.kt:357, 986` | 🔄 En curso | `worktree-agent-a8dd877d108cce00f` — `<plurals>` de `strings.xml` hechos; falta el plural armado en `CreatePaymentScreen.kt` (paso posterior) |
 | C-08 | Fechas: formatos distintos entre pantallas, ISO crudo en cartelera, meses en español también en inglés | `InvoiceListScreen.kt:482`, `InvoiceDetailScreen.kt:749`, `BillboardDetailScreen.kt:313`, `PaymentHistoryScreen.kt:258`, `DecisionComponents.kt:87` | ⬜ Pendiente | |
-| C-09 | `$` hardcodeado en lugar de `currency_amount` (puede contradecir la moneda mostrada) | `DashboardScreen.kt:597`, `InvoiceDetailScreen.kt:353`, `DecisionDetailScreen.kt:848` | ⬜ Pendiente | |
+| C-09 | `$` hardcodeado en lugar de `currency_amount` (puede contradecir la moneda mostrada) | `DashboardScreen.kt:597`, `InvoiceDetailScreen.kt:353`, `DecisionDetailScreen.kt:848, 1345`, `DecisionSheetsStubs.kt:373`, `CreatePaymentScreen.kt:306, 351, 418` | ⬜ Pendiente | |
 
 ## D. Contraste (WCAG AA: 4.5:1 texto normal, 3:1 texto grande / íconos)
 
 | ID | Par | Contraste | Dónde | Estado | Ref |
 |---|---|---|---|---|---|
-| D-01 | Badges de estado (web: todos; móvil: aviso y pendiente) | 1.99–3.82:1 | `StatusBadge.kt`, `AdminWebStyle.kt` (ver B-05) | ⬜ Pendiente | |
-| D-02 | Pestaña inactiva barra inferior/rail (#9CA3AF) | 2.39–2.54:1 | `AppBottomBar.kt:113, 174` | ⬜ Pendiente | |
-| D-03 | Pestaña activa móvil (#FF6B00 sobre blanco) | 2.86:1 | `AppBottomBar.kt:112` | ⬜ Pendiente | |
+| D-01 | Badges de estado (web: todos; móvil: aviso y pendiente) | 1.99–3.82:1 | `StatusBadge.kt`, `AdminWebStyle.kt` (ver B-05) | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — ver B-05; móvil ≥ 4.9:1, web ≥ 4.8:1 |
+| D-02 | Pestaña inactiva barra inferior/rail (#9CA3AF) | 2.39–2.54:1 | `AppBottomBar.kt:113, 174` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — `AptoNavInactive` #6B7280: 4.83:1 (blanco), 4.55:1 (rail web) |
+| D-03 | Pestaña activa móvil (#FF6B00 sobre blanco) | 2.86:1 | `AppBottomBar.kt:112` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — activa = `colorScheme.primary`: #C45006 4.67:1 (móvil), #B45309 4.73:1 (rail web) |
 | D-04 | Texto blanco del panel de marca del login sobre el degradado | 1.79–3.19:1 | `AppShell.kt:124-135` | ⬜ Pendiente | |
-| D-05 | Blanco sobre el primary móvil (#DB5A07) | 3.83:1 | `Color.kt:28` | ⬜ Pendiente | |
-| D-06 | Textos con `onSurface` al 50–60% de alfa (perfil, notificaciones, primer login) | < 4.5:1 (estimado) | `EditProfileScreen.kt:72`, `NotificationSettingsScreen.kt:80`, `FirstLoginChangePasswordScreen.kt:160` | ⬜ Pendiente | |
+| D-05 | Blanco sobre el primary móvil (#DB5A07) | 3.83:1 | `Color.kt:28` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — #DB5A07 → #C45006: 4.67:1 |
+| D-06 | Textos con `onSurface` al 50–60% de alfa (perfil, notificaciones, primer login) | α 0.5: 3.3:1; α 0.6: ~4.5:1 (en el límite) | `EditProfileScreen.kt:72`, `NotificationSettingsScreen.kt:80`, `FirstLoginChangePasswordScreen.kt:160` | ⬜ Pendiente | |
 
 Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco sobre primary web (5.02:1).
 
@@ -104,7 +106,7 @@ Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco s
 |---|---|---|---|---|
 | E-L1 | Ningún campo con autofill (`contentType` Email/Password/NewPassword/nombres) ni `autoCorrectEnabled = false` en email/códigos | `LoginScreen.kt:242-287`, `RegisterScreen.kt:263-305`, `ChangePasswordScreen.kt:298` | ⬜ Pendiente | |
 | E-L2 | Enter repetido dispara el login dos veces (`onDone` no mira `isLoading`); email sin `trim()` | `LoginScreen.kt:283-286`, `LoginViewModel.kt:67` | ⬜ Pendiente | |
-| E-L3 | FirstLogin y Register no se pueden enviar desde el teclado en móvil (sin ImeAction) | `FirstLoginChangePasswordScreen.kt:138-143`, `RegisterScreen.kt:300-305` | ⬜ Pendiente | |
+| E-L3 | FirstLogin y Register no se pueden enviar desde el teclado en móvil (en web Enter ya envía; en móvil no hay ImeAction) | `FirstLoginChangePasswordScreen.kt:138-143`, `RegisterScreen.kt:300-305` | ⬜ Pendiente | |
 | E-L4 | Errores sin `liveRegion` ni `isError` por campo; fallos silenciosos si `exception.message` es null | `ForgotPasswordViewModel.kt:38`, `FirstLoginChangePasswordViewModel.kt:57`, `RegisterViewModel.kt:95`, `LoginViewModel.kt:90` | ⬜ Pendiente | |
 | E-L5 | Escáner QR: cerrar es `Text("✕")` sin descripción y de 40dp; código pasado sin codificar a la ruta | `QrScannerScreen.kt:97-105, 60-69` | ⬜ Pendiente | |
 | E-L6 | Términos aceptados al registrarse sin enlace a los documentos | `RegisterScreen.kt:335` | ⬜ Pendiente | |
@@ -190,3 +192,5 @@ Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco s
 | Fecha | Cambio |
 |---|---|
 | 2026-10-16 | Auditoría inicial (9 revisiones por pantalla, rama `poc/web-admin-theme`) |
+| 2026-10-21 | Revisión contra el código actual (sin cambios desde la auditoría): bloque A confirmado en código → ⬜ Pendiente; corregidas las descripciones de A-10, B-01, B-02, B-09, C-02, C-07, C-09, D-06 y E-L3 |
+| 2026-10-21 | Paso 0 (`worktree-agent-a8dd877d108cce00f`): B-01…B-10, C-02, C-03, C-04, C-06, D-01, D-02, D-03 y D-05 → ✅; C-07 → 🔄 (falta `CreatePaymentScreen.kt`). A-15 (nuevo, hallado probando web contra DEV) → ✅. Primary móvil #DB5A07 → #C45006; nuevos `AptoNavInactive`, `AptoOnWarningContainer`, `onStatusContainer()` y `rememberReducedMotion()` |

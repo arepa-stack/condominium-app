@@ -67,6 +67,7 @@ import com.example.condominio.ui.utils.isWebPlatform
 import com.example.condominio.ui.theme.badgeBg
 import com.example.condominio.ui.theme.badgeShape
 import com.example.condominio.ui.theme.badgeBorder
+import com.example.condominio.ui.theme.onStatusContainer
 import com.example.condominio.ui.theme.TableHeaderBg
 import com.example.condominio.ui.theme.statCardBg
 import com.example.condominio.ui.theme.statCardBorder
@@ -605,9 +606,9 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
 @Composable
 private fun PaymentStatusBadge(status: PaymentStatus) {
     val statusLabel = when (status) {
-        PaymentStatus.APPROVED -> stringResource(Res.string.status_approved_upper)
-        PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper)
-        PaymentStatus.PENDING -> stringResource(Res.string.status_pending)
+        PaymentStatus.APPROVED -> stringResource(Res.string.status_approved_upper).uppercase()
+        PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper).uppercase()
+        PaymentStatus.PENDING -> stringResource(Res.string.status_pending).uppercase()
     }
 
     val statusBg = when (status) {
@@ -635,7 +636,7 @@ private fun PaymentStatusBadge(status: PaymentStatus) {
                     fontSize = 9.sp,
                     letterSpacing = 0.5.sp
                 ),
-                color = statusColor
+                color = onStatusContainer(statusColor)
         )
     }
 }

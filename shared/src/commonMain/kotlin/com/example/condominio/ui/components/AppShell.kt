@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,6 +77,8 @@ fun AppSidebar(
                 Text("VIVIENDA ELEVADA", style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp, fontSize = 9.sp), color = AptoOnSurfaceVariant)
             }
         }
+        // Tabs: announced as a tab list with the current section selected.
+        Column(Modifier.selectableGroup()) {
         BottomTab.entries.forEach { tab ->
             val active = tab == activeTab
             val label = stringResource(tab.label)
@@ -86,7 +90,12 @@ fun AppSidebar(
                     .clip(RoundedCornerShape(if (isWebPlatform) 12.dp else 10.dp))
                     .background(if (active) AptoSecondaryContainer.copy(alpha = 0.10f) else Color.Transparent)
                     .then(if (active && isWebPlatform) Modifier.border(1.dp, AptoSecondaryContainer.copy(alpha = 0.15f), RoundedCornerShape(12.dp)) else Modifier)
-                    .clickable(interactionSource = null, indication = ripple(color = if (isWebPlatform) AptoSecondaryContainer else Color.Unspecified)) { if (!active || currentRoute == "unit_selection") onTabSelected(tab) }
+                    .selectable(
+                        selected = active,
+                        interactionSource = null,
+                        indication = ripple(color = if (isWebPlatform) AptoSecondaryContainer else Color.Unspecified),
+                        role = Role.Tab
+                    ) { if (!active || currentRoute == "unit_selection") onTabSelected(tab) }
                     .pointerHoverIcon(PointerIcon.Hand)
                     .padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
@@ -98,6 +107,7 @@ fun AppSidebar(
                     color = if (active) AptoSecondaryContainer else AptoOnSurface
                 )
             }
+        }
         }
         Spacer(Modifier.weight(1f))
         Text("Apto by Nibs", style = MaterialTheme.typography.labelSmall, color = AptoOnSurfaceVariant, modifier = Modifier.padding(start = 12.dp))

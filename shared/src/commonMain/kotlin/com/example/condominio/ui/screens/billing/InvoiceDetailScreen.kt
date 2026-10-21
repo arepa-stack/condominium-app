@@ -285,11 +285,11 @@ private fun InvoiceStatusHeader(invoice: Invoice) {
 @Composable
 private fun resolveInvoiceStatusVisuals(status: InvoiceStatus): Triple<ImageVector, Color, String> {
     return when (status) {
-        InvoiceStatus.PAID -> Triple(Icons.Default.CheckCircle, AptoStatusSuccess, stringResource(Res.string.status_paid))
-        InvoiceStatus.OVERDUE -> Triple(Icons.Default.Warning, AptoStatusError, stringResource(Res.string.status_overdue))
-        InvoiceStatus.CANCELLED -> Triple(Icons.Default.Warning, AptoStatusError, stringResource(Res.string.status_cancelled))
-        InvoiceStatus.PARTIAL -> Triple(Icons.Default.Warning, AptoSecondaryContainer, stringResource(Res.string.status_partial))
-        InvoiceStatus.PENDING -> Triple(Icons.Default.Warning, AptoSecondaryContainer, stringResource(Res.string.status_pending))
+        InvoiceStatus.PAID -> Triple(Icons.Default.CheckCircle, AptoStatusSuccess, stringResource(Res.string.status_paid).uppercase())
+        InvoiceStatus.OVERDUE -> Triple(Icons.Default.Warning, AptoStatusError, stringResource(Res.string.status_overdue).uppercase())
+        InvoiceStatus.CANCELLED -> Triple(Icons.Default.Warning, AptoStatusError, stringResource(Res.string.status_cancelled).uppercase())
+        InvoiceStatus.PARTIAL -> Triple(Icons.Default.Warning, AptoSecondaryContainer, stringResource(Res.string.status_partial).uppercase())
+        InvoiceStatus.PENDING -> Triple(Icons.Default.Warning, AptoSecondaryContainer, stringResource(Res.string.status_pending).uppercase())
     }
 }
 
@@ -553,7 +553,7 @@ private fun InvoiceStatusPill(text: String, color: Color) {
             text = text,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = color,
+            color = onStatusContainer(color),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
         )
     }
