@@ -21,7 +21,7 @@
     <!-- QR Scanner Screen -->
     <string name="qr_scan_title">Scan your building\'s QR code</string>
     <string name="qr_scan_subtitle">Align the code inside the frame to start registration.</string>
-    <string name="qr_scan_scanning">SCANNING...</string>
+    <string name="qr_scan_scanning">Scanning…</string>
     <string name="qr_enter_manually">Enter code manually</string>
     <string name="qr_manual_dialog_title">Enter building code</string>
     <string name="qr_manual_dialog_hint">Paste the code you were given</string>
@@ -32,15 +32,15 @@
     <!-- Register Form Screen -->
     <string name="register_title">User Registration</string>
     <string name="register_subtitle">Complete your details to access your building\'s services.</string>
-    <string name="register_building_label">BUILDING</string>
-    <string name="register_select_unit_label">SELECT YOUR UNIT</string>
-    <string name="register_first_name_label">FIRST NAME</string>
-    <string name="register_last_name_label">LAST NAME</string>
-    <string name="register_email_label">EMAIL ADDRESS</string>
+    <string name="register_building_label">Building</string>
+    <string name="register_select_unit_label">Select your unit</string>
+    <string name="register_first_name_label">First name</string>
+    <string name="register_last_name_label">Last name</string>
+    <string name="register_email_label">Email address</string>
     <string name="register_first_name_hint">e.g. John</string>
     <string name="register_last_name_hint">e.g. Smith</string>
     <string name="register_email_hint">name@example.com</string>
-    <string name="register_document_id_label">ID / PASSPORT</string>
+    <string name="register_document_id_label">ID / passport</string>
     <string name="register_document_id_hint">e.g. V-12345678</string>
     <string name="register_submit">Register</string>
     <string name="register_terms_notice">By registering, you accept our Terms of Service and Privacy Policy.</string>
@@ -76,7 +76,7 @@
     <string name="cancel">Cancel</string>
     <string name="accept">Accept</string>
     <string name="save">Save</string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading…</string>
     <string name="error_unknown">Unknown error</string>
 
     <!-- Register Screen -->
@@ -91,19 +91,7 @@
 
     <!-- Petty Cash -->
     <string name="petty_cash_title">Petty Cash</string>
-    <string name="recent_activity">Recent Activity</string>
-    <string name="no_transactions">No transactions registered</string>
     <string name="available_balance">Available Balance</string>
-    <string name="register_income">Register Income</string>
-    <string name="register_expense">Register Expense</string>
-    <string name="insufficient_balance">Insufficient Balance</string>
-    <string name="evidence_receipt">Evidence / Receipt</string>
-    <string name="category_repair">Repairs</string>
-    <string name="category_cleaning">Cleaning</string>
-    <string name="category_emergency">Emergency</string>
-    <string name="category_office">Office</string>
-    <string name="category_utilities">Utilities</string>
-    <string name="category_other">Other</string>
 
     <!-- Profile -->
     <string name="profile_title">Profile</string>
@@ -155,25 +143,9 @@
     <string name="error_user_unit_not_found">User or Unit not found</string>
     <string name="error_proof_required">You must attach the payment proof.</string>
     <string name="error_bank_info_required">Bank and reference number are required for transfers and mobile payments.</string>
-    <string name="error_no_building_found">No building ID found for user</string>
-    <string name="income_item_label">Income</string>
-    <string name="expense_item_label">Expense</string>
     <string name="attention">Attention</string>
-    <string name="understood">Understood</string>
-    <string name="from_date_label">From: %1$s</string>
-    <string name="view_receipt">View receipt</string>
-    <string name="amount_label">Amount ($)</string>
     <string name="description_label">Description</string>
-    <string name="category_label">Category</string>
-    <string name="evidence_ready">Receipt Ready</string>
-    <string name="upload_evidence">Upload Receipt</string>
-    <string name="confirm_overage">Confirm Overage</string>
-    <string name="register">Register</string>
-    <string name="expense_registered_title">Expense Registered!</string>
-    <string name="excess_neighbors">Excess (Neighbors)</string>
-    <string name="expense_evidence_title">Expense Evidence</string>
     <string name="close">Close</string>
-    <string name="overage_warning_desc">Current balance: %1$s. Expense amount: %2$s.\nDifference (%3$s) will be automatically billed to owners as petty cash replenishment.</string>
     <string name="account_info_title">Account Information</string>
     <string name="quick_actions_title">Quick Actions</string>
     <string name="apt_label">Apt. %1$s</string>
@@ -188,9 +160,9 @@
     <string name="total_label">Total</string>
     <string name="paid_label">Paid</string>
     <string name="remaining_label">Remaining</string>
-    <string name="status_paid">PAID</string>
-    <string name="status_overdue">OVERDUE</string>
-    <string name="status_cancelled">CANCELLED</string>
+    <string name="status_paid">Paid</string>
+    <string name="status_overdue">Overdue</string>
+    <string name="status_cancelled">Cancelled</string>
     <string name="invoice_detail_title">Invoice Detail</string>
     <string name="pay_remainder_btn">Pay Remainder (%1$s)</string>
     <string name="invoice_period_label">Invoice %1$s</string>
@@ -255,10 +227,10 @@
     <string name="period_label_short">Period %1$s</string>
     <string name="invoice_id_short">Inv. %1$s</string>
     <string name="payment_receipt_label">Payment Receipt</string>
-    <string name="status_pending">PENDING</string>
-    <string name="status_partial">PARTIAL</string>
-    <string name="status_approved_upper">APPROVED</string>
-    <string name="status_rejected_upper">REJECTED</string>
+    <string name="status_pending">Pending</string>
+    <string name="status_partial">Partial</string>
+    <string name="status_approved_upper">Approved</string>
+    <string name="status_rejected_upper">Rejected</string>
     <string name="solvency_solvent">Up to date</string>
     <string name="solvency_pending">Pending Payments</string>
     <string name="currency_symbol">$</string>
@@ -271,14 +243,6 @@
     <string name="dont_have_account">Don't have an account? Sign up</string>
     <string name="database_cleared">✓ Database Cleared!</string>
     <string name="clear_database_demo">🗑️ Clear Database (Demo)</string>
-    <string name="insufficient_balance_title">Insufficient Balance</string>
-    <string name="insufficient_balance_desc">Current balance: $%1$s. Expense amount: $%2$s.\nDifference ($%3$s) will be automatically billed to owners as petty cash replenishment.</string>
-    <string name="cat_repair">Repair</string>
-    <string name="cat_cleaning">Cleaning</string>
-    <string name="cat_emergency">Emergency</string>
-    <string name="cat_office">Office</string>
-    <string name="cat_utilities">Utilities</string>
-    <string name="cat_other">Other</string>
     <string name="no_units_found">No units found</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
@@ -326,6 +290,9 @@
     <string name="decisions_filter_reception">Reception</string>
     <string name="decisions_filter_voting">Voting</string>
     <string name="decisions_filter_resolved">Resolved</string>
+    <string name="decisions_see_detail">See details</string>
+    <string name="decisions_urgent">Urgent</string>
+    <string name="decisions_finalized_on">Finalized on %1$s</string>
     <string name="decisions_status_reception">Reception</string>
     <string name="decisions_status_voting">Voting</string>
     <string name="decisions_status_tiebreak">Tiebreak</string>
@@ -333,7 +300,10 @@
     <string name="decisions_status_cancelled">Cancelled</string>
     <string name="decisions_reception_until">Reception until: %1$s</string>
     <string name="decisions_voting_until">Voting until: %1$s</string>
-    <string name="decisions_quote_count">%1$d quotes</string>
+    <plurals name="decisions_quote_count">
+        <item quantity="one">%1$d quote</item>
+        <item quantity="other">%1$d quotes</item>
+    </plurals>
     <string name="decisions_vote_count">%1$d votes</string>
     <string name="decisions_detail_fallback_title">Decision</string>
     <string name="decisions_upload_quote_btn">Upload quote</string>
@@ -360,13 +330,19 @@
     <string name="decisions_cancelled_title">Decision cancelled</string>
     <string name="decisions_cancelled_reason_label">Reason: %1$s</string>
     <string name="decisions_tally_waiting">Waiting for votes…</string>
-    <string name="decisions_tally_votes_pct">%1$d votes (%2$s%%)</string>
+    <plurals name="decisions_tally_votes_pct">
+        <item quantity="one">%1$d vote (%2$s%%)</item>
+        <item quantity="other">%1$d votes (%2$s%%)</item>
+    </plurals>
     <string name="decisions_tally_tie_hint">Technical tie</string>
     <string name="decisions_tally_participation">%1$d/%2$d apartments (%3$s%%)</string>
     <string name="decisions_tally_participation_label">Participation</string>
-    <string name="decisions_tally_participation_count">%1$d of %2$d units</string>
+    <plurals name="decisions_tally_participation_count">
+        <item quantity="one">%1$d of %2$d unit</item>
+        <item quantity="other">%1$d of %2$d units</item>
+    </plurals>
     <string name="decisions_quote_rank_leading">Leading</string>
-    <string name="decisions_quote_rank_winner">WINNER</string>
+    <string name="decisions_quote_rank_winner">Winner</string>
     <string name="decisions_deadline_urgent">Closing soon!</string>
     <string name="decisions_upload_title">Upload quote</string>
     <string name="decisions_upload_provider_label">Provider</string>
@@ -379,11 +355,14 @@
     <string name="decisions_upload_submit_btn">Upload</string>
     <string name="decisions_no_active_unit">No active unit</string>
     <string name="decisions_vote_sheet_title">Cast vote</string>
-    <string name="decisions_vote_final_warning">⚠️ Your vote is FINAL. You cannot change it.</string>
+    <string name="decisions_vote_final_warning">⚠️ Your vote is final. You cannot change it.</string>
     <string name="decisions_vote_confirm_btn">Confirm</string>
     <string name="decisions_deadline_card_title">Closes in</string>
     <string name="decisions_deadline_hours">%1$d h</string>
-    <string name="decisions_deadline_days">%1$d days</string>
+    <plurals name="decisions_deadline_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
     <string name="decisions_deadline_passed">Deadline passed</string>
     <string name="decisions_phase_reception_title">Reception phase</string>
     <string name="decisions_phase_reception_body">Any resident can upload quotes until the deadline. After that, voting starts.</string>
@@ -391,19 +370,29 @@
     <string name="decisions_phase_voting_body">Cast your vote before the deadline. Each apartment votes once.</string>
     <string name="decisions_quotes_empty_title">No quotes yet</string>
     <string name="decisions_quotes_empty_body">Upload the first quote so your neighbors can evaluate it.</string>
-    <string name="decisions_resolved_hero_eyebrow">DECISION RESOLVED</string>
+    <string name="decisions_resolved_hero_eyebrow">Decision resolved</string>
     <string name="decisions_resolved_finalized_at">Resolved on %1$s</string>
-    <string name="decisions_resolved_winner_votes">%1$d votes · %2$s%% of total</string>
+    <plurals name="decisions_resolved_winner_votes">
+        <item quantity="one">%1$d vote · %2$s%% of total</item>
+        <item quantity="other">%1$d votes · %2$s%% of total</item>
+    </plurals>
     <string name="decisions_resolved_results_title">Voting results</string>
 
     <!-- Billboard -->
     <string name="billboard_title">Billboard</string>
+    <string name="billboard_detail_title">Announcement detail</string>
     <string name="billboard_empty">No announcements published</string>
     <string name="billboard_filter_all">All</string>
     <string name="billboard_pinned">Pinned</string>
     <string name="billboard_read">Read</string>
-    <string name="billboard_understood_count">%1$d understood</string>
-    <string name="billboard_reads_count">%1$d read(s)</string>
+    <plurals name="billboard_understood_count">
+        <item quantity="one">%1$d understood</item>
+        <item quantity="other">%1$d understood</item>
+    </plurals>
+    <plurals name="billboard_reads_count">
+        <item quantity="one">%1$d read</item>
+        <item quantity="other">%1$d reads</item>
+    </plurals>
     <string name="billboard_attachment">View attachment</string>
     <string name="billboard_attachment_pdf">View PDF</string>
     <string name="billboard_attachment_image">Attached image</string>
@@ -414,6 +403,12 @@
     <string name="language_settings">Language</string>
     <string name="language_dialog_title">Select Language</string>
     <string name="language_current">Current language: %1$s</string>
+
+    <!-- Invoice / Billing UI -->
+    <string name="download_invoice">Download Invoice</string>
+    <string name="no_invoices_for_filter">No invoices found for the selected filter.</string>
+    <string name="share">Share</string>
+    <string name="settings">Settings</string>
 
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>

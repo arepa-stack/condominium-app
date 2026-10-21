@@ -8,9 +8,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.loading
+import org.jetbrains.compose.resources.stringResource
 
 // `icon` is leading (create/identify actions: Add, Save, Search).
 // `trailingIcon` is directional (next-step / external link: ArrowForward, OpenInNew).
@@ -26,10 +32,12 @@ fun PrimaryButton(
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
+    val loadingLabel = stringResource(Res.string.loading)
     Button(
         onClick = onClick,
         enabled = enabled && !isLoading,
-        modifier = modifier.height(56.dp).fillMaxWidth(),
+        // While loading the label is replaced by a spinner: keep the button named and say it's busy.
+        modifier = modifier.height(56.dp).fillMaxWidth().semantics { if (isLoading) stateDescription = loadingLabel },
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
@@ -39,7 +47,7 @@ fun PrimaryButton(
         )
     ) {
         if (isLoading) {
-            CircularProgressIndicator(color = contentColor, modifier = Modifier.size(24.dp))
+            CircularProgressIndicator(color = contentColor, modifier = Modifier.size(24.dp).semantics { contentDescription = text })
         } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

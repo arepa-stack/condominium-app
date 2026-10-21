@@ -42,6 +42,7 @@ import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.AptoOnSurface
 import com.example.condominio.ui.theme.AptoOnSurfaceVariant
+import com.example.condominio.ui.utils.rememberReducedMotion
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -159,7 +160,7 @@ fun QrScannerScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(Res.string.qr_scan_scanning),
+                            text = stringResource(Res.string.qr_scan_scanning).uppercase(),
                             color = Color.White.copy(alpha = 0.2f),
                             style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp)
                         )
@@ -333,16 +334,19 @@ private fun WideQrScannerContent(
 
 @Composable
 private fun ScanLine(travel: Dp = ViewfinderSize) {
-    val infiniteTransition = rememberInfiniteTransition(label = "scanLine")
-    val offsetFraction by infiniteTransition.animateFloat(
-        initialValue = 0.10f,
-        targetValue = 0.90f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scanLineOffset"
-    )
+    // Reduced motion: the line rests in the middle of the viewfinder.
+    val offsetFraction = if (rememberReducedMotion()) 0.5f else {
+        val infiniteTransition = rememberInfiniteTransition(label = "scanLine")
+        infiniteTransition.animateFloat(
+            initialValue = 0.10f,
+            targetValue = 0.90f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "scanLineOffset"
+        ).value
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Box(

@@ -32,7 +32,7 @@ fun StatusBadge(
     ) {
         Text(
             text = text.uppercase(),
-            color = statusColor,
+            color = onStatusContainer(statusColor),
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.5.sp

@@ -43,7 +43,7 @@ fun decisionStatusBg(status: DecisionStatus): Color = when (status) {
 fun decisionStatusTextColor(status: DecisionStatus): Color = when (status) {
     DecisionStatus.RECEPTION -> Color(0xFF3D494E)
     DecisionStatus.VOTING -> AptoSecondary
-    DecisionStatus.TIEBREAK_PENDING -> AptoStatusWarning
+    DecisionStatus.TIEBREAK_PENDING -> AptoOnWarningContainer
     DecisionStatus.RESOLVED -> AptoStatusSuccess
     DecisionStatus.CANCELLED -> AptoOnSurfaceVariant
 }

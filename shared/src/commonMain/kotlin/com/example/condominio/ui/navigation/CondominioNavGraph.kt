@@ -1,6 +1,11 @@
 package com.example.condominio.ui.navigation
 
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
@@ -68,6 +73,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.condominio.ui.components.AppBottomBar
 import com.example.condominio.ui.components.BottomTab
+import com.example.condominio.ui.utils.rememberReducedMotion
 
 // Every app page shares ONE container (same max width, same left edge) so the page title never
 // jumps when navigating. Narrow content (settings forms) is capped inside the page, left-aligned
@@ -117,6 +123,8 @@ private fun NavGraphBuilder.composable(
     }
 }
 
+private const val NavFadeMillis = 200
+
 // Rutas del flujo de autenticación/onboarding donde no se muestra el bottom bar
 private val routesWithoutBottomBar = setOf(
         "splash",
@@ -138,6 +146,7 @@ fun CondominioNavGraph(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showNav = currentRoute != null && currentRoute !in routesWithoutBottomBar
+    val reducedMotion = rememberReducedMotion()
     val onTabSelected: (BottomTab) -> Unit = { tab ->
         if (tab == BottomTab.HOME) {
             // Home is the stack root: just pop back to it. Navigating with popUpTo(dashboard){saveState} +
@@ -192,6 +201,10 @@ fun CondominioNavGraph(
         NavHost(
                 navController = navController,
                 startDestination = "splash",
+                // Short fade (NavHost's default is 700ms); none when the OS asks to reduce motion.
+                // pop transitions default to these.
+                enterTransition = { if (reducedMotion) EnterTransition.None else fadeIn(tween(NavFadeMillis)) },
+                exitTransition = { if (reducedMotion) ExitTransition.None else fadeOut(tween(NavFadeMillis)) },
                 // No max width here: each page caps its own (see composable() below), so a page fading
                 // out keeps its width instead of being squeezed into the next route's (dashboard → unit_selection).
                 modifier = Modifier

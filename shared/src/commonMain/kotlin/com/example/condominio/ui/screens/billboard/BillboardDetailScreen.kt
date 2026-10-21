@@ -56,6 +56,7 @@ import com.example.condominio.ui.theme.AptoSuccess
 import com.example.condominio.ui.theme.AptoSuccessContainer
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 // ---------------------------------------------------------------------------
@@ -314,11 +315,11 @@ private fun WideAnnouncementDetail(
                             )
                             SideMetaRow(
                                 icon = Icons.Default.Visibility,
-                                text = stringResource(Res.string.billboard_reads_count, announcement.metrics.readsCount),
+                                text = pluralStringResource(Res.plurals.billboard_reads_count, announcement.metrics.readsCount, announcement.metrics.readsCount),
                             )
                             SideMetaRow(
                                 icon = Icons.Default.ThumbUp,
-                                text = stringResource(Res.string.billboard_understood_count, reactionsCount),
+                                text = pluralStringResource(Res.plurals.billboard_understood_count, reactionsCount, reactionsCount),
                             )
                             if (announcement.isPinned) {
                                 SideMetaRow(
@@ -447,7 +448,7 @@ private fun AnnouncementDateMetricsRow(announcement: AnnouncementDto) {
                 modifier = Modifier.size(16.dp),
             )
             Text(
-                text = stringResource(Res.string.billboard_reads_count, announcement.metrics.readsCount),
+                text = pluralStringResource(Res.plurals.billboard_reads_count, announcement.metrics.readsCount, announcement.metrics.readsCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

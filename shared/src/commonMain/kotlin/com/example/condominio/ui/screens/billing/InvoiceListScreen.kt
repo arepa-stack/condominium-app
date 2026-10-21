@@ -540,27 +540,27 @@ private fun InvoiceAmountLabel(text: String) {
 fun InvoiceStatusBadge(status: InvoiceStatus) {
     val (text, containerColor, contentColor) = when (status) {
         InvoiceStatus.PAID -> Triple(
-            stringResource(Res.string.status_paid),
+            stringResource(Res.string.status_paid).uppercase(),
             AptoStatusSuccess.copy(alpha = 0.1f),
             AptoStatusSuccess
         )
         InvoiceStatus.OVERDUE -> Triple(
-            stringResource(Res.string.status_overdue),
+            stringResource(Res.string.status_overdue).uppercase(),
             AptoStatusError.copy(alpha = 0.1f),
             AptoStatusError
         )
         InvoiceStatus.CANCELLED -> Triple(
-            stringResource(Res.string.status_cancelled),
+            stringResource(Res.string.status_cancelled).uppercase(),
             AptoStatusError.copy(alpha = 0.1f),
             AptoStatusError
         )
         InvoiceStatus.PENDING -> Triple(
-            stringResource(Res.string.status_pending),
+            stringResource(Res.string.status_pending).uppercase(),
             AptoSecondaryFixed,
             AptoSecondary
         )
         InvoiceStatus.PARTIAL -> Triple(
-            stringResource(Res.string.status_partial),
+            stringResource(Res.string.status_partial).uppercase(),
             AptoSecondaryFixed,
             AptoSecondary
         )
@@ -568,7 +568,7 @@ fun InvoiceStatusBadge(status: InvoiceStatus) {
 
     Surface(
         color = badgeBg(containerColor, contentColor),
-        contentColor = contentColor,
+        contentColor = onStatusContainer(contentColor),
         shape = CircleShape,
         border = badgeBorder(contentColor)
     ) {
