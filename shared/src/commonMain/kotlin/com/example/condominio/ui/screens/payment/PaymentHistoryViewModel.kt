@@ -37,23 +37,24 @@ class PaymentHistoryViewModel (
 
     fun loadPayments() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
+            _uiState.update { it.copy(isLoading = true, loadFailed = false) }
+
             val user = authRepository.fetchCurrentUser().getOrNull()
             val unitId = user?.currentUnit?.unitId ?: user?.units?.firstOrNull()?.unitId
 
-            try {
-                val payments = paymentRepository.getPayments(unitId)
-                _uiState.update { 
-                    it.copy(
-                        payments = payments,
-                        isLoading = false
-                    ) 
+            paymentRepository.fetchPayments(unitId)
+                .onSuccess { payments ->
+                    _uiState.update {
+                        it.copy(
+                            payments = payments,
+                            isLoading = false
+                        )
+                    }
                 }
-            } catch (e: Exception) {
-                // Handle error
-                _uiState.update { it.copy(isLoading = false) }
-            }
+                .onFailure {
+                    // Keep what was already shown; the screen shows the error only when there is nothing to show (A-07)
+                    _uiState.update { it.copy(isLoading = false, loadFailed = true) }
+                }
         }
     }
 }
@@ -61,5 +62,7 @@ class PaymentHistoryViewModel (
 data class PaymentHistoryUiState(
     val payments: List<Payment> = emptyList(),
     val unit: String = "",
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    /** Last load failed (network/HTTP): not the same as "no payments". */
+    val loadFailed: Boolean = false
 )

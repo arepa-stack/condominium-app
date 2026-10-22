@@ -141,7 +141,7 @@
     <string name="error_invalid_amount">Monto inválido</string>
     <string name="error_select_invoices">Por favor selecciona facturas a pagar</string>
     <string name="error_user_unit_not_found">Usuario o unidad no encontrados</string>
-    <string name="error_proof_required">Debés adjuntar el comprobante de pago.</string>
+    <string name="error_proof_required">Adjunta el comprobante de pago.</string>
     <string name="error_bank_info_required">Banco y número de referencia son obligatorios para transferencias y pago móvil.</string>
     <string name="attention">Atención</string>
     <string name="description_label">Descripción</string>
@@ -185,8 +185,11 @@
     <string name="reference_number_label">Número de referencia</string>
     <string name="cash_payment_hint">Para pagos en efectivo, sube una foto del recibo.</string>
     <string name="select_invoices_label">Seleccionar facturas a pagar</string>
-    <string name="invoices_selected_count">%d facturas seleccionadas</string>
-    <string name="no_pending_invoices">No se encontraron facturas pendientes.</string>
+    <plurals name="invoices_selected_count">
+        <item quantity="one">%1$d factura seleccionada</item>
+        <item quantity="other">%1$d facturas seleccionadas</item>
+    </plurals>
+    <string name="no_pending_invoices">No tienes facturas pendientes.</string>
     <string name="payment_description_label">Descripción del pago</string>
     <string name="payment_description_placeholder">Ej. Pago de enero</string>
     <string name="payment_date_label">Fecha del pago</string>
@@ -432,4 +435,35 @@
     <string name="web_dashboard_amount">Monto</string>
     <string name="web_dashboard_status">Estado</string>
     <string name="web_dashboard_no_transactions">Aún no hay transacciones registradas.</string>
+
+    <!-- Payments (audit step 1) -->
+    <string name="create_payment_select_invoices_hint">Elige las facturas pendientes que quieres pagar hoy.</string>
+    <string name="create_payment_history_hint">Al realizar el pago se generará un comprobante digital inmediato disponible en tu sección de Historial.</string>
+    <string name="total_to_pay">Total a pagar</string>
+    <string name="continue_to_payment">Continuar al pago</string>
+    <string name="total_to_register">Total a registrar</string>
+    <string name="step_of">Paso %1$d de %2$d</string>
+    <string name="bank_placeholder">Nombre del banco</string>
+    <string name="phone_label">Teléfono</string>
+    <string name="reference_placeholder_last6">Últimos 6 dígitos</string>
+    <string name="reference_placeholder_confirmation">Últimos dígitos de confirmación</string>
+    <string name="cash_zelle_payment_hint">Para pagos en efectivo o Zelle, acércate a la administración o adjunta la captura del Zelle.</string>
+    <string name="cancel_payment">Cancelar pago</string>
+    <string name="method_transfer_bank">Transferencia bancaria</string>
+    <string name="method_cash_zelle">Efectivo / Zelle</string>
+    <string name="proof_uploaded">Archivo cargado</string>
+    <string name="proof_upload">Subir comprobante</string>
+    <string name="proof_change_hint">Toca para cambiar el archivo</string>
+    <string name="proof_formats_hint">JPG, PNG o PDF (máx. 5 MB)</string>
+    <string name="no_proof_uploaded">Sin comprobante</string>
+    <string name="payment_validation_notice">Tu pago será validado por la administración en un lapso de 24 a 48 horas hábiles.</string>
+    <string name="payment_history_empty">No hay pagos registrados.</string>
+    <string name="payment_default_desc">Pago de factura</string>
+    <string name="retry">Reintentar</string>
+    <string name="error_loading_payments">No pudimos cargar tus pagos</string>
+    <string name="error_loading_payment">No pudimos cargar el pago</string>
+    <string name="error_loading_invoices">No pudimos cargar tus facturas pendientes</string>
+    <string name="error_check_connection">Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="error_bank_required">Indica el banco emisor.</string>
+    <string name="error_reference_required">Indica el número de referencia.</string>
 </resources>

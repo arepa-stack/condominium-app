@@ -2,17 +2,23 @@ package com.example.condominio.ui.utils
 
 import platform.Foundation.NSNumber
 import platform.Foundation.NSNumberFormatter
-import platform.Foundation.NSNumberFormatterCurrencyStyle
+import platform.Foundation.NSNumberFormatterDecimalStyle
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSLocale
 import platform.Foundation.currentLocale
 
+// Same output as Android/web ("1500.25"): fixed locale, no grouping, no currency symbol (the symbol comes from
+// `currency_amount`). The old currency style added locale grouping and could keep dots from symbols like "Bs.".
 actual fun formatCurrency(amount: Double): String {
     val formatter = NSNumberFormatter().apply {
-        numberStyle = NSNumberFormatterCurrencyStyle
+        numberStyle = NSNumberFormatterDecimalStyle
+        locale = NSLocale("en_US_POSIX")
+        usesGroupingSeparator = false
+        minimumFractionDigits = 2u
+        maximumFractionDigits = 2u
     }
-    return formatter.stringFromNumber(NSNumber(amount))?.replace(Regex("[^0-9.,]"), "") ?: amount.toString()
+    return formatter.stringFromNumber(NSNumber(amount)) ?: amount.toString()
 }
 
 actual fun formatDate(timestamp: Long, formatString: String): String {

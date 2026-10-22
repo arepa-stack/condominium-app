@@ -185,8 +185,11 @@
     <string name="reference_number_label">Reference Number</string>
     <string name="cash_payment_hint">For cash payments, please upload a photo of the receipt.</string>
     <string name="select_invoices_label">Select Invoices to Pay</string>
-    <string name="invoices_selected_count">%d invoices selected</string>
-    <string name="no_pending_invoices">No pending invoices found.</string>
+    <plurals name="invoices_selected_count">
+        <item quantity="one">%1$d invoice selected</item>
+        <item quantity="other">%1$d invoices selected</item>
+    </plurals>
+    <string name="no_pending_invoices">You have no pending invoices.</string>
     <string name="payment_description_label">Payment Description</string>
     <string name="payment_description_placeholder">e.g. January payment</string>
     <string name="payment_date_label">Payment Date</string>
@@ -432,4 +435,35 @@
     <string name="web_dashboard_amount">Amount</string>
     <string name="web_dashboard_status">Status</string>
     <string name="web_dashboard_no_transactions">No transactions yet.</string>
+
+    <!-- Payments (audit step 1) -->
+    <string name="create_payment_select_invoices_hint">Choose the pending invoices you want to pay today.</string>
+    <string name="create_payment_history_hint">Once you pay, a digital receipt will be available right away in your History section.</string>
+    <string name="total_to_pay">Total to pay</string>
+    <string name="continue_to_payment">Continue to payment</string>
+    <string name="total_to_register">Total to register</string>
+    <string name="step_of">Step %1$d of %2$d</string>
+    <string name="bank_placeholder">Bank name</string>
+    <string name="phone_label">Phone</string>
+    <string name="reference_placeholder_last6">Last 6 digits</string>
+    <string name="reference_placeholder_confirmation">Last digits of the confirmation</string>
+    <string name="cash_zelle_payment_hint">For cash or Zelle payments, go to the management office or attach a screenshot of the Zelle transfer.</string>
+    <string name="cancel_payment">Cancel payment</string>
+    <string name="method_transfer_bank">Bank transfer</string>
+    <string name="method_cash_zelle">Cash / Zelle</string>
+    <string name="proof_uploaded">File uploaded</string>
+    <string name="proof_upload">Upload proof</string>
+    <string name="proof_change_hint">Tap to change the file</string>
+    <string name="proof_formats_hint">JPG, PNG or PDF (max. 5 MB)</string>
+    <string name="no_proof_uploaded">No proof</string>
+    <string name="payment_validation_notice">Management will validate your payment within 24 to 48 business hours.</string>
+    <string name="payment_history_empty">No payments recorded.</string>
+    <string name="payment_default_desc">Invoice payment</string>
+    <string name="retry">Retry</string>
+    <string name="error_loading_payments">We couldn\'t load your payments</string>
+    <string name="error_loading_payment">We couldn\'t load the payment</string>
+    <string name="error_loading_invoices">We couldn\'t load your pending invoices</string>
+    <string name="error_check_connection">Check your connection and try again.</string>
+    <string name="error_bank_required">Enter the issuing bank.</string>
+    <string name="error_reference_required">Enter the reference number.</string>
 </resources>
