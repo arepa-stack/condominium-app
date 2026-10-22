@@ -163,7 +163,8 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
                 provider = { ByteReadChannel(proofImage) },
                 dispose = {},
                 partHeaders = Headers.build {
-                    append(HttpHeaders.ContentType, "image/jpeg")
+                    // Storage keeps this type: a PDF sent as image/jpeg can't be opened later.
+                    append(HttpHeaders.ContentType, proofContentType(fileName))
                     append(
                         HttpHeaders.ContentDisposition,
                         "form-data; name=\"proof_image\"; filename=\"${fileName}\""
@@ -314,4 +315,12 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
     override suspend fun toggleAnnouncementReaction(id: String): Response<ToggleReactionResponseDto> = safeRequest {
         client.post("api/v1/app/information-center/announcements/$id/reaction")
     }
+}
+
+/** Proof MIME type from the file extension (the payment picker accepts images and PDF); JPEG when unknown. */
+private fun proofContentType(fileName: String): String = when (fileName.substringAfterLast('.', "").lowercase()) {
+    "pdf" -> "application/pdf"
+    "png" -> "image/png"
+    "webp" -> "image/webp"
+    else -> "image/jpeg"
 }

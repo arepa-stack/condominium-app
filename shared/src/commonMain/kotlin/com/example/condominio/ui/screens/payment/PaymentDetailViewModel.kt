@@ -26,16 +26,21 @@ class PaymentDetailViewModel(
         loadPayment()
     }
 
-    private fun loadPayment() {
-        if (paymentId == null) return
+    fun loadPayment() {
+        if (paymentId == null) {
+            _uiState.update { it.copy(loadFailed = true) }
+            return
+        }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val payment = paymentRepository.getPayment(paymentId)
+            _uiState.update { it.copy(isLoading = true, loadFailed = false) }
+            val result = paymentRepository.fetchPayment(paymentId)
             _uiState.update {
                 it.copy(
-                    payment = payment,
-                    isLoading = false
+                    payment = result.getOrNull() ?: it.payment,
+                    isLoading = false,
+                    // Error state with retry instead of a blank screen (A-07)
+                    loadFailed = result.isFailure
                 )
             }
         }
@@ -58,5 +63,6 @@ class PaymentDetailViewModel(
 data class PaymentDetailUiState(
     val payment: Payment? = null,
     val isLoading: Boolean = false,
+    val loadFailed: Boolean = false,
     val pdfFile: String? = null
 )

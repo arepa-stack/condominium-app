@@ -27,13 +27,13 @@ Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit)
 
 ## Resumen
 
-| Bloque | Ítems | 🔍 | ⬜ | 🔄 | ✅ |
-|---|---|---|---|---|---|
-| A. Errores de producto | 15 | 0 | 14 | 0 | 1 |
-| B. Componentes compartidos | 10 | 0 | 0 | 0 | 10 |
-| C. Textos e i18n | 9 | 0 | 4 | 1 | 4 |
-| D. Contraste | 6 | 0 | 2 | 0 | 4 |
-| E. Por pantalla (prioritarios) | 37 | 0 | 37 | 0 | 0 |
+| Bloque | Ítems | 🔍 | ⬜ | 🔄 | ✅ | ⏸️ |
+|---|---|---|---|---|---|---|
+| A. Errores de producto | 16 | 0 | 9 | 1 | 5 | 1 |
+| B. Componentes compartidos | 10 | 0 | 0 | 0 | 10 | 0 |
+| C. Textos e i18n | 9 | 0 | 0 | 5 | 4 | 0 |
+| D. Contraste | 6 | 0 | 2 | 0 | 4 | 0 |
+| E. Por pantalla (prioritarios) | 37 | 0 | 31 | 0 | 6 | 0 |
 
 ---
 
@@ -41,21 +41,22 @@ Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit)
 
 | ID | Pantalla | Problema | Dónde | Estado | Ref |
 |---|---|---|---|---|---|
-| A-01 | Pagos | El monto con coma decimal ("150,50") da "Monto inválido": se parsea con `toDoubleOrNull()` | `CreatePaymentScreen.kt:774`, `CreatePaymentViewModel.kt:117` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
-| A-02 | Pagos (iOS) | `formatCurrency` en iOS devuelve separador de miles; al volver a parsearlo, montos ≥ 1000 dan "Monto inválido" | `CreatePaymentViewModel.kt:110`, `KmpFormatters.ios.kt:15` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
-| A-03 | Pagos | Marcar/desmarcar facturas sobrescribe sin aviso el monto que escribió el usuario | `CreatePaymentViewModel.kt:110` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-01 | Pagos | El monto con coma decimal ("150,50") da "Monto inválido": se parsea con `toDoubleOrNull()` | `CreatePaymentScreen.kt:774`, `CreatePaymentViewModel.kt:117` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — `parseAmount()` común (`KmpFormatters.kt`): coma o punto, con o sin miles |
+| A-02 | Pagos (iOS) | `formatCurrency` en iOS devuelve separador de miles; al volver a parsearlo, montos ≥ 1000 dan "Monto inválido" | `CreatePaymentViewModel.kt:110`, `KmpFormatters.ios.kt:15` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — el campo se rellena con `formatAmountInput()` (nunca con el formato de pantalla); iOS `formatCurrency` = "1500.25" como Android/web |
+| A-03 | Pagos | Marcar/desmarcar facturas sobrescribe sin aviso el monto que escribió el usuario | `CreatePaymentViewModel.kt:110` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — autollenado solo mientras el usuario no editó el monto (`amountEdited`); vaciarlo lo reactiva |
 | A-04 | Votaciones | Presupuesto "1.500" (miles en es) se envía como 1.5 sin avisar; "1500,50" se rechaza | `DecisionSheetsStubs.kt:121` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
 | A-05 | Dashboard | Muestra "¡Estás al día!" cuando el saldo aún carga o falló (`totalDebt` por defecto 0.0) | `DashboardScreen.kt:219, 801`, `DashboardViewModel.kt:69-80` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
 | A-06 | Dashboard | Doble carga al abrir (`init` + `ON_RESUME`) y `refresh()` no cancela el job anterior → datos viejos / de otra unidad | `DashboardViewModel.kt:29, 93-96`, `DashboardScreen.kt:97` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
-| A-07 | Varias | Errores de red mostrados como vacío o pantalla en blanco, sin reintentar: historial de pagos, crear pago ("No tienes recibos pendientes"), detalle de pago, detalle de factura ("No se encontraron facturas"), dashboard, selector de propiedad | `PaymentHistoryViewModel.kt:53`, `CreatePaymentViewModel.kt:56`, `PaymentDetailScreen.kt:241`, `InvoiceDetailScreen.kt:163-184`, `DashboardScreen.kt:108`, `UnitSelectionViewModel.kt:49` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-07 | Varias | Errores de red mostrados como vacío o pantalla en blanco, sin reintentar: historial de pagos, crear pago ("No tienes recibos pendientes"), detalle de pago, detalle de factura ("No se encontraron facturas"), dashboard, selector de propiedad | `PaymentHistoryViewModel.kt:53`, `CreatePaymentViewModel.kt:56`, `PaymentDetailScreen.kt:241`, `InvoiceDetailScreen.kt:163-184`, `DashboardScreen.kt:108`, `UnitSelectionViewModel.kt:49` | 🔄 En curso | `worktree-agent-a91b636e2b2268872` — pagos hecho (historial, crear pago, detalle) con el nuevo `ErrorState` (`EmptyState.kt`) y `fetchPayments`/`fetchPayment` (`Result`); faltan detalle de factura, dashboard y selector de propiedad |
 | A-08 | Facturas | El error de la lista nunca se limpia: tras un refresh exitoso sigue mostrándose | `InvoiceListViewModel.kt:29, 37` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
 | A-09 | Perfil | Preferencias de notificación solo en memoria: no se guardan ni se envían a la API | `NotificationSettingsScreen.kt:31-33` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
 | A-10 | Perfil | Editar perfil: la unidad es editable pero no se envía (solo `name`); además bloquea guardar si no hay unidad | `EditProfileScreen.kt:85-90`, `EditProfileViewModel.kt:53-75`, `RemoteAuthRepository.kt:204-210` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
 | A-11 | Perfil | Cambiar contraseña pide la actual pero el backend no la verifica (solo envía `newPassword`) | `ChangePasswordScreen.kt:232`, `RemoteAuthRepository.kt:226-228` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
-| A-12 | Pagos / Facturas | Botones que no hacen nada: "Descargar recibo" (solo `println`), "Descargar factura" (TODO), "Contactar soporte" (onClick vacío) | `PaymentDetailScreen.kt:71-75, 117, 354`, `CondominioNavGraph.kt:351` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
+| A-12 | Pagos / Facturas | Botones que no hacen nada: "Descargar recibo" (solo `println`), "Descargar factura" (TODO), "Contactar soporte" (onClick vacío) | `PaymentDetailScreen.kt:71-75, 117, 354`, `CondominioNavGraph.kt:351` | ⏸️ Descartado | Falta backend: no hay endpoint de descarga de recibo/factura ni de soporte (verificado en `condominium-api`, 2026-10-21) |
 | A-13 | Votaciones | Porcentajes sin formato ("33.333333333333336%"); empates reciben #1/#2 y "Liderando" pese al aviso "Empate técnico" | `DecisionDetailScreen.kt:1150, 170-175, 1082-1091` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
 | A-14 | Primer login | Sin salida: no se puede cerrar sesión ni volver si el usuario no cambia la contraseña | `FirstLoginChangePasswordScreen.kt:48-86` | ⬜ Pendiente | Confirmado en código (2026-10-21) |
 | A-15 | Votaciones | Detalle de votación muestra error de JSON si un presupuesto no tiene archivo (`file_url` null) | `DecisionModels.kt:61` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — `fileUrl: String?`; sin archivo se oculta "Ver archivo" |
+| A-16 | Pagos (web) | Calendario: encabezado y mes muestran un día/mes de menos (formato UTC en zona local) | `CreatePaymentScreen.kt:1021, 1210` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — Material3 1.9 wasm formatea con `Date` JS en zona local; en web se pasa un `DatePickerFormatter` en UTC (kotlinx-datetime + `month_*`); encabezado `dd/MM/yyyy` (con el mes largo no cabía el año), forma larga solo para accesibilidad |
 
 ## B. Componentes compartidos — un arreglo corrige todas las pantallas
 
@@ -76,15 +77,15 @@ Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit)
 
 | ID | Problema | Dónde | Estado | Ref |
 |---|---|---|---|---|
-| C-01 | ~60 textos visibles hardcodeados en Kotlin (muchos ya existen en `strings.xml`): sobre todo Pagos (~30), Cartelera, splash/marca ("Tu condominio, en orden.", "VIVIENDA ELEVADA", "Apto by Nibs") | `PaymentHistoryScreen.kt`, `PaymentDetailScreen.kt`, `CreatePaymentScreen.kt`, `BillboardDetailScreen.kt`, `AnnouncementComponents.kt:41-47, 176`, `AppShell.kt:74-133`, `SplashScreen.kt` | ⬜ Pendiente | |
+| C-01 | ~60 textos visibles hardcodeados en Kotlin (muchos ya existen en `strings.xml`): sobre todo Pagos (~30), Cartelera, splash/marca ("Tu condominio, en orden.", "VIVIENDA ELEVADA", "Apto by Nibs") | `PaymentHistoryScreen.kt`, `PaymentDetailScreen.kt`, `CreatePaymentScreen.kt`, `BillboardDetailScreen.kt`, `AnnouncementComponents.kt:41-47, 176`, `AppShell.kt:74-133`, `SplashScreen.kt` | 🔄 En curso | `worktree-agent-a91b636e2b2268872` — Pagos hecho (crear, historial, detalle; también el nombre del método, antes `PaymentMethod.label` solo en español); falta el resto |
 | C-02 | Claves faltantes en `values-en`: `download_invoice`, `no_invoices_for_filter`, `billboard_detail_title`, `decisions_see_detail`, `decisions_urgent`, `decisions_finalized_on` (y `settings`, `share`, sin uso). A la inversa, `values-en` tiene 36 claves que no existen en `values` (caja chica: `cat_*`, `category_*`, `register_expense`…), todas sin uso: borrar | `values-en/strings.xml` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` — 36 claves en-only borradas (sin uso verificado); 8 traducciones añadidas |
 | C-03 | Title Case en español ("Deuda Total", "Iniciar Sesión", "Cerrar Sesión", "Historial de Pagos"…): pasar a sentence case | `values/strings.xml` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
 | C-04 | Mayúsculas dentro del texto ("GANADOR", "CORREO ELECTRÓNICO", estados): aplicar con estilo, no en el recurso | `values/strings.xml`, `RegisterScreen.kt` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
-| C-05 | Tono mezclado tú / usted / vos ("Seleccione", "acérquese", "Debés") | `values/strings.xml:144`, `CreatePaymentScreen.kt:500` | ⬜ Pendiente | |
+| C-05 | Tono mezclado tú / usted / vos ("Seleccione", "acérquese", "Debés") | `values/strings.xml:144`, `CreatePaymentScreen.kt:500` | 🔄 En curso | `worktree-agent-a91b636e2b2268872` — Pagos hecho ("Adjunta el comprobante", "acércate", "Nombre del banco"); falta revisar el resto de `strings.xml` (p. ej. `select_unit_placeholder` "Seleccione unidad") |
 | C-06 | "..." en vez de "…" (`loading`, `qr_scan_scanning`) y falta de ortografía "Registrate" | `values*/strings.xml:24, 79` | ✅ Hecho | `worktree-agent-a8dd877d108cce00f` |
-| C-07 | Plurales armados a mano ("1 presupuestos", "entendido(s)", "recibo(s) seleccionado(s)"): usar `<plurals>` | `values*/strings.xml`, `CreatePaymentScreen.kt:357, 986` | 🔄 En curso | `worktree-agent-a8dd877d108cce00f` — `<plurals>` de `strings.xml` hechos; falta el plural armado en `CreatePaymentScreen.kt` (paso posterior) |
-| C-08 | Fechas: formatos distintos entre pantallas, ISO crudo en cartelera, meses en español también en inglés | `InvoiceListScreen.kt:482`, `InvoiceDetailScreen.kt:749`, `BillboardDetailScreen.kt:313`, `PaymentHistoryScreen.kt:258`, `DecisionComponents.kt:87` | ⬜ Pendiente | |
-| C-09 | `$` hardcodeado en lugar de `currency_amount` (puede contradecir la moneda mostrada) | `DashboardScreen.kt:597`, `InvoiceDetailScreen.kt:353`, `DecisionDetailScreen.kt:848, 1345`, `DecisionSheetsStubs.kt:373`, `CreatePaymentScreen.kt:306, 351, 418` | ⬜ Pendiente | |
+| C-07 | Plurales armados a mano ("1 presupuestos", "entendido(s)", "recibo(s) seleccionado(s)"): usar `<plurals>` | `values*/strings.xml`, `CreatePaymentScreen.kt:357, 986` | 🔄 En curso | `worktree-agent-a8dd877d108cce00f` — `<plurals>` de `strings.xml` hechos; `worktree-agent-a91b636e2b2268872` — `CreatePaymentScreen.kt` usa `invoices_selected_count` (`<plurals>`). Falta `units_count_label` ("%1$d unidades", en uso: "1 unidades") |
+| C-08 | Fechas: formatos distintos entre pantallas, ISO crudo en cartelera, meses en español también en inglés | `InvoiceListScreen.kt:482`, `InvoiceDetailScreen.kt:749`, `BillboardDetailScreen.kt:313`, `PaymentHistoryScreen.kt:258`, `DecisionComponents.kt:87` | 🔄 En curso | `worktree-agent-a91b636e2b2268872` — Pagos hecho: `dd/MM/yyyy` en historial, detalle y crear pago (como el detalle de factura); meses de facturas por recurso `month_*`; falta el resto |
+| C-09 | `$` hardcodeado en lugar de `currency_amount` (puede contradecir la moneda mostrada) | `DashboardScreen.kt:597`, `InvoiceDetailScreen.kt:353`, `DecisionDetailScreen.kt:848, 1345`, `DecisionSheetsStubs.kt:373`, `CreatePaymentScreen.kt:306, 351, 418` | 🔄 En curso | `worktree-agent-a91b636e2b2268872` — Pagos hecho (crear, historial, detalle); falta dashboard, factura y votaciones |
 
 ## D. Contraste (WCAG AA: 4.5:1 texto normal, 3:1 texto grande / íconos)
 
@@ -139,12 +140,12 @@ Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco s
 ### Pagos
 | ID | Problema | Dónde | Estado | Ref |
 |---|---|---|---|---|
-| E-P1 | Validación con un único error al pie, sin inline ni foco; el error no se limpia al editar | `CreatePaymentScreen.kt:523-529`, `CreatePaymentViewModel.kt:63-93` | ⬜ Pendiente | |
-| E-P2 | Checkbox de facturas sin semántica (toggleable / Role.Checkbox) | `CreatePaymentScreen.kt:259-284` | ⬜ Pendiente | |
-| E-P3 | Android no acepta PDF (`PickVisualMedia.ImageOnly`) aunque el texto lo promete; tamaño no validado | `CreatePaymentScreen.kt:672-677`, `ImagePicker.android.kt:15` | ⬜ Pendiente | |
-| E-P4 | DatePicker permite fechas futuras | `CreatePaymentScreen.kt:842-859` | ⬜ Pendiente | |
-| E-P5 | "CANCELAR OPERACIÓN" solo vuelve al paso 1 | `CreatePaymentScreen.kt:565` | ⬜ Pendiente | |
-| E-P6 | "Ver completo" y el recuadro del comprobante clicables sin comprobante | `PaymentDetailScreen.kt:217-224, 294` | ⬜ Pendiente | |
+| E-P1 | Validación con un único error al pie, sin inline ni foco; el error no se limpia al editar | `CreatePaymentScreen.kt:523-529`, `CreatePaymentViewModel.kt:63-93` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — error por campo (`isError` + `supportingText`), foco al primer campo inválido, se limpia al editar; errores de formulario con `liveRegion` |
+| E-P2 | Checkbox de facturas sin semántica (toggleable / Role.Checkbox) | `CreatePaymentScreen.kt:259-284` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — `Surface(checked, onCheckedChange)` + `Role.Checkbox` |
+| E-P3 | Android no acepta PDF (`PickVisualMedia.ImageOnly`) aunque el texto lo promete; tamaño no validado | `CreatePaymentScreen.kt:672-677`, `ImagePicker.android.kt:15` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — `rememberDocumentPickerLauncher` (imagen o PDF, también en web) con el mismo límite de 5 MB que votaciones; el multipart envía el MIME real; el detalle abre los PDF con el visor externo |
+| E-P4 | DatePicker permite fechas futuras | `CreatePaymentScreen.kt:842-859` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — `SelectableDates` hasta hoy |
+| E-P5 | "CANCELAR OPERACIÓN" solo vuelve al paso 1 | `CreatePaymentScreen.kt:565` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — sale del flujo (volver al paso 1 sigue en la flecha atrás) |
+| E-P6 | "Ver completo" y el recuadro del comprobante clicables sin comprobante | `PaymentDetailScreen.kt:217-224, 294` | ✅ Hecho | `worktree-agent-a91b636e2b2268872` — solo clicables (y "Ver completo" visible) con comprobante |
 
 ### Cartelera
 | ID | Problema | Dónde | Estado | Ref |
@@ -194,3 +195,4 @@ Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco s
 | 2026-10-16 | Auditoría inicial (9 revisiones por pantalla, rama `poc/web-admin-theme`) |
 | 2026-10-21 | Revisión contra el código actual (sin cambios desde la auditoría): bloque A confirmado en código → ⬜ Pendiente; corregidas las descripciones de A-10, B-01, B-02, B-09, C-02, C-07, C-09, D-06 y E-L3 |
 | 2026-10-21 | Paso 0 (`worktree-agent-a8dd877d108cce00f`): B-01…B-10, C-02, C-03, C-04, C-06, D-01, D-02, D-03 y D-05 → ✅; C-07 → 🔄 (falta `CreatePaymentScreen.kt`). A-15 (nuevo, hallado probando web contra DEV) → ✅. Primary móvil #DB5A07 → #C45006; nuevos `AptoNavInactive`, `AptoOnWarningContainer`, `onStatusContainer()` y `rememberReducedMotion()` |
+| 2026-10-21 | Paso 1, Pagos (`worktree-agent-a91b636e2b2268872`): A-01, A-02, A-03 y E-P1…E-P6 → ✅; A-07 → 🔄 (pagos hecho); C-01, C-05, C-08 y C-09 → 🔄 (pagos hecho); C-07 sigue 🔄 (falta `units_count_label`); A-12 → ⏸️ (falta backend). Nuevos `parseAmount()`/`formatAmountInput()` (`KmpFormatters.kt`), `ErrorState` (`EmptyState.kt`) y `PaymentRepository.fetchPayments`/`fetchPayment`. Resumen con columna ⏸️. A-16 (nuevo, hallado probando web contra DEV en UTC−4) → ✅ |

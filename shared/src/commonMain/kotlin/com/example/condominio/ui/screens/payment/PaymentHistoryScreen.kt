@@ -41,6 +41,7 @@ import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.EmptyState
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.StatusBadge
@@ -51,11 +52,11 @@ import com.example.condominio.ui.components.isWide
 import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.*
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.formatDate
 import condominio.shared.generated.resources.*
-import kotlin.time.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -84,7 +85,7 @@ fun PaymentHistoryScreen(
     Scaffold(
         topBar = {
             TopBarWithBack(
-                title = "Historial de Pagos",
+                title = stringResource(Res.string.payment_history),
                 onBackClick = onBackClick
             )
         },
@@ -99,9 +100,16 @@ fun PaymentHistoryScreen(
                 uiState.isLoading && uiState.payments.isEmpty() -> {
                     LoadingState()
                 }
+                // A failed load is not "no payments" (A-07)
+                uiState.loadFailed && uiState.payments.isEmpty() -> WebEmptyFrame {
+                    ErrorState(
+                        title = stringResource(Res.string.error_loading_payments),
+                        onRetry = viewModel::loadPayments,
+                    )
+                }
                 uiState.payments.isEmpty() -> WebEmptyFrame {
                     EmptyState(
-                        title = "No hay pagos registrados.",
+                        title = stringResource(Res.string.payment_history_empty),
                         icon = Icons.Default.ReceiptLong,
                     )
                 }
@@ -131,16 +139,17 @@ fun PaymentHistoryScreen(
                             Column(modifier = Modifier.padding(bottom = 24.dp)) {
                                 if (uiState.unit.isNotEmpty()) {
                                     Text(
-                                        text = "UNIDAD ${uiState.unit}".uppercase(),
+                                        text = stringResource(Res.string.unit, uiState.unit).uppercase(),
                                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = AptoOnSurfaceVariant,
                                         modifier = Modifier.padding(bottom = 4.dp)
                                     )
                                 }
                                 Text(
-                                    text = "Transacciones Recientes",
+                                    text = stringResource(Res.string.recent_transactions),
                                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = AptoPrimary
+                                    color = AptoPrimary,
+                                    modifier = Modifier.semantics { heading() }
                                 )
                             }
                         }
@@ -209,11 +218,12 @@ fun PaymentHistoryCard(
             ) {
                 Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
-                        text = payment.description.ifBlank { "Pago de Recibo" },
+                        text = payment.description.ifBlank { stringResource(Res.string.payment_default_desc) },
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                         color = AptoPrimary,
                         modifier = Modifier.padding(bottom = 4.dp),
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = formattedDate,
@@ -223,9 +233,10 @@ fun PaymentHistoryCard(
                     )
                 }
                 Text(
-                    text = "$${formatCurrency(payment.amount)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = AptoPrimary
+                    color = AptoPrimary,
+                    maxLines = 1
                 )
             }
 
@@ -234,38 +245,44 @@ fun PaymentHistoryCard(
                 horizontalArrangement = Arrangement.Start
             ) {
                 StatusBadge(
-                    text = statusData.first,
+                    text = stringResource(statusData.first),
                     statusColor = statusData.second
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val extraText = when {
-                    !payment.processorName.isNullOrBlank() -> "• Por: ${payment.processorName}"
-                    else -> "• ${payment.method.label}"
+                    !payment.processorName.isNullOrBlank() ->
+                        stringResource(Res.string.processed_by_short, payment.processorName).trimStart()
+                    else -> "· ${paymentMethodLabel(payment.method)}"
                 }
                 Text(
                     text = extraText,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                    color = AptoOutline
+                    color = AptoOutline,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
     }
 }
 
-private fun formatPaymentDate(epochMillis: Long): String = try {
-    val instant = Instant.fromEpochMilliseconds(epochMillis)
-    val date = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val months = listOf("", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
-    val monthStr = if (date.monthNumber in 1..12) months[date.monthNumber] else date.monthNumber.toString()
-    "${date.dayOfMonth} $monthStr, ${date.year}"
-} catch (e: Exception) {
-    "Fecha Inválida"
-}
+/** Same numeric date in every payment screen and language (C-08), as in the invoice detail. */
+internal fun formatPaymentDate(epochMillis: Long): String = formatDate(epochMillis, "dd/MM/yyyy")
+
+/** Localized method name (the enum label is Spanish only). */
+@Composable
+internal fun paymentMethodLabel(method: PaymentMethod): String = stringResource(
+    when (method) {
+        PaymentMethod.PAGO_MOVIL -> Res.string.method_pago_movil
+        PaymentMethod.TRANSFER -> Res.string.method_transfer
+        PaymentMethod.CASH -> Res.string.method_cash
+    }
+)
 
 private fun paymentStatusData(status: PaymentStatus) = when (status) {
-    PaymentStatus.APPROVED -> Pair("Aprobado", AptoStatusSuccess)
-    PaymentStatus.REJECTED -> Pair("Rechazado", AptoStatusError)
-    PaymentStatus.PENDING -> Pair("Pendiente", AptoStatusWarning)
+    PaymentStatus.APPROVED -> Pair(Res.string.status_approved, AptoStatusSuccess)
+    PaymentStatus.REJECTED -> Pair(Res.string.status_rejected, AptoStatusError)
+    PaymentStatus.PENDING -> Pair(Res.string.status_pending, AptoStatusWarning)
 }
 
 // Column weights shared by the header and the rows of the web table.
@@ -293,16 +310,17 @@ private fun PaymentHistoryTable(
             Column {
                 if (unit.isNotEmpty()) {
                     Text(
-                        text = "UNIDAD $unit".uppercase(),
+                        text = stringResource(Res.string.unit, unit).uppercase(),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = AptoOnSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
                 Text(
-                    text = "Transacciones Recientes",
+                    text = stringResource(Res.string.recent_transactions),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = AptoOnSurface
+                    color = AptoOnSurface,
+                    modifier = Modifier.semantics { heading() }
                 )
             }
         }
@@ -394,7 +412,7 @@ private fun PaymentTableRow(
                 color = AptoOnSurface
             )
             Text(
-                text = payment.description.ifBlank { "Pago de Recibo" },
+                text = payment.description.ifBlank { stringResource(Res.string.payment_default_desc) },
                 style = MaterialTheme.typography.bodySmall,
                 color = AptoOnSurfaceVariant,
                 maxLines = 1,
@@ -420,7 +438,7 @@ private fun PaymentTableRow(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = payment.method.label,
+                text = paymentMethodLabel(payment.method),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AptoOnSurface,
                 maxLines = 1,
@@ -436,7 +454,7 @@ private fun PaymentTableRow(
             modifier = Modifier.weight(COL_REFERENCE).padding(end = 16.dp)
         )
         Text(
-            text = "$${formatCurrency(payment.amount)}",
+            text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
             color = AptoPrimary,
             textAlign = TextAlign.End,
@@ -444,7 +462,7 @@ private fun PaymentTableRow(
             modifier = Modifier.weight(COL_AMOUNT).padding(end = 24.dp)
         )
         Box(modifier = Modifier.weight(COL_STATUS)) {
-            StatusBadge(text = statusData.first, statusColor = statusData.second)
+            StatusBadge(text = stringResource(statusData.first), statusColor = statusData.second)
         }
     }
 }
