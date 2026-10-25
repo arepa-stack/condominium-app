@@ -32,8 +32,9 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
             } else {
                 Response.error(response.status.value, "Error from server: ${response.status}")
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
+            // No printStackTrace: on web every network failure filled the console with traces (A-20)
             Response.error(500, e.message ?: "Unknown error")
         }
     }

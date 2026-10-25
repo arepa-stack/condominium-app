@@ -469,4 +469,7 @@
     <string name="error_loading_dashboard">No pudimos cargar tu información</string>
     <string name="error_loading_balance">No pudimos cargar tu saldo</string>
     <string name="see_invoices">Ver facturas</string>
+    <string name="error_loading_invoice_list">No pudimos cargar tus facturas</string>
+    <string name="error_loading_invoice">No pudimos cargar la factura</string>
+    <string name="error_loading_invoice_payments">No pudimos cargar los pagos de la factura</string>
 </resources>

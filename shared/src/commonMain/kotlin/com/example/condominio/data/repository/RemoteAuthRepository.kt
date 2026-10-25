@@ -1,5 +1,6 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.local.TokenManager
 import com.example.condominio.data.model.*
 import com.example.condominio.data.remote.*
@@ -68,7 +69,8 @@ class RemoteAuthRepository
                     Result.failure(Exception(errorMsg))
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             println("RemoteAuthRepo: Exception during login")
             Result.failure(Exception("Login error: ${e.message}"))
         }
@@ -107,7 +109,8 @@ class RemoteAuthRepository
                         "Registration failed: ${response.errorBody().string()}"
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -120,7 +123,8 @@ class RemoteAuthRepository
             } else {
                 Result.failure(Exception("Failed to send reset email (${response.code})"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -136,7 +140,8 @@ class RemoteAuthRepository
             } else {
                 Result.failure(Exception("Failed to change password (${response.code})"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -157,7 +162,8 @@ class RemoteAuthRepository
                 if (response.code == 401) tokenManager.clearToken()
                 Result.failure(Exception("Failed to fetch user"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -172,7 +178,8 @@ class RemoteAuthRepository
             } else {
                 Result.failure(Exception("Failed to fetch units for building $buildingId"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -187,7 +194,8 @@ class RemoteAuthRepository
             } else {
                 Result.failure(Exception("Failed to fetch unit details for $unitId"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -214,7 +222,8 @@ class RemoteAuthRepository
             } else {
                 Result.failure(Exception("Failed to update user"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -231,7 +240,8 @@ class RemoteAuthRepository
             } else {
                 Result.failure(Exception("Failed to change password (${response.code})"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -247,7 +257,8 @@ class RemoteAuthRepository
             } else {
                 Result.failure(Exception("Failed to delete account"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -264,7 +275,8 @@ class RemoteAuthRepository
                 val unitDetailsResp =
                         try {
                             apiService.getUnitDetails(unit.unitId)
-                        } catch (e: Exception) {
+                        } catch (e: Throwable) {
+                            e.rethrowIfCancellation()
                             null
                         }
                 if (unitDetailsResp?.body() != null) {
@@ -279,7 +291,8 @@ class RemoteAuthRepository
                 val buildingResp =
                         try {
                             apiService.getBuilding(bId)
-                        } catch (e: Exception) {
+                        } catch (e: Throwable) {
+                            e.rethrowIfCancellation()
                             null
                         }
                 bName = buildingResp?.body()?.name ?: "Building"

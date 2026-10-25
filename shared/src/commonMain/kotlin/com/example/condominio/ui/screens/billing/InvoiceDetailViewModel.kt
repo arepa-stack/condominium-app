@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.condominio.ui.utils.UiText
-import condominio.shared.generated.resources.*
 
 class InvoiceDetailViewModel (
     private val paymentRepository: PaymentRepository,
@@ -18,7 +16,7 @@ class InvoiceDetailViewModel (
 ) : ViewModel() {
 
     private val invoiceId: String = checkNotNull(savedStateHandle["invoiceId"])
-    
+
     private val _uiState = MutableStateFlow(InvoiceDetailUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -26,36 +24,38 @@ class InvoiceDetailViewModel (
         loadData()
     }
 
-    private fun loadData() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            // Fetch Invoice Details
-            launch {
-                paymentRepository.getInvoice(invoiceId)
-                    .onSuccess { invoice ->
-                        _uiState.update { it.copy(invoice = invoice) }
-                    }
-                    .onFailure { e ->
-                        println("Error: `Error loading invoice $invoiceId: ${e.message}")
-                        _uiState.update { it.copy(error = UiText.DynamicString(e.message ?: "")) }
-                    }
-            }
+    /** Loads the invoice and its payments; also the retry action of both error states (A-07). */
+    fun loadData() {
+        loadInvoice()
+        loadPayments()
+    }
 
-            // Fetch Payments
-            launch {
-                paymentRepository.getInvoicePayments(invoiceId)
-                    .onSuccess { payments ->
-                        _uiState.update { 
-                            it.copy(
-                                payments = payments,
-                                isLoading = false
-                            )
-                        }
-                    }
-                    .onFailure {
-                        _uiState.update { it.copy(isLoading = false, error = UiText.StringResource(Res.string.error_unknown)) }
-                    }
+    private fun loadInvoice() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, loadFailed = false) }
+            val result = paymentRepository.getInvoice(invoiceId)
+            _uiState.update {
+                it.copy(
+                    invoice = result.getOrNull() ?: it.invoice,
+                    isLoading = false,
+                    // A failed load is not "invoice not found" (A-07)
+                    loadFailed = result.isFailure
+                )
+            }
+        }
+    }
+
+    fun loadPayments() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingPayments = true, paymentsLoadFailed = false) }
+            val result = paymentRepository.getInvoicePayments(invoiceId)
+            _uiState.update {
+                it.copy(
+                    payments = result.getOrNull() ?: it.payments,
+                    isLoadingPayments = false,
+                    // A failed load is not "no payments" (A-07)
+                    paymentsLoadFailed = result.isFailure
+                )
             }
         }
     }
@@ -64,6 +64,9 @@ class InvoiceDetailViewModel (
 data class InvoiceDetailUiState(
     val invoice: com.example.condominio.data.model.Invoice? = null,
     val payments: List<Payment> = emptyList(),
+    /** Invoice request in flight (the payments list has its own flag). */
     val isLoading: Boolean = false,
-    val error: UiText? = null
+    val loadFailed: Boolean = false,
+    val isLoadingPayments: Boolean = false,
+    val paymentsLoadFailed: Boolean = false
 )

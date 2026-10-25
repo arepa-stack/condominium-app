@@ -1,5 +1,6 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.DecisionDetailDto
 import com.example.condominio.data.model.DecisionStatus
 import com.example.condominio.data.model.DecisionsPageDto
@@ -67,7 +68,8 @@ class RemoteDecisionsRepositoryImpl(
                 val errorMsg = translateDecisionsError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -81,7 +83,8 @@ class RemoteDecisionsRepositoryImpl(
                 val errorMsg = translateDecisionsError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -117,7 +120,8 @@ class RemoteDecisionsRepositoryImpl(
                 val errorMsg = translateDecisionsError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -131,7 +135,8 @@ class RemoteDecisionsRepositoryImpl(
                 val errorMsg = translateDecisionsError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -149,7 +154,8 @@ class RemoteDecisionsRepositoryImpl(
                 val errorMsg = translateDecisionsError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -163,7 +169,8 @@ class RemoteDecisionsRepositoryImpl(
                 val errorMsg = translateDecisionsError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }

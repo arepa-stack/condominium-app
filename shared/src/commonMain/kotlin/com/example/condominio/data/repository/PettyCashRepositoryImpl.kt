@@ -1,5 +1,6 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.PettyCashBalanceDto
 import com.example.condominio.data.remote.ApiService
 
@@ -15,7 +16,8 @@ class PettyCashRepositoryImpl(
             } else {
                 Result.failure(Exception(response.errorBody().string()))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }

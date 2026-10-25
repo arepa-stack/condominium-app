@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -35,8 +34,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
@@ -59,6 +56,7 @@ import com.example.condominio.ui.utils.formatDate
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.example.condominio.ui.utils.OnScreenReturn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,19 +66,9 @@ fun PaymentHistoryScreen(
     viewModel: PaymentHistoryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.loadPayments()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+    // Reload when coming back from a payment detail or from background; opening and rotation don't (A-19)
+    OnScreenReturn(viewModel::onScreenReturn, viewModel::onBackgroundReturn)
+    val openPayment: (String) -> Unit = { id -> viewModel.onOpenChild(); onPaymentClick(id) }
 
     Scaffold(
         topBar = {
@@ -117,7 +105,7 @@ fun PaymentHistoryScreen(
                     PaymentHistoryTable(
                         unit = uiState.unit,
                         payments = uiState.payments,
-                        onPaymentClick = onPaymentClick
+                        onPaymentClick = openPayment
                     )
                 }
                 else -> {
@@ -157,7 +145,7 @@ fun PaymentHistoryScreen(
                         items(uiState.payments) { payment ->
                             PaymentHistoryCard(
                                 payment = payment,
-                                onClick = { onPaymentClick(payment.id) }
+                                onClick = { openPayment(payment.id) }
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }

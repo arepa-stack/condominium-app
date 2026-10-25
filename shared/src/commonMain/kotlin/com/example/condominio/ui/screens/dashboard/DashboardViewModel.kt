@@ -31,8 +31,8 @@ class DashboardViewModel(
     /** Current load; a new one cancels it (and its child requests) so a stale response never lands (A-06). */
     private var loadJob: Job? = null
 
-    /** `init` already loads: the first ON_RESUME (right after opening) must not load again (A-06). */
-    private var skipNextResume = true
+    /** The user went forward to a child screen; set by [onOpenChild], consumed by the next [onScreenReturn] (A-19). */
+    private var childOpened = false
 
     init {
         loadData()
@@ -123,12 +123,29 @@ class DashboardViewModel(
         loadData()
     }
 
-    /** Reload when coming back to the screen (e.g. after a payment), except for the first resume. */
-    fun onResume() {
-        if (skipNextResume) {
-            skipNextResume = false
-            return
-        }
+    /** The screen is about to navigate forward (payment, action, profile...): coming back must reload. */
+    fun onOpenChild() {
+        childOpened = true
+    }
+
+    /**
+     * Screen entered composition again ([com.example.condominio.ui.utils.OnScreenReturn]). Reloads only coming
+     * back from a child screen; opening and rotation/recreation (the ViewModel survives) don't, `init` loaded.
+     */
+    fun onScreenReturn() {
+        if (!childOpened) return
+        childOpened = false
+        reloadIfIdle()
+    }
+
+    /** App back from background: reload. */
+    fun onBackgroundReturn() {
+        reloadIfIdle()
+    }
+
+    private fun reloadIfIdle() {
+        // A load already running is as fresh as a new one: don't cancel and restart it on a duplicate signal.
+        if (loadJob?.isActive == true) return
         loadData()
     }
 }

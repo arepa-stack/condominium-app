@@ -26,30 +26,32 @@ class InvoiceListViewModel (
 
     private fun loadInvoices() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
+            // Clear the previous error so a successful refresh doesn't keep showing it (A-08)
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
             val user = authRepository.fetchCurrentUser().getOrNull()
             val unitId = user?.currentUnit?.unitId ?: user?.units?.firstOrNull()?.unitId
-            
+
             if (!unitId.isNullOrEmpty()) {
                 val result = paymentRepository.getInvoices(unitId)
                 result.onSuccess { invoices ->
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
                             invoices = invoices,
                             isLoading = false
                         )
                     }
-                }.onFailure { e ->
-                    _uiState.update { 
+                }.onFailure {
+                    // Error state with retry instead of the raw exception message (A-07)
+                    _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = UiText.DynamicString(e.message ?: "")
+                            error = UiText.StringResource(Res.string.error_loading_invoice_list)
                         )
                     }
                 }
             } else {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         isLoading = false,
                         error = UiText.StringResource(Res.string.error_user_unit_not_found)
@@ -62,10 +64,17 @@ class InvoiceListViewModel (
     fun refresh() {
         loadInvoices()
     }
+
+    /** Kept here (not in `remember`) so the filter survives going to the detail and back (E-F4). */
+    fun onTabSelected(index: Int) {
+        _uiState.update { it.copy(selectedTab = index) }
+    }
 }
 
 data class InvoiceListUiState(
     val invoices: List<Invoice> = emptyList(),
     val isLoading: Boolean = false,
-    val error: UiText? = null
+    val error: UiText? = null,
+    /** 0 = all, 1 = pending, 2 = paid. */
+    val selectedTab: Int = 0
 )

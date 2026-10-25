@@ -30,8 +30,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -89,6 +87,7 @@ import com.example.condominio.ui.utils.formatCurrency
 import org.jetbrains.compose.resources.stringResource
 import condominio.shared.generated.resources.*
 
+@Suppress("NAME_SHADOWING")
 @Composable
 fun DashboardScreen(
         onPayClick: () -> Unit,
@@ -102,17 +101,17 @@ fun DashboardScreen(
         viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.onResume()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
+    // Reload when coming back from a child screen or from background; opening and rotation don't (A-06, A-19)
+    com.example.condominio.ui.utils.OnScreenReturn(viewModel::onScreenReturn, viewModel::onBackgroundReturn)
+    // Every forward navigation tells the ViewModel first, so the next re-entry knows it is a real return.
+    val onPayClick = { viewModel.onOpenChild(); onPayClick() }
+    val onHistoryClick = { viewModel.onOpenChild(); onHistoryClick() }
+    val onPaymentClick = { id: String -> viewModel.onOpenChild(); onPaymentClick(id) }
+    val onProfileClick = { viewModel.onOpenChild(); onProfileClick() }
+    val onUnitClick = { viewModel.onOpenChild(); onUnitClick() }
+    val onSeeAllInvoicesClick = { viewModel.onOpenChild(); onSeeAllInvoicesClick() }
+    val onDecisionsClick = { viewModel.onOpenChild(); onDecisionsClick() }
+    val onBillboardClick = { viewModel.onOpenChild(); onBillboardClick() }
 
     Scaffold(
             modifier = Modifier.fillMaxSize(),
