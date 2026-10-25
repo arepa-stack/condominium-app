@@ -32,8 +32,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.WebCard
+import com.example.condominio.ui.components.WebEmptyFrame
+import com.example.condominio.ui.screens.payment.formatPaymentDate
 import com.example.condominio.ui.components.isExpanded
 import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
@@ -73,7 +86,6 @@ import com.example.condominio.ui.theme.statCardBg
 import com.example.condominio.ui.theme.statCardBorder
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.ui.utils.formatCurrency
-import com.example.condominio.ui.utils.formatDate
 import org.jetbrains.compose.resources.stringResource
 import condominio.shared.generated.resources.*
 
@@ -95,7 +107,7 @@ fun DashboardScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refresh()
+                viewModel.onResume()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -110,6 +122,20 @@ fun DashboardScreen(
             LoadingState(modifier = Modifier.padding(paddingValues))
             return@Scaffold
         }
+        // Nothing loaded and the user/unit request failed: error with retry, not a blank screen (A-07).
+        val error = uiState.error
+        if (error != null && uiState.userName.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(paddingValues)) {
+                WebEmptyFrame { ErrorState(title = error.asString(), onRetry = viewModel::refresh) }
+            }
+            return@Scaffold
+        }
+        val balance = BalanceUi(
+                totalDebt = uiState.totalDebt,
+                loading = uiState.totalDebt == null && !uiState.balanceFailed && !uiState.unitId.isNullOrEmpty(),
+                failed = uiState.totalDebt == null && uiState.balanceFailed,
+                onRetry = viewModel::refresh
+        )
         val summary: LazyListScope.() -> Unit = {
             item {
                 HeaderSection(
@@ -125,7 +151,7 @@ fun DashboardScreen(
 
             item {
                 BillingCard(
-                        totalDebt = uiState.totalDebt,
+                        balance = balance,
                         pendingInvoices = uiState.pendingInvoices,
                         onSeeAllClick = onSeeAllInvoicesClick
                 )
@@ -154,6 +180,7 @@ fun DashboardScreen(
             }
         }
 
+        val historyLabel = stringResource(Res.string.history)
         val transactions: LazyListScope.() -> Unit = {
             item {
                 Row(
@@ -173,15 +200,33 @@ fun DashboardScreen(
                             text = stringResource(Res.string.see_all),
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable { onHistoryClick() }
+                            modifier = Modifier
+                                    .minimumInteractiveComponentSize()
+                                    .clickable(onClickLabel = historyLabel, role = Role.Button) { onHistoryClick() }
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            items(uiState.recentPayments) { payment ->
+            items(uiState.recentPayments, key = { it.id }) { payment ->
                 TransactionItem(payment = payment, onClick = { onPaymentClick(payment.id) })
                 Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            if (uiState.recentPayments.isEmpty() && !uiState.isLoading) {
+                item {
+                    if (uiState.paymentsFailed) {
+                        ErrorState(title = stringResource(Res.string.error_loading_payments), onRetry = viewModel::refresh)
+                    } else {
+                        Text(
+                                text = stringResource(Res.string.web_dashboard_no_transactions),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -189,6 +234,7 @@ fun DashboardScreen(
             // Web dashboard: greeting, KPI cards, action cards and a transactions table in one scroll.
             DashboardWebLayout(
                     uiState = uiState,
+                    balance = balance,
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
                     onPayClick = onPayClick,
                     onHistoryClick = onHistoryClick,
@@ -211,13 +257,43 @@ fun DashboardScreen(
     }
 }
 
+/** Balance as the cards show it: [totalDebt] is null while unknown (loading or failed), never "al día" (A-05). */
+class BalanceUi(
+        val totalDebt: Double?,
+        val loading: Boolean,
+        val failed: Boolean,
+        val onRetry: () -> Unit
+) {
+    val isSolvent: Boolean get() = totalDebt != null && totalDebt <= 0
+}
+
+/** Amount placeholder while the balance is unknown, or its error with retry. */
+@Composable
+private fun BalanceUnknown(balance: BalanceUi) {
+    if (balance.failed) {
+        Column(Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
+            Text(
+                    text = stringResource(Res.string.error_loading_balance),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.error
+            )
+            TextButton(onClick = balance.onRetry, contentPadding = PaddingValues(0.dp)) {
+                Text(stringResource(Res.string.retry))
+            }
+        }
+    } else if (balance.loading) {
+        LoadingState(fullScreen = false, size = 24.dp, strokeWidth = 3.dp)
+    }
+}
+
 @Composable
 fun BillingCard(
-        totalDebt: Double,
+        balance: BalanceUi,
         pendingInvoices: List<com.example.condominio.data.model.Invoice>,
         onSeeAllClick: () -> Unit = {}
 ) {
-    val isSolvent = totalDebt <= 0
+    val totalDebt = balance.totalDebt
+    val isSolvent = balance.isSolvent
     val amountColor = if (isSolvent) AptoSuccess else MaterialTheme.colorScheme.onSurface
 
     Card(
@@ -242,16 +318,22 @@ fun BillingCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                        text = stringResource(Res.string.see_all),
+                        text = stringResource(Res.string.see_invoices),
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
                             textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
                         ),
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.clickable { onSeeAllClick() }
+                        modifier = Modifier
+                                .minimumInteractiveComponentSize()
+                                .clickable(role = Role.Button) { onSeeAllClick() }
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
+            if (totalDebt == null) {
+                BalanceUnknown(balance)
+                return@Column
+            }
             Text(
                     text = stringResource(Res.string.currency_amount, formatCurrency(totalDebt)),
                     style = MaterialTheme.typography.headlineLarge.copy(
@@ -278,7 +360,7 @@ fun BillingCard(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.Bottom
                     ) {
-                        Column {
+                        Column(Modifier.weight(1f)) {
                             Text(
                                 text = stringResource(Res.string.pending_invoices_label),
                                 style = MaterialTheme.typography.labelSmall,
@@ -287,9 +369,12 @@ fun BillingCard(
                             Text(
                                     text = invoice.description ?: invoice.period,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                             )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                                 text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -298,7 +383,7 @@ fun BillingCard(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-            } else {
+            } else if (isSolvent) {
                 Text(
                         text = stringResource(Res.string.up_to_date).emojiSafe(),
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
@@ -324,7 +409,7 @@ fun HeaderSection(
             verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
-            modifier = if (hasMultipleUnits) Modifier.clickable(onClick = onUnitClick) else Modifier
+            modifier = Modifier.weight(1f).then(if (hasMultipleUnits) Modifier.clickable(onClick = onUnitClick) else Modifier)
         ) {
             Text(
                     text = stringResource(Res.string.welcome_back),
@@ -337,7 +422,9 @@ fun HeaderSection(
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = (-0.5).sp
                     ),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
             )
             if (building.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -345,7 +432,10 @@ fun HeaderSection(
                     Text(
                             text = stringResource(Res.string.apt_unit_label, building, apartmentUnit),
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                     )
                     if (hasMultipleUnits) {
                         Icon(
@@ -358,9 +448,13 @@ fun HeaderSection(
                 }
             }
         }
-        // Avatar - Clickable to open profile
+        Spacer(modifier = Modifier.width(16.dp))
+        // Avatar - Clickable to open profile; announced as "Perfil", not as the initial (E-D2)
+        val profileLabel = stringResource(Res.string.profile)
         Surface(
-                modifier = Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onProfileClick),
+                modifier = Modifier.size(48.dp).clip(CircleShape)
+                        .clickable(role = Role.Button, onClick = onProfileClick)
+                        .clearAndSetSemantics { contentDescription = profileLabel },
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
@@ -377,7 +471,7 @@ fun HeaderSection(
                 } else {
                     Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = stringResource(Res.string.profile),
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -421,7 +515,7 @@ fun QuickActions(
         Spacer(modifier = Modifier.width(8.dp))
         QuickActionItem(
                 icon = Icons.Default.Campaign,
-                label = "Cartelera",
+                label = stringResource(Res.string.billboard_title),
                 color = AptoCategoryGreen,
                 onClick = onBillboardClick,
                 modifier = Modifier.weight(1f),
@@ -498,7 +592,7 @@ fun QuickActionItem(
         badgeCount: Int = 0,
 ) {
     Column(
-            modifier = modifier.clickable(onClick = onClick),
+            modifier = modifier.clickable(role = Role.Button, onClick = onClick),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
         BadgedBox(
@@ -520,7 +614,8 @@ fun QuickActionItem(
                                     .background(color.copy(alpha = 0.1f), CircleShape)
                                     .border(1.dp, color.copy(alpha = 0.2f), CircleShape),
                     contentAlignment = Alignment.Center
-            ) { Icon(imageVector = icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp)) }
+            // The label below already names the action: no contentDescription, or it is read twice (E-D2)
+            ) { Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp)) }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -571,7 +666,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
             Text(
-                    text = formatDate(payment.date),
+                    text = formatPaymentDate(payment.date),
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.outline
             )
@@ -583,10 +678,7 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                             text = stringResource(Res.string.processed_by_short, payment.processorName),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 9.sp
-                            ),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                             color = MaterialTheme.colorScheme.outline,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -595,21 +687,31 @@ fun TransactionItem(payment: Payment, onClick: () -> Unit) {
             }
         }
         Text(
-                text = "$${formatCurrency(payment.amount)}",
+                text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
+@Composable
+private fun paymentStatusLabel(status: PaymentStatus): String = when (status) {
+    PaymentStatus.APPROVED -> stringResource(Res.string.status_approved_upper).uppercase()
+    PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper).uppercase()
+    PaymentStatus.PENDING -> stringResource(Res.string.status_pending).uppercase()
+}
+
+// labelSmall size (was a fixed 9sp, unreadable) (E-D4)
+@Composable
+private fun paymentStatusBadgeStyle(): TextStyle =
+        MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp)
+
+private val BadgeHorizontalPadding = 6.dp
+
 /** Status pill shared by the mobile transaction item and the web transactions table. */
 @Composable
 private fun PaymentStatusBadge(status: PaymentStatus) {
-    val statusLabel = when (status) {
-        PaymentStatus.APPROVED -> stringResource(Res.string.status_approved_upper).uppercase()
-        PaymentStatus.REJECTED -> stringResource(Res.string.status_rejected_upper).uppercase()
-        PaymentStatus.PENDING -> stringResource(Res.string.status_pending).uppercase()
-    }
+    val statusLabel = paymentStatusLabel(status)
 
     val statusBg = when (status) {
         PaymentStatus.APPROVED -> AptoSuccessContainer
@@ -627,16 +729,14 @@ private fun PaymentStatusBadge(status: PaymentStatus) {
         modifier = Modifier
             .background(badgeBg(statusBg, statusColor), badgeShape(RoundedCornerShape(4.dp)))
             .then(badgeBorder(statusColor)?.let { Modifier.border(it, CircleShape) } ?: Modifier)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(horizontal = BadgeHorizontalPadding, vertical = 2.dp)
     ) {
         Text(
                 text = statusLabel,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 9.sp,
-                    letterSpacing = 0.5.sp
-                ),
-                color = onStatusContainer(statusColor)
+                style = paymentStatusBadgeStyle(),
+                color = onStatusContainer(statusColor),
+                maxLines = 1,
+                softWrap = false
         )
     }
 }
@@ -650,6 +750,7 @@ private val HandCursor = Modifier.pointerHoverIcon(PointerIcon.Hand)
 @Composable
 private fun DashboardWebLayout(
         uiState: DashboardUiState,
+        balance: BalanceUi,
         modifier: Modifier,
         onPayClick: () -> Unit,
         onHistoryClick: () -> Unit,
@@ -680,13 +781,16 @@ private fun DashboardWebLayout(
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(2.4f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 WebKpiRow(
-                        totalDebt = uiState.totalDebt,
+                        balance = balance,
                         pendingInvoices = uiState.pendingInvoices,
                         pettyCash = uiState.pettyCashBalance?.let { it.currentBalance to it.currency },
                         onSeeAllInvoicesClick = onSeeAllInvoicesClick
                 )
                 WebTransactionsTable(
                         payments = uiState.recentPayments,
+                        loading = uiState.isLoading,
+                        failed = uiState.paymentsFailed,
+                        onRetry = balance.onRetry,
                         onPaymentClick = onPaymentClick,
                         onSeeAllClick = onHistoryClick
                 )
@@ -736,7 +840,9 @@ private fun WebGreetingRow(
             Text(
                     text = userName,
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
             )
         }
 
@@ -747,7 +853,8 @@ private fun WebGreetingRow(
                     shape = RoundedCornerShape(12.dp),
                     color = AptoSurfaceContainerLowest,
                     border = androidx.compose.foundation.BorderStroke(1.dp, AptoOutlineVariant),
-                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).then(unitModifier)
+                    // Capped so a long building name can't squeeze the greeting out (E-D5).
+                    modifier = Modifier.widthIn(max = 360.dp).clip(RoundedCornerShape(12.dp)).then(unitModifier)
             ) {
                 Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -756,7 +863,10 @@ private fun WebGreetingRow(
                     Text(
                             text = stringResource(Res.string.apt_unit_label, building, apartmentUnit),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                     )
                     if (hasMultipleUnits) {
                         Spacer(Modifier.width(4.dp))
@@ -771,8 +881,12 @@ private fun WebGreetingRow(
             }
         }
 
+        val profileLabel = stringResource(Res.string.profile)
         Surface(
-                modifier = Modifier.size(44.dp).clip(CircleShape).then(HandCursor).clickable(onClick = onProfileClick),
+                modifier = Modifier.size(44.dp).clip(CircleShape).then(HandCursor)
+                        .clickable(role = Role.Button, onClick = onProfileClick)
+                        // Announced as "Perfil", not as the initial (E-D2).
+                        .clearAndSetSemantics { contentDescription = profileLabel },
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
@@ -785,7 +899,7 @@ private fun WebGreetingRow(
                             color = MaterialTheme.colorScheme.primary
                     )
                 } else {
-                    Icon(Icons.Default.Person, contentDescription = stringResource(Res.string.profile), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -794,45 +908,57 @@ private fun WebGreetingRow(
 
 @Composable
 private fun WebKpiRow(
-        totalDebt: Double,
+        balance: BalanceUi,
         pendingInvoices: List<com.example.condominio.data.model.Invoice>,
         pettyCash: Pair<Double, String>?,
         onSeeAllInvoicesClick: () -> Unit
 ) {
-    val isSolvent = totalDebt <= 0
-    Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
+    val totalDebt = balance.totalDebt
+    val isSolvent = balance.isSolvent
+    // Both cards come from the balance: while it is unknown, a dash and the loading/error footer (A-05).
+    val unknownValue = "—"
+    val cards = mutableListOf<@Composable (Modifier) -> Unit>()
+    cards += { cardModifier ->
         WebKpiCard(
-                modifier = Modifier.weight(1f).fillMaxHeight(),
+                modifier = cardModifier,
                 icon = Icons.Default.AccountBalanceWallet,
                 iconTint = AptoSecondaryContainer,
                 label = stringResource(Res.string.total_debt),
-                value = stringResource(Res.string.currency_amount, formatCurrency(totalDebt)),
+                value = totalDebt?.let { stringResource(Res.string.currency_amount, formatCurrency(it)) } ?: unknownValue,
                 valueColor = if (isSolvent) AptoSuccess else MaterialTheme.colorScheme.onSurface,
                 footer = {
-                    if (isSolvent) {
+                    if (totalDebt == null) {
+                        BalanceUnknown(balance)
+                    } else if (isSolvent) {
                         Text(
                                 text = stringResource(Res.string.up_to_date).emojiSafe(),
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                 color = AptoSuccess
                         )
                     } else {
-                        WebLink(stringResource(Res.string.see_all), onSeeAllInvoicesClick)
+                        WebLink(stringResource(Res.string.see_invoices), onSeeAllInvoicesClick)
                     }
                 }
         )
+    }
 
+    val invoicesKnown = totalDebt != null
+    cards += { cardModifier ->
         WebKpiCard(
-                modifier = Modifier.weight(1f).fillMaxHeight(),
+                modifier = cardModifier,
                 icon = Icons.Default.Receipt,
-                iconTint = if (pendingInvoices.isEmpty()) AptoSuccess else MaterialTheme.colorScheme.error,
+                iconTint = when {
+                    !invoicesKnown -> MaterialTheme.colorScheme.onSurfaceVariant
+                    pendingInvoices.isEmpty() -> AptoSuccess
+                    else -> MaterialTheme.colorScheme.error
+                },
                 label = stringResource(Res.string.pending_invoices_label).trimEnd(':', ' '),
-                value = pendingInvoices.size.toString(),
-                valueColor = if (pendingInvoices.isEmpty()) AptoSuccess else MaterialTheme.colorScheme.onSurface,
+                value = if (invoicesKnown) pendingInvoices.size.toString() else unknownValue,
+                valueColor = if (invoicesKnown && pendingInvoices.isEmpty()) AptoSuccess else MaterialTheme.colorScheme.onSurface,
                 footer = {
-                    if (pendingInvoices.isEmpty()) {
+                    if (!invoicesKnown) {
+                        // Loading/error is already shown in the total-debt card next to it.
+                    } else if (pendingInvoices.isEmpty()) {
                         Text(
                                 text = stringResource(Res.string.up_to_date).emojiSafe(),
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
@@ -862,10 +988,12 @@ private fun WebKpiRow(
                     }
                 }
         )
+    }
 
-        pettyCash?.let { (amount, currency) ->
+    pettyCash?.let { (amount, currency) ->
+        cards += { cardModifier ->
             WebKpiCard(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    modifier = cardModifier,
                     icon = Icons.Default.Savings,
                     iconTint = AptoPettyCashAccent,
                     iconBackground = AptoPettyCashAccentContainer,
@@ -882,7 +1010,26 @@ private fun WebKpiRow(
             )
         }
     }
+
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // Side by side each card needs ~200dp for its label and amount; narrower (e.g. an 800px window) they
+        // stack instead of breaking words mid-way.
+        if (maxWidth < KpiRowMinWidth) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                cards.forEach { it(Modifier.fillMaxWidth()) }
+            }
+        } else {
+            Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                cards.forEach { it(Modifier.weight(1f).fillMaxHeight()) }
+            }
+        }
+    }
 }
+
+private val KpiRowMinWidth = 640.dp
 
 @Composable
 private fun WebKpiCard(
@@ -910,7 +1057,10 @@ private fun WebKpiCard(
             Text(
                     text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -973,18 +1123,22 @@ private fun WebActionCard(
 }
 
 @Composable
-private fun WebLink(text: String, onClick: () -> Unit) {
+private fun WebLink(text: String, onClick: () -> Unit, onClickLabel: String? = null) {
     Text(
             text = text,
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = AptoSecondaryContainer,
-            modifier = HandCursor.clickable(onClick = onClick)
+            modifier = Modifier.minimumInteractiveComponentSize().then(HandCursor)
+                    .clickable(onClickLabel = onClickLabel, role = Role.Button, onClick = onClick)
     )
 }
 
 @Composable
 private fun WebTransactionsTable(
         payments: List<Payment>,
+        loading: Boolean,
+        failed: Boolean,
+        onRetry: () -> Unit,
         onPaymentClick: (String) -> Unit,
         onSeeAllClick: () -> Unit
 ) {
@@ -999,28 +1153,52 @@ private fun WebTransactionsTable(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp),
                     color = MaterialTheme.colorScheme.onSurface
             )
-            WebLink(stringResource(Res.string.see_all), onSeeAllClick)
+            WebLink(stringResource(Res.string.see_all), onSeeAllClick, onClickLabel = stringResource(Res.string.history))
         }
+
+        // Date, amount and status columns are as wide as their widest cell (they never wrap, e.g. in an 800px
+        // window); the description takes the rest and ellipsizes.
+        val dateHeader = stringResource(Res.string.date_label)
+        val amountHeader = stringResource(Res.string.web_dashboard_amount)
+        val statusHeader = stringResource(Res.string.web_dashboard_status)
+        val dates = payments.map { formatPaymentDate(it.date) }
+        val amounts = payments.map { stringResource(Res.string.currency_amount, formatCurrency(it.amount)) }
+        val statusLabels = PaymentStatus.entries.map { paymentStatusLabel(it) }
+        val measurer = rememberTextMeasurer()
+        val density = LocalDensity.current
+        val headerStyle = webTableHeaderStyle()
+        val badgeStyle = paymentStatusBadgeStyle()
+        fun widthOf(texts: List<String>, style: TextStyle, extra: Dp = 0.dp): Dp = with(density) {
+            texts.maxOf { measurer.measure(it, style, maxLines = 1, softWrap = false).size.width }.toDp() + extra + 1.dp
+        }
+        val dateWidth = maxOf(widthOf(listOf(dateHeader.uppercase()), headerStyle), widthOf(dates + "00/00/0000", MaterialTheme.typography.bodyMedium))
+        val amountWidth = maxOf(widthOf(listOf(amountHeader.uppercase()), headerStyle), widthOf(amounts.ifEmpty { listOf("") }, WebAmountStyle()))
+        val statusWidth = maxOf(widthOf(listOf(statusHeader.uppercase()), headerStyle), widthOf(statusLabels, badgeStyle, BadgeHorizontalPadding * 2))
 
         // Column header
         Row(
                 modifier = Modifier.fillMaxWidth().background(TableHeaderBg).padding(horizontal = 24.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
         ) {
-            WebTableHeader(stringResource(Res.string.date_label), Modifier.weight(1.2f))
-            WebTableHeader(stringResource(Res.string.description_label), Modifier.weight(3f))
-            WebTableHeader(stringResource(Res.string.web_dashboard_amount), Modifier.weight(1.3f), TextAlign.End)
-            Spacer(Modifier.width(24.dp))
-            WebTableHeader(stringResource(Res.string.web_dashboard_status), Modifier.weight(1.3f))
+            WebTableHeader(dateHeader, Modifier.width(dateWidth))
+            WebTableHeader(stringResource(Res.string.description_label), Modifier.weight(1f))
+            WebTableHeader(amountHeader, Modifier.width(amountWidth), TextAlign.End)
+            WebTableHeader(statusHeader, Modifier.width(statusWidth))
         }
 
         if (payments.isEmpty()) {
             Box(Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
-                Text(
-                        text = stringResource(Res.string.web_dashboard_no_transactions),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                when {
+                    loading -> LoadingState(fullScreen = false)
+                    // A failed load is not "no transactions" (A-07)
+                    failed -> ErrorState(title = stringResource(Res.string.error_loading_payments), onRetry = onRetry)
+                    else -> Text(
+                            text = stringResource(Res.string.web_dashboard_no_transactions),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
         payments.forEachIndexed { index, payment ->
@@ -1030,15 +1208,18 @@ private fun WebTransactionsTable(
                             .then(HandCursor)
                             .clickable { onPaymentClick(payment.id) }
                             .padding(horizontal = 24.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                        text = formatDate(payment.date),
+                        text = dates[index],
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1.2f)
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.width(dateWidth)
                 )
-                Column(Modifier.weight(3f)) {
+                Column(Modifier.weight(1f)) {
                     Text(
                             text = payment.description.ifBlank { stringResource(Res.string.payment_item_label) },
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -1057,14 +1238,15 @@ private fun WebTransactionsTable(
                     }
                 }
                 Text(
-                        text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
+                        text = amounts[index],
+                        style = WebAmountStyle(),
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.End,
-                        modifier = Modifier.weight(1.3f)
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.width(amountWidth)
                 )
-                Spacer(Modifier.width(24.dp))
-                Box(Modifier.weight(1.3f)) { PaymentStatusBadge(payment.status) }
+                Box(Modifier.width(statusWidth)) { PaymentStatusBadge(payment.status) }
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -1072,12 +1254,21 @@ private fun WebTransactionsTable(
 }
 
 @Composable
+private fun webTableHeaderStyle(): TextStyle =
+        MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+
+@Composable
+private fun WebAmountStyle(): TextStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold)
+
+@Composable
 private fun WebTableHeader(text: String, modifier: Modifier, textAlign: TextAlign = TextAlign.Start) {
     Text(
             text = text.uppercase(),
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp),
+            style = webTableHeaderStyle(),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = textAlign,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = modifier
     )
 }

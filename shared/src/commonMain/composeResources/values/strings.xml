@@ -466,4 +466,7 @@
     <string name="error_check_connection">Revisa tu conexión e inténtalo de nuevo.</string>
     <string name="error_bank_required">Indica el banco emisor.</string>
     <string name="error_reference_required">Indica el número de referencia.</string>
+    <string name="error_loading_dashboard">No pudimos cargar tu información</string>
+    <string name="error_loading_balance">No pudimos cargar tu saldo</string>
+    <string name="see_invoices">Ver facturas</string>
 </resources>
