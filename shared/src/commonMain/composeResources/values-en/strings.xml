@@ -466,4 +466,7 @@
     <string name="error_check_connection">Check your connection and try again.</string>
     <string name="error_bank_required">Enter the issuing bank.</string>
     <string name="error_reference_required">Enter the reference number.</string>
+    <string name="error_loading_dashboard">We couldn\'t load your information</string>
+    <string name="error_loading_balance">We couldn\'t load your balance</string>
+    <string name="see_invoices">See invoices</string>
 </resources>
