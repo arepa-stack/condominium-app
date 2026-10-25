@@ -1,5 +1,6 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.RegistrationRequestBody
 import com.example.condominio.data.model.RegistrationRequestResponse
 import com.example.condominio.data.remote.ApiService
@@ -51,7 +52,8 @@ class RemoteOnboardingRepository(
             }
             Result.failure(Exception(msg))
         }
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
+        e.rethrowIfCancellation()
         Result.failure(e)
     }
 }

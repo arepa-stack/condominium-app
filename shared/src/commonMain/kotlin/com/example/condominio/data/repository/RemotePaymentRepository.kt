@@ -1,5 +1,6 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.*
 import com.example.condominio.data.remote.ApiService
 import com.example.condominio.ui.utils.formatDate
@@ -58,7 +59,8 @@ class RemotePaymentRepository(
             } else {
                 Result.failure(Exception("HTTP ${response.code}"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             println("Error fetching payments: ${e.message}")
             Result.failure(e)
         }
@@ -72,7 +74,8 @@ class RemotePaymentRepository(
             } else {
                 emit(emptyList())
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             println("Error fetching payments stream: ${e.message}")
             emit(emptyList())
         }
@@ -89,7 +92,8 @@ class RemotePaymentRepository(
             } else {
                 Result.failure(Exception("HTTP ${response.code}"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             println("Error fetching payment $id: ${e.message}")
             Result.failure(e)
         }
@@ -164,7 +168,8 @@ class RemotePaymentRepository(
                 val errorMsg = translatePaymentError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -208,7 +213,8 @@ class RemotePaymentRepository(
                 val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -222,7 +228,8 @@ class RemotePaymentRepository(
                 val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -235,7 +242,8 @@ class RemotePaymentRepository(
             } else {
                 Result.failure(Exception("Failed to fetch invoice details"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -269,7 +277,8 @@ class RemotePaymentRepository(
             } else {
                 Result.failure(Exception("Failed to fetch invoice payments"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }

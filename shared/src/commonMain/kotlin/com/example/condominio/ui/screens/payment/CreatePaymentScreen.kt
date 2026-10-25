@@ -850,11 +850,12 @@ private val monthNames = listOf(
     Res.string.month_september, Res.string.month_october, Res.string.month_november, Res.string.month_december
 )
 
-/** "2025-03" -> "Marzo 2025" / "March 2025" in the app language (falls back to the raw period). */
+/** "2025-03" -> "Marzo 2025" / "March 2025" in the app language (falls back to the raw period). Also used by billing. */
 @Composable
-private fun invoiceMonthLabel(period: String): String {
+internal fun invoiceMonthLabel(period: String): String {
     val parts = period.split("-")
-    val monthNum = if (parts.size > 1) parts[1].toIntOrNull() ?: 1 else 1
+    // Not "YYYY-MM" (the backend doesn't enforce it): show it as is instead of "Enero <period>".
+    val monthNum = if (parts.size == 2) parts[1].toIntOrNull() ?: 0 else 0
     return if (monthNum in 1..12) "${stringResource(monthNames[monthNum - 1])} ${parts[0]}" else period
 }
 

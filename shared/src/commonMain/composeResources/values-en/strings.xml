@@ -469,4 +469,7 @@
     <string name="error_loading_dashboard">We couldn\'t load your information</string>
     <string name="error_loading_balance">We couldn\'t load your balance</string>
     <string name="see_invoices">See invoices</string>
+    <string name="error_loading_invoice_list">We couldn\'t load your invoices</string>
+    <string name="error_loading_invoice">We couldn\'t load the invoice</string>
+    <string name="error_loading_invoice_payments">We couldn\'t load this invoice\'s payments</string>
 </resources>

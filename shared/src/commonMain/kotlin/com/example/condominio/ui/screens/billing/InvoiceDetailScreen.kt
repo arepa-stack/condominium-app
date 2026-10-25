@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -43,7 +46,9 @@ import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
-import com.example.condominio.ui.utils.formatDate
+import com.example.condominio.ui.components.ErrorState
+import com.example.condominio.ui.screens.payment.formatPaymentDate
+import com.example.condominio.ui.screens.payment.invoiceMonthLabel
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -82,56 +87,59 @@ fun InvoiceDetailScreen(
                     tonalElevation = 0.dp
                 ) {
                     HorizontalDivider(color = AptoOutlineVariant)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    val secondaryLabel = stringResource(Res.string.view_all_payments)
+                    val primaryLabel = if (hasPendingBalance) {
+                        stringResource(Res.string.pay_now).uppercase()
+                    } else {
+                        stringResource(Res.string.download_invoice)
+                    }
+                    val seeAll: @Composable (Modifier) -> Unit = { mod ->
                         OutlinedButton(
                             onClick = onSeeAllPaymentsClick,
-                            modifier = Modifier.weight(1f),
+                            modifier = mod,
                             shape = CircleShape,
                             border = BorderStroke(1.dp, AptoSecondary),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoSecondary)
                         ) {
-                            Text(
-                                text = stringResource(Res.string.view_all_payments),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
-                            )
+                            BottomBarButtonLabel(secondaryLabel)
                         }
-                        if (hasPendingBalance) {
-                            Button(
-                                onClick = { onPayRemainderClick(invoice.id) },
-                                modifier = Modifier.weight(1f),
-                                shape = CircleShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AptoSecondaryContainer,
-                                    contentColor = AptoOnSecondary
-                                )
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.pay_now).uppercase(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
+                    }
+                    val primary: @Composable (Modifier) -> Unit = { mod ->
+                        Button(
+                            onClick = { if (hasPendingBalance) onPayRemainderClick(invoice.id) else onDownloadClick() },
+                            modifier = mod,
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (hasPendingBalance) AptoSecondaryContainer else AptoSecondary,
+                                contentColor = AptoOnSecondary
+                            )
+                        ) {
+                            BottomBarButtonLabel(primaryLabel)
+                        }
+                    }
+                    // Side by side when both labels fit on one line; otherwise stacked at full width, so they
+                    // never wrap to two lines (A-21).
+                    BoxWithConstraints(Modifier.fillMaxWidth().padding(16.dp)) {
+                        val measurer = rememberTextMeasurer()
+                        val density = LocalDensity.current
+                        val labelStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        val halfLabelWidth = (maxWidth - BottomBarSpacing) / 2 -
+                            ButtonDefaults.ContentPadding.calculateLeftPadding(LayoutDirection.Ltr) -
+                            ButtonDefaults.ContentPadding.calculateRightPadding(LayoutDirection.Ltr)
+                        val fits = listOf(secondaryLabel, primaryLabel).all {
+                            with(density) {
+                                measurer.measure(it, labelStyle, maxLines = 1, softWrap = false).size.width.toDp()
+                            } <= halfLabelWidth
+                        }
+                        if (fits) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(BottomBarSpacing)) {
+                                seeAll(Modifier.weight(1f))
+                                primary(Modifier.weight(1f))
                             }
                         } else {
-                            Button(
-                                onClick = onDownloadClick,
-                                modifier = Modifier.weight(1f),
-                                shape = CircleShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AptoSecondary,
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.download_invoice),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                seeAll(Modifier.fillMaxWidth())
+                                primary(Modifier.fillMaxWidth())
                             }
                         }
                     }
@@ -143,8 +151,13 @@ fun InvoiceDetailScreen(
         if (expanded) {
             InvoiceDetailWideContent(
                 isLoading = uiState.isLoading,
+                loadFailed = uiState.loadFailed,
+                onRetry = viewModel::loadData,
                 invoice = invoice,
                 payments = uiState.payments,
+                isLoadingPayments = uiState.isLoadingPayments,
+                paymentsLoadFailed = uiState.paymentsLoadFailed,
+                onRetryPayments = viewModel::loadPayments,
                 hasPendingBalance = hasPendingBalance,
                 onSeeAllPaymentsClick = onSeeAllPaymentsClick,
                 onDownloadClick = onDownloadClick,
@@ -163,6 +176,18 @@ fun InvoiceDetailScreen(
             if (uiState.isLoading && invoice == null) {
                 item {
                     LoadingState(modifier = Modifier.fillParentMaxSize())
+                }
+                return@LazyColumn
+            }
+
+            // A failed load is not "no invoices found" (A-07)
+            if (invoice == null && uiState.loadFailed) {
+                item {
+                    ErrorState(
+                        title = stringResource(Res.string.error_loading_invoice),
+                        onRetry = viewModel::loadData,
+                        modifier = Modifier.fillParentMaxSize()
+                    )
                 }
                 return@LazyColumn
             }
@@ -205,11 +230,19 @@ fun InvoiceDetailScreen(
                 )
             }
 
-            if (uiState.isLoading) {
+            if (uiState.isLoadingPayments && uiState.payments.isEmpty()) {
                 item {
                     LoadingState(
                         modifier = Modifier.fillMaxWidth().padding(32.dp),
                         fullScreen = false
+                    )
+                }
+            } else if (uiState.paymentsLoadFailed && uiState.payments.isEmpty()) {
+                // A failed load is not "no payments" (A-07)
+                item {
+                    ErrorState(
+                        title = stringResource(Res.string.error_loading_invoice_payments),
+                        onRetry = viewModel::loadPayments
                     )
                 }
             } else if (uiState.payments.isEmpty()) {
@@ -229,7 +262,7 @@ fun InvoiceDetailScreen(
                     }
                 }
             } else {
-                items(uiState.payments) { payment ->
+                items(uiState.payments, key = { it.id }) { payment ->
                     PaymentItem(
                         payment = payment,
                         invoiceId = invoice.id,
@@ -240,6 +273,20 @@ fun InvoiceDetailScreen(
             }
         }
     }
+}
+
+private val BottomBarSpacing = 12.dp
+
+@Composable
+private fun BottomBarButtonLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        // Safety net (e.g. huge font scale): the bar stacks the buttons before this is needed.
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
@@ -267,7 +314,7 @@ private fun InvoiceStatusHeader(invoice: Invoice) {
             )
         }
         Text(
-            text = invoice.description ?: stringResource(Res.string.invoice_period_label, invoice.period),
+            text = invoice.description ?: stringResource(Res.string.invoice_period_label, invoiceMonthLabel(invoice.period)),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = AptoPrimary,
@@ -350,7 +397,7 @@ private fun AmountRow(
             color = labelColor
         )
         Text(
-            text = "\$${formatCurrency(amount)}",
+            text = stringResource(Res.string.currency_amount, formatCurrency(amount)),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = amountColor
@@ -385,7 +432,7 @@ fun PaymentItem(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = formatDate(payment.date, "dd/MM/yyyy"),
+                    text = formatPaymentDate(payment.date),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = AptoOnSurface
@@ -404,7 +451,7 @@ fun PaymentItem(
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 val displayAmount = allocation?.amount ?: payment.amount
                 Text(
-                    text = stringResource(Res.string.applied_label, formatCurrency(displayAmount)),
+                    text = stringResource(Res.string.applied_label, stringResource(Res.string.currency_amount, formatCurrency(displayAmount))),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = AptoStatusSuccess,
@@ -412,7 +459,7 @@ fun PaymentItem(
                 )
                 if (allocation != null && allocation.amount != payment.amount) {
                     Text(
-                        text = stringResource(Res.string.total_amount_label, formatCurrency(payment.amount)),
+                        text = stringResource(Res.string.total_amount_label, stringResource(Res.string.currency_amount, formatCurrency(payment.amount))),
                         style = MaterialTheme.typography.labelSmall,
                         color = AptoOnSurfaceVariant
                     )
@@ -429,8 +476,13 @@ fun PaymentItem(
 @Composable
 private fun InvoiceDetailWideContent(
     isLoading: Boolean,
+    loadFailed: Boolean,
+    onRetry: () -> Unit,
     invoice: Invoice?,
     payments: List<Payment>,
+    isLoadingPayments: Boolean,
+    paymentsLoadFailed: Boolean,
+    onRetryPayments: () -> Unit,
     hasPendingBalance: Boolean,
     onSeeAllPaymentsClick: () -> Unit,
     onDownloadClick: () -> Unit,
@@ -440,6 +492,15 @@ private fun InvoiceDetailWideContent(
 ) {
     if (isLoading && invoice == null) {
         LoadingState(modifier = modifier)
+        return
+    }
+    if (invoice == null && loadFailed) {
+        // Error with retry instead of "no invoices found" (A-07)
+        Box(modifier = modifier) {
+            WebEmptyFrame {
+                ErrorState(title = stringResource(Res.string.error_loading_invoice), onRetry = onRetry)
+            }
+        }
         return
     }
     if (invoice == null) {
@@ -475,7 +536,9 @@ private fun InvoiceDetailWideContent(
                         modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 12.dp)
                     )
                     InvoicePaymentsTable(
-                        isLoading = isLoading,
+                        isLoading = isLoadingPayments,
+                        loadFailed = paymentsLoadFailed,
+                        onRetry = onRetryPayments,
                         payments = payments,
                         invoiceId = invoice.id,
                         onPaymentClick = onPaymentClick
@@ -520,13 +583,13 @@ private fun InvoiceWideHeader(invoice: Invoice) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = invoice.description ?: stringResource(Res.string.invoice_period_label, invoice.period),
+                text = invoice.description ?: stringResource(Res.string.invoice_period_label, invoiceMonthLabel(invoice.period)),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = AptoPrimary
             )
             Text(
-                text = stringResource(Res.string.period_label, invoice.period),
+                text = stringResource(Res.string.period_label, invoiceMonthLabel(invoice.period)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AptoOnSurfaceVariant
             )
@@ -562,15 +625,22 @@ private fun InvoiceStatusPill(text: String, color: Color) {
 @Composable
 private fun InvoicePaymentsTable(
     isLoading: Boolean,
+    loadFailed: Boolean,
+    onRetry: () -> Unit,
     payments: List<Payment>,
     invoiceId: String,
     onPaymentClick: (String) -> Unit
 ) {
-    if (isLoading) {
+    if (isLoading && payments.isEmpty()) {
         LoadingState(
             modifier = Modifier.fillMaxWidth().padding(32.dp),
             fullScreen = false
         )
+        return
+    }
+    if (loadFailed && payments.isEmpty()) {
+        // A failed load is not "no payments" (A-07)
+        ErrorState(title = stringResource(Res.string.error_loading_invoice_payments), onRetry = onRetry)
         return
     }
     if (payments.isEmpty()) {
@@ -626,7 +696,7 @@ private fun InvoicePaymentsTable(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = formatDate(payment.date, "dd/MM/yyyy"),
+                text = formatPaymentDate(payment.date),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AptoOnSurface,
@@ -651,14 +721,14 @@ private fun InvoicePaymentsTable(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text = "\$${formatCurrency(displayAmount)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(displayAmount)),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = AptoStatusSuccess
                 )
                 if (allocation != null && allocation.amount != payment.amount) {
                     Text(
-                        text = stringResource(Res.string.total_amount_label, formatCurrency(payment.amount)),
+                        text = stringResource(Res.string.total_amount_label, stringResource(Res.string.currency_amount, formatCurrency(payment.amount))),
                         style = MaterialTheme.typography.labelSmall,
                         color = AptoOnSurfaceVariant
                     )
@@ -737,7 +807,7 @@ private fun InvoiceSummaryCard(
         }
         SummaryInfoRow(label = stringResource(Res.string.web_invoice_detail_period)) {
             Text(
-                text = invoice.period,
+                text = invoiceMonthLabel(invoice.period),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AptoOnSurface
@@ -746,7 +816,7 @@ private fun InvoiceSummaryCard(
         invoice.dueDate?.let { due ->
             SummaryInfoRow(label = stringResource(Res.string.web_invoice_detail_due_date)) {
                 Text(
-                    text = formatDate(due, "dd/MM/yyyy"),
+                    text = formatPaymentDate(due),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = if (invoice.status == InvoiceStatus.OVERDUE) AptoStatusError else AptoOnSurface
@@ -793,7 +863,7 @@ private fun InvoiceSummaryCard(
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AptoSecondary,
-                        contentColor = Color.White
+                        contentColor = AptoOnSecondary
                     )
                 ) {
                     Text(
