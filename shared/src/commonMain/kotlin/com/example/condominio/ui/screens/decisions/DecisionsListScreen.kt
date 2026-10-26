@@ -359,7 +359,7 @@ private fun DecisionCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = stringResource(Res.string.decisions_urgent),
+                            text = stringResource(Res.string.decisions_deadline_passed),
                             style = MaterialTheme.typography.labelLarge,
                             color = AptoStatusWarning
                         )

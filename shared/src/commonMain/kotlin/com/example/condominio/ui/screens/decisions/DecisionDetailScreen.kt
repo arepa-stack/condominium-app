@@ -167,14 +167,7 @@ fun DecisionDetailScreen(
             }
 
             detail != null -> {
-                val rankByQuoteId: Map<String, Int> = remember(detail.tally) {
-                    detail.tally.tallies
-                        .sortedByDescending { it.votes }
-                        .mapIndexedNotNull { index, t ->
-                            if (t.votes > 0) t.quoteId to (index + 1) else null
-                        }
-                        .toMap()
-                }
+                val rankByQuoteId: Map<String, Int> = remember(detail.tally) { rankTallies(detail.tally.tallies) }
                 val showRank = detail.decision.status == DecisionStatus.VOTING ||
                         detail.decision.status == DecisionStatus.TIEBREAK_PENDING ||
                         detail.decision.status == DecisionStatus.RESOLVED
@@ -253,6 +246,7 @@ fun DecisionDetailScreen(
                                 currentUserId = uiState.currentUserId,
                                 status = detail.decision.status,
                                 rank = rank,
+                                isLeader = quote.id == leaderQuoteId(rankByQuoteId),
                                 isWinner = isWinner,
                                 onDelete = { viewModel.deleteOwnQuote(quote.id) }
                             )
@@ -406,6 +400,7 @@ private fun DecisionDetailWide(
                                         currentUserId = currentUserId,
                                         status = status,
                                         rank = if (showRank) rankByQuoteId[quote.id] else null,
+                                        isLeader = quote.id == leaderQuoteId(rankByQuoteId),
                                         isWinner = decision.winnerQuoteId == quote.id &&
                                                 status == DecisionStatus.RESOLVED,
                                         onDelete = { onDeleteQuote(quote.id) }
@@ -768,6 +763,7 @@ private fun QuoteItem(
     currentUserId: String?,
     status: DecisionStatus,
     rank: Int? = null,
+    isLeader: Boolean = false,
     isWinner: Boolean = false,
     onDelete: () -> Unit
 ) {
@@ -823,7 +819,7 @@ private fun QuoteItem(
                     modifier = Modifier.padding(bottom = 8.dp)
                 ) {
                     RankBadge(rank = rank, tint = accent)
-                    if (rank == 1) {
+                    if (isLeader) {
                         Spacer(Modifier.width(6.dp))
                         Text(
                             stringResource(Res.string.decisions_quote_rank_leading),
@@ -846,7 +842,7 @@ private fun QuoteItem(
                         color = AptoOnSurface
                     )
                     Text(
-                        "$" + formatCurrency(quote.amount),
+                        stringResource(Res.string.currency_amount, formatCurrency(quote.amount)),
                         color = AptoSecondary,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -1087,15 +1083,16 @@ private fun TallyBreakdown(tally: TallyDto) {
             }
         } else {
             val sorted = tally.tallies.sortedByDescending { it.votes }
+            val ranks = rankTallies(tally.tallies)
             val maxPct = (sorted.firstOrNull()?.pct ?: 0.0).coerceAtLeast(1.0)
             sorted.forEachIndexed { index, item ->
                 TallyBar(
-                    rank = index + 1,
+                    rank = ranks[item.quoteId] ?: (index + 1),
                     providerName = item.providerName,
                     votes = item.votes,
                     pct = item.pct,
                     relativeFill = (item.pct / maxPct).toFloat().coerceIn(0f, 1f),
-                    barColor = if (index < rankPalette.size) rankPalette[index] else neutralBar
+                    barColor = (ranks[item.quoteId] ?: (index + 1)).let { r -> if (r <= rankPalette.size) rankPalette[r - 1] else neutralBar }
                 )
                 Spacer(Modifier.height(8.dp))
             }
@@ -1154,7 +1151,7 @@ private fun TallyBar(
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                pluralStringResource(Res.plurals.decisions_tally_votes_pct, votes).formatArgs(votes, pct),
+                pluralStringResource(Res.plurals.decisions_tally_votes_pct, votes).formatArgs(votes, formatPercent(pct)),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = AptoOnSurface
@@ -1350,7 +1347,7 @@ private fun WinnerHeroCard(
             Spacer(Modifier.height(4.dp))
 
             Text(
-                "$" + formatCurrency(winner.amount),
+                stringResource(Res.string.currency_amount, formatCurrency(winner.amount)),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = AptoSecondary
@@ -1360,7 +1357,7 @@ private fun WinnerHeroCard(
 
             Text(
                 // formatArgs, not stringResource args: Compose resources leave "%%" unescaped.
-                pluralStringResource(Res.plurals.decisions_resolved_winner_votes, votes).formatArgs(votes, pct.toInt().toString()),
+                pluralStringResource(Res.plurals.decisions_resolved_winner_votes, votes).formatArgs(votes, formatPercent(pct)),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AptoOnSurface
