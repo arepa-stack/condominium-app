@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.model.AnnouncementDto
 import com.example.condominio.data.repository.AnnouncementsRepository
 import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.error_loading_announcement
+import condominio.shared.generated.resources.error_toggling_reaction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -40,7 +43,7 @@ class BillboardDetailViewModel(
                     announcement = announcement ?: state.announcement,
                     reacted = announcement?.reactedByCurrentUser ?: state.reacted,
                     reactionsCount = announcement?.metrics?.reactionsCount ?: state.reactionsCount,
-                    error = result.exceptionOrNull()?.message?.let { UiText.DynamicString(it) },
+                    error = result.exceptionOrNull()?.let { UiText.StringResource(Res.string.error_loading_announcement) },
                 )
             }
             // Fire-and-forget: mark as read after loading detail
@@ -82,9 +85,7 @@ class BillboardDetailViewModel(
                         isTogglingReaction = false,
                         reacted = currentReacted,
                         reactionsCount = currentCount,
-                        error = UiText.DynamicString(
-                            result.exceptionOrNull()?.message ?: "Error al registrar reacción"
-                        ),
+                        error = UiText.StringResource(Res.string.error_toggling_reaction),
                     )
                 }
             }
