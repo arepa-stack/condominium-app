@@ -252,7 +252,16 @@
     <string name="reference_short">Ref</string>
     <string name="select_building_hint">Selecciona un edificio para continuar:</string>
     <string name="unit_label_short">Unidad: %1$s</string>
-    <string name="units_count_label">%1$d unidades</string>
+    <plurals name="units_count_label">
+        <item quantity="one">%1$d unidad</item>
+        <item quantity="other">%1$d unidades</item>
+    </plurals>
+    <string name="error_loading_units">No pudimos cargar tus propiedades</string>
+    <string name="units_empty_title">Aún no tienes propiedades asociadas</string>
+    <string name="units_empty_subtitle">Contacta a la administración de tu condominio para que vinculen tu unidad.</string>
+    <string name="state_expanded">Expandido</string>
+    <string name="state_collapsed">Contraído</string>
+    <string name="state_selected">Seleccionado</string>
     <string name="select_unit_hint">Selecciona una unidad:</string>
     <string name="primary_label">Principal</string>
     <string name="registration_pending_title">Registro pendiente</string>
