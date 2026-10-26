@@ -81,19 +81,19 @@ fun DecisionStatusBadge(status: DecisionStatus, modifier: Modifier = Modifier) {
 }
 
 // ---------------------------------------------------------------------------
-// formatDecisionDeadline — shared utility "ISO → dd/MM HH:mm"
+// formatDecisionDeadline — shared utility "ISO → dd/MM/yyyy HH:mm"
 // ---------------------------------------------------------------------------
 
-fun formatDecisionDeadline(iso: String?): String {
+fun formatDecisionDeadline(iso: String?, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
     if (iso == null) return "—"
     return try {
         val instant = Instant.parse(iso)
-        val dt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+        val dt = instant.toLocalDateTime(timeZone)
         val day = dt.dayOfMonth.toString().padStart(2, '0')
         val month = dt.monthNumber.toString().padStart(2, '0')
         val hour = dt.hour.toString().padStart(2, '0')
         val minute = dt.minute.toString().padStart(2, '0')
-        "$day/$month $hour:$minute"
+        "$day/$month/${dt.year} $hour:$minute"
     } catch (e: Exception) {
         iso
     }

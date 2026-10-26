@@ -290,7 +290,7 @@
     <string name="decisions_title">Votaciones</string>
     <string name="decisions_empty">No hay votaciones en tu edificio</string>
     <string name="decisions_filter_all">Todos</string>
-    <string name="decisions_filter_reception">Borradores</string>
+    <string name="decisions_filter_reception">Recepción</string>
     <string name="decisions_filter_voting">En votación</string>
     <string name="decisions_filter_resolved">Resueltas</string>
     <string name="decisions_see_detail">Ver detalle</string>
@@ -360,6 +360,9 @@
     <string name="decisions_vote_sheet_title">Emitir voto</string>
     <string name="decisions_vote_final_warning">⚠️ Tu voto es definitivo. No podrás cambiarlo.</string>
     <string name="decisions_vote_confirm_btn">Confirmar</string>
+    <string name="decisions_vote_confirm_for">Confirmar voto por %1$s</string>
+    <string name="decisions_upload_provider_invalid">Escribe al menos 2 caracteres</string>
+    <string name="decisions_upload_amount_invalid">Monto inválido. Ejemplo: 1500,50</string>
     <string name="decisions_deadline_card_title">Cierra en</string>
     <string name="decisions_deadline_hours">%1$d h</string>
     <plurals name="decisions_deadline_days">

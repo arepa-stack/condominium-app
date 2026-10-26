@@ -360,6 +360,9 @@
     <string name="decisions_vote_sheet_title">Cast vote</string>
     <string name="decisions_vote_final_warning">⚠️ Your vote is final. You cannot change it.</string>
     <string name="decisions_vote_confirm_btn">Confirm</string>
+    <string name="decisions_vote_confirm_for">Confirm vote for %1$s</string>
+    <string name="decisions_upload_provider_invalid">Enter at least 2 characters</string>
+    <string name="decisions_upload_amount_invalid">Invalid amount. Example: 1500.50</string>
     <string name="decisions_deadline_card_title">Closes in</string>
     <string name="decisions_deadline_hours">%1$d h</string>
     <plurals name="decisions_deadline_days">

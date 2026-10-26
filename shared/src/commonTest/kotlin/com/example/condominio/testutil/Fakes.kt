@@ -4,6 +4,8 @@ import com.example.condominio.data.model.*
 import com.example.condominio.data.repository.AnnouncementsRepository
 import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.BuildingRepository
+import com.example.condominio.data.repository.DecisionsRepository
+import kotlinx.coroutines.CompletableDeferred
 import com.example.condominio.data.repository.PaymentRepository
 import com.example.condominio.data.repository.PettyCashRepository
 import kotlinx.coroutines.Dispatchers
@@ -73,6 +75,45 @@ class FakeBuildingRepository : BuildingRepository {
 class FakePettyCashRepository : PettyCashRepository {
     override suspend fun getBalance(buildingId: String) = TODO()
 }
+
+class FakeDecisionsRepository : DecisionsRepository {
+    var detailResult: Result<DecisionDetailDto> = Result.failure(Exception("unset"))
+    var detailCount = 0
+    /** When set, [vote] and [uploadQuote] suspend until it completes (to test the in-flight state). */
+    var gate: CompletableDeferred<Unit>? = null
+    var voteResult: Result<VoteDto> = Result.failure(Exception("vote failed"))
+    var uploadResult: Result<QuoteDto> = Result.failure(Exception("upload failed"))
+    val votes = mutableListOf<String>()
+    var uploadCount = 0
+
+    override suspend fun detail(id: String): Result<DecisionDetailDto> { detailCount++; return detailResult }
+    override suspend fun vote(decisionId: String, unitId: String, quoteId: String): Result<VoteDto> {
+        votes += quoteId
+        gate?.await()
+        return voteResult
+    }
+    override suspend fun uploadQuote(decisionId: String, unitId: String, providerName: String, amount: Double, notes: String?, fileUri: String, mimeType: String): Result<QuoteDto> {
+        uploadCount++
+        gate?.await()
+        return uploadResult
+    }
+    override suspend fun list(buildingId: String, status: DecisionStatus?, search: String?, page: Int, limit: Int) = TODO()
+    override suspend fun deleteQuote(decisionId: String, quoteId: String) = TODO()
+    override suspend fun results(decisionId: String, round: Int?) = TODO()
+}
+
+fun testDecisionDetail(status: DecisionStatus = DecisionStatus.VOTING) = DecisionDetailDto(
+    decision = DecisionDto(
+        id = "d1", buildingId = "b1", title = "Pintura", status = status, currentRound = 1,
+        receptionDeadline = "2026-01-01T00:00:00Z", votingDeadline = "2026-01-10T00:00:00Z",
+        tiebreakDurationHours = 24, createdAt = "2026-01-01T00:00:00Z", updatedAt = "2026-01-01T00:00:00Z",
+        quoteCount = 0, isDeadlinePassed = false
+    ),
+    quotes = emptyList(),
+    tally = TallyDto(round = 1, status = "OPEN", totalApartments = 10, totalVotes = 0, participationPct = 0.0, tallies = emptyList(), isTied = false)
+)
+
+fun testVote() = VoteDto(id = "v1", decisionId = "d1", round = 1, apartmentId = "u1", quoteId = "q1", createdAt = "2026-01-02T00:00:00Z")
 
 class FakeAnnouncementsRepository : AnnouncementsRepository {
     override suspend fun list(buildingId: String, category: AnnouncementCategory?, search: String?, isPinned: Boolean?, readStatus: String?, page: Int, limit: Int) = TODO()

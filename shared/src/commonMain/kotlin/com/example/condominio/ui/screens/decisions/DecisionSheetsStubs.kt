@@ -15,8 +15,11 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,10 +39,13 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -67,6 +74,9 @@ import com.example.condominio.ui.components.isWide
 import com.example.condominio.ui.utils.UiText
 import com.example.condominio.ui.utils.formatCurrency
 import condominio.shared.generated.resources.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
@@ -92,6 +102,8 @@ fun UploadQuoteSheet(
     var fileName by remember { mutableStateOf<String?>(null) }
     var fileSizeBytes by remember { mutableStateOf(0) }
     var fileError by remember { mutableStateOf<String?>(null) }
+    var isReadingFile by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val errReadFailed = stringResource(Res.string.decisions_upload_file_read_failed)
     val errFileTooLarge = stringResource(Res.string.decisions_upload_file_too_large)
@@ -99,34 +111,44 @@ fun UploadQuoteSheet(
     val pickFile = rememberDocumentPickerLauncher { uri, mime ->
         if (uri == null) return@rememberDocumentPickerLauncher
         fileError = null
-        val bytes = fileReader.readBytes(uri)
-        if (bytes == null) {
-            fileError = errReadFailed
-            return@rememberDocumentPickerLauncher
+        // Up to 5 MB: read off the UI callback so the sheet doesn't freeze.
+        scope.launch {
+            isReadingFile = true
+            val bytes = try {
+                withContext(Dispatchers.Default) { fileReader.readBytes(uri) }
+            } finally {
+                isReadingFile = false
+            }
+            if (bytes == null) {
+                fileError = errReadFailed
+                return@launch
+            }
+            if (bytes.size > 5 * 1024 * 1024) {
+                fileError = errFileTooLarge
+                fileUri = null
+                fileMime = null
+                fileName = null
+                fileSizeBytes = 0
+                return@launch
+            }
+            fileUri = uri
+            fileMime = mime ?: "application/octet-stream"
+            fileName = fileReader.getFileName(uri)
+            fileSizeBytes = bytes.size
         }
-        if (bytes.size > 5 * 1024 * 1024) {
-            fileError = errFileTooLarge
-            fileUri = null
-            fileMime = null
-            fileName = null
-            fileSizeBytes = 0
-            return@rememberDocumentPickerLauncher
-        }
-        fileUri = uri
-        fileMime = mime ?: "application/octet-stream"
-        fileName = fileReader.getFileName(uri)
-        fileSizeBytes = bytes.size
     }
 
-    val amount = amountText.toDoubleOrNull()
+    val amount = parseQuoteAmount(amountText)
+    val providerInvalid = provider.isNotBlank() && provider.trim().length < 2
+    val amountInvalid = amountText.isNotBlank() && amount == null
     val canSubmit =
         provider.isNotBlank() &&
-        provider.length >= 2 &&
+        provider.trim().length >= 2 &&
         amount != null &&
-        amount > 0 &&
         fileUri != null &&
         fileMime != null &&
-        !isSubmitting
+        !isSubmitting &&
+        !isReadingFile
 
     val focusManager = LocalFocusManager.current
     val amountFocus = remember { FocusRequester() }
@@ -136,7 +158,8 @@ fun UploadQuoteSheet(
 
     AdaptiveSheet(
         onDismiss = onDismiss,
-        skipPartiallyExpanded = true
+        skipPartiallyExpanded = true,
+        dismissEnabled = !isSubmitting
     ) {
         Column(
             modifier = Modifier
@@ -158,7 +181,7 @@ fun UploadQuoteSheet(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = onDismiss) {
+                IconButton(onClick = onDismiss, enabled = !isSubmitting) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(Res.string.cancel)
@@ -172,6 +195,8 @@ fun UploadQuoteSheet(
                 value = provider,
                 onValueChange = { provider = it },
                 label = stringResource(Res.string.decisions_upload_provider_label),
+                isError = providerInvalid,
+                supportingText = if (providerInvalid) stringResource(Res.string.decisions_upload_provider_invalid) else null,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { amountFocus.requestFocus() })
             )
@@ -183,6 +208,8 @@ fun UploadQuoteSheet(
                 onValueChange = { amountText = it },
                 label = stringResource(Res.string.decisions_upload_amount_label),
                 modifier = Modifier.focusRequester(amountFocus),
+                isError = amountInvalid,
+                supportingText = if (amountInvalid) stringResource(Res.string.decisions_upload_amount_invalid) else null,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next
@@ -316,8 +343,9 @@ fun VoteSheet(
     var selectedId by remember { mutableStateOf<String?>(null) }
 
     val activeQuotes = quotes.filter { it.deletedAt == null }
+    val selectedQuote = activeQuotes.firstOrNull { it.id == selectedId }
 
-    AdaptiveSheet(onDismiss = onDismiss) {
+    AdaptiveSheet(onDismiss = onDismiss, dismissEnabled = !isSubmitting) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -351,18 +379,26 @@ fun VoteSheet(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                     .weight(1f, fill = false)
+                    .selectableGroup()
             ) {
                 activeQuotes.forEach { quote ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .selectable(
+                                selected = selectedId == quote.id,
+                                enabled = !isSubmitting,
+                                role = Role.RadioButton,
+                                onClick = { selectedId = quote.id }
+                            )
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = selectedId == quote.id,
-                            onClick = { selectedId = quote.id }
+                            onClick = null
                         )
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = quote.providerName,
@@ -370,7 +406,7 @@ fun VoteSheet(
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "$${formatCurrency(quote.amount)}",
+                                text = stringResource(Res.string.currency_amount, formatCurrency(quote.amount)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -395,7 +431,7 @@ fun VoteSheet(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(onClick = onDismiss, enabled = !isSubmitting) {
                     Text(stringResource(Res.string.cancel))
                 }
                 Button(
@@ -409,7 +445,10 @@ fun VoteSheet(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text(stringResource(Res.string.decisions_vote_confirm_btn))
+                        Text(
+                            selectedQuote?.let { stringResource(Res.string.decisions_vote_confirm_for, it.providerName) }
+                                ?: stringResource(Res.string.decisions_vote_confirm_btn)
+                        )
                     }
                 }
             }
@@ -429,12 +468,18 @@ fun VoteSheet(
 private fun AdaptiveSheet(
     onDismiss: () -> Unit,
     skipPartiallyExpanded: Boolean = false,
+    /** False while a request is in flight: back, outside taps and swipes don't close it. */
+    dismissEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     if (isWide()) {
         Dialog(
             onDismissRequest = onDismiss,
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(
+                dismissOnBackPress = dismissEnabled,
+                dismissOnClickOutside = dismissEnabled,
+                usePlatformDefaultWidth = false
+            )
         ) {
             WebCard(
                 modifier = Modifier
@@ -448,9 +493,13 @@ private fun AdaptiveSheet(
             }
         }
     } else {
+        val canDismiss by rememberUpdatedState(dismissEnabled)
         ModalBottomSheet(
             onDismissRequest = onDismiss,
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)
+            sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = skipPartiallyExpanded,
+                confirmValueChange = { canDismiss || it != SheetValue.Hidden }
+            )
         ) {
             content()
         }
