@@ -40,7 +40,9 @@ class FakeAuthRepository(var user: User = testUser) : AuthRepository {
     var resetResult: Result<Unit> = Result.success(Unit)
     var firstLoginResult: Result<Unit> = Result.success(Unit)
     override val currentUser: Flow<User?> = MutableStateFlow(user)
-    override suspend fun fetchCurrentUser(): Result<User> { fetchCount++; return fetchResult ?: Result.success(user) }
+    /** When set, [fetchCurrentUser] throws it (an unexpected failure outside Result). */
+    var fetchThrows: Throwable? = null
+    override suspend fun fetchCurrentUser(): Result<User> { fetchCount++; fetchThrows?.let { throw it }; return fetchResult ?: Result.success(user) }
     override suspend fun login(email: String, password: String): Result<User> {
         logins += email to password
         loginGate?.await()

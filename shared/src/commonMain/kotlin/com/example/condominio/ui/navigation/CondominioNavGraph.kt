@@ -295,6 +295,7 @@ fun CondominioNavGraph(
                     uiState = uiState,
                     onBuildingSelected = viewModel::onBuildingSelected,
                     onUnitSelected = viewModel::onUnitSelected,
+                    onRetry = viewModel::retry,
                     onNavigateToDashboard = {
                         navController.navigate("dashboard") {
                             popUpTo("unit_selection") { inclusive = true }
