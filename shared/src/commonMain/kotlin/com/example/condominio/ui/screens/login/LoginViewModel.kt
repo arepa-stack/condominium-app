@@ -2,13 +2,16 @@ package com.example.condominio.ui.screens.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.condominio.data.model.SessionExpiredException
 import com.example.condominio.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import com.example.condominio.ui.utils.AuthAction
 import com.example.condominio.ui.utils.UiText
+import com.example.condominio.ui.utils.authErrorText
 import condominio.shared.generated.resources.*
 
 open class LoginViewModel(
@@ -24,14 +27,16 @@ open class LoginViewModel(
 
     private fun checkExistingSession() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isCheckingSession = true) }
+            _uiState.update { it.copy(isCheckingSession = true, sessionCheckFailed = false) }
             val hasSession = authRepository.hasValidSession()
             if (hasSession) {
                 // Fetch user data to populate currentUser flow
                 val result = authRepository.fetchCurrentUser()
                 if (result.isFailure) {
-                    // Saved token no longer works (expired, or API unreachable): ask to log in again.
-                    _uiState.update { it.copy(isCheckingSession = false) }
+                    // Only a 401 (the repository already dropped the token) means "log in again".
+                    // Any other failure (offline, server down) keeps the session: offer to retry (A-17).
+                    val expired = result.exceptionOrNull() is SessionExpiredException
+                    _uiState.update { it.copy(isCheckingSession = false, sessionCheckFailed = !expired) }
                     return@launch
                 }
                 val mustChange = result.getOrNull()?.mustChangePassword == true
@@ -48,6 +53,19 @@ open class LoginViewModel(
         }
     }
 
+    fun onRetrySessionCheck() {
+        if (_uiState.value.isCheckingSession) return
+        checkExistingSession()
+    }
+
+    /** From the offline screen: give up the saved session and show the login form. */
+    fun onUseAnotherAccount() {
+        viewModelScope.launch {
+            authRepository.logout()
+            _uiState.update { it.copy(isCheckingSession = false, sessionCheckFailed = false) }
+        }
+    }
+
     fun onEmailChange(email: String) {
         _uiState.update { it.copy(email = email, error = null) }
     }
@@ -57,14 +75,17 @@ open class LoginViewModel(
     }
 
     fun onLoginClick() {
-        if (_uiState.value.email.isBlank() || _uiState.value.password.isBlank()) {
+        // Enter held down / double tap: one request at a time (E-L2).
+        if (_uiState.value.isLoading) return
+        val email = _uiState.value.email.trim()
+        if (email.isBlank() || _uiState.value.password.isBlank()) {
             _uiState.update { it.copy(error = UiText.StringResource(Res.string.error_missing_fields)) }
             return
         }
 
+        _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            val result = authRepository.login(_uiState.value.email, _uiState.value.password)
+            val result = authRepository.login(email, _uiState.value.password)
             _uiState.update { it.copy(isLoading = false) }
             
             result.onSuccess { user ->
@@ -87,9 +108,8 @@ open class LoginViewModel(
 
                 _uiState.update { it.copy(isSuccess = true, hasMultipleUnits = needsSelection) }
             }.onFailure { error ->
-                val errorText = error.message?.let { UiText.DynamicString(it) } 
-                    ?: UiText.StringResource(Res.string.error_invalid_credentials)
-                _uiState.update { it.copy(error = errorText) }
+                // Never the repository's own (English, technical) message (A-24).
+                _uiState.update { it.copy(error = authErrorText(error, AuthAction.Login)) }
             }
         }
     }
@@ -109,6 +129,7 @@ data class LoginUiState(
     val password: String = "",
     val isLoading: Boolean = false,
     val isCheckingSession: Boolean = true,
+    val sessionCheckFailed: Boolean = false,
     val error: UiText? = null,
     val isSuccess: Boolean = false,
     val isPending: Boolean = false,

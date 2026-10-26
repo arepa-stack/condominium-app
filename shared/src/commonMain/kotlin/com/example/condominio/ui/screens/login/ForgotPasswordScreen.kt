@@ -13,6 +13,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -175,10 +179,13 @@ private fun ForgotPasswordForm(
         value = uiState.email,
         onValueChange = onEmailChange,
         label = stringResource(Res.string.email),
-        placeholder = "ejemplo@correo.com",
+        placeholder = stringResource(Res.string.email_placeholder),
         enabled = !uiState.isLoading,
+        isError = uiState.error != null,
+        contentType = ContentType.EmailAddress,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
+            autoCorrectEnabled = false,
             imeAction = ImeAction.Done
         ),
         keyboardActions = KeyboardActions(
@@ -206,7 +213,8 @@ private fun ForgotPasswordForm(
         Text(
             text = error.asString(),
             color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
         )
     }
 

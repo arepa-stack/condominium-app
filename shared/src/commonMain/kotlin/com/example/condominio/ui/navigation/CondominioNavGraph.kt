@@ -221,7 +221,7 @@ fun CondominioNavGraph(
                         popUpTo("splash") { inclusive = true }
                     }
                     // Deep link from a building QR: land on registration, with login behind it.
-                    if (registerCode != null) navController.navigate("register_form/$registerCode")
+                    if (registerCode != null) navController.navigate(registerFormRoute(registerCode))
                 }
             )
         }
@@ -235,6 +235,8 @@ fun CondominioNavGraph(
                     onPasswordChange = viewModel::onPasswordChange,
                     onLoginClick = viewModel::onLoginClick,
                     onClearDatabaseClick = viewModel::onClearDatabaseClick,
+                    onRetrySessionCheck = viewModel::onRetrySessionCheck,
+                    onUseAnotherAccount = viewModel::onUseAnotherAccount,
                     onLoginSuccess = { hasMultiple ->
                         if (hasMultiple) {
                             navController.navigate("unit_selection") {
@@ -272,6 +274,9 @@ fun CondominioNavGraph(
                         navController.navigate("dashboard") {
                             popUpTo(0) { inclusive = true }
                         }
+                    },
+                    onLoggedOut = {
+                        navController.navigate("login") { popUpTo(0) { inclusive = true } }
                     }
             )
         }
@@ -301,7 +306,7 @@ fun CondominioNavGraph(
             QrScannerScreen(
                 onBack = { navController.popBackStack() },
                 onScanned = { buildingId ->
-                    navController.navigate("register_form/$buildingId") {
+                    navController.navigate(registerFormRoute(buildingId)) {
                         popUpTo("register_scanner") { inclusive = true }
                     }
                 }

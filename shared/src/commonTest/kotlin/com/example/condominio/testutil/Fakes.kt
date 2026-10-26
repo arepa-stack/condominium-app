@@ -29,20 +29,43 @@ val testUser = User(id = "1", name = "Ana", email = "a@b.c", units = listOf(test
 
 class FakeAuthRepository(var user: User = testUser) : AuthRepository {
     var fetchCount = 0
+    /** null = succeed with [user]. */
+    var fetchResult: Result<User>? = null
+    var hasSession = true
+    var loginResult: Result<User> = Result.success(testUser)
+    val logins = mutableListOf<Pair<String, String>>()
+    /** When set, [login] suspends until it completes (to test the in-flight state). */
+    var loginGate: CompletableDeferred<Unit>? = null
+    var logoutCount = 0
+    var resetResult: Result<Unit> = Result.success(Unit)
+    var firstLoginResult: Result<Unit> = Result.success(Unit)
     override val currentUser: Flow<User?> = MutableStateFlow(user)
-    override suspend fun fetchCurrentUser(): Result<User> { fetchCount++; return Result.success(user) }
-    override suspend fun login(email: String, password: String) = TODO()
+    override suspend fun fetchCurrentUser(): Result<User> { fetchCount++; return fetchResult ?: Result.success(user) }
+    override suspend fun login(email: String, password: String): Result<User> {
+        logins += email to password
+        loginGate?.await()
+        return loginResult
+    }
     override suspend fun register(name: String, email: String, unitId: String, building: String, password: String) = TODO()
-    override suspend fun resetPassword(email: String) = TODO()
+    override suspend fun resetPassword(email: String) = resetResult
     override suspend fun getUnits(buildingId: String) = TODO()
     override suspend fun getUnit(unitId: String) = TODO()
-    override suspend fun logout() = TODO()
+    override suspend fun logout() { logoutCount++ }
     override suspend fun updateUser(user: User) = TODO()
     override suspend fun changePassword(currentPassword: String, newPassword: String) = TODO()
-    override suspend fun changePasswordFirstLogin(newPassword: String) = TODO()
+    override suspend fun changePasswordFirstLogin(newPassword: String) = firstLoginResult
     override suspend fun deleteAccount(reason: String?) = TODO()
-    override fun setCurrentUnit(unit: UserUnit) = TODO()
-    override suspend fun hasValidSession() = TODO()
+    override fun setCurrentUnit(unit: UserUnit) {}
+    override suspend fun hasValidSession() = hasSession
+}
+
+class FakeOnboardingRepository : com.example.condominio.data.repository.OnboardingRepository {
+    var result: Result<RegistrationRequestResponse> = Result.failure(Exception("unset"))
+    var submitCount = 0
+    override suspend fun submitRegistrationRequest(buildingCode: String, unitId: String, email: String, firstName: String, lastName: String, documentId: String, phone: String?): Result<RegistrationRequestResponse> {
+        submitCount++
+        return result
+    }
 }
 
 class FakePaymentRepository : PaymentRepository {
@@ -68,7 +91,15 @@ class FakePaymentRepository : PaymentRepository {
 class FakeBuildingRepository : BuildingRepository {
     override suspend fun getBuildings() = TODO()
     override suspend fun getBuilding(id: String) = TODO()
-    override suspend fun getBuildingByCode(code: String) = TODO()
+    var byCodeResult: Result<Building> = Result.failure(Exception("unset"))
+    val byCodeCalls = mutableListOf<String>()
+    /** When set, [getBuildingByCode] suspends until it completes (to test the in-flight state). */
+    var byCodeGate: CompletableDeferred<Unit>? = null
+    override suspend fun getBuildingByCode(code: String): Result<Building> {
+        byCodeCalls += code
+        byCodeGate?.await()
+        return byCodeResult
+    }
     override suspend fun getBuildingUnitsByCode(code: String) = TODO()
 }
 

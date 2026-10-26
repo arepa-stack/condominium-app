@@ -13,8 +13,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.brand_footer
+import condominio.shared.generated.resources.brand_tagline
 import condominio.shared.generated.resources.logo
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import com.example.condominio.ui.utils.isWebPlatform
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,10 +31,15 @@ import androidx.compose.ui.unit.sp
 import com.example.condominio.ui.utils.rememberReducedMotion
 import kotlinx.coroutines.delay
 
+/** How long the brand splash stays. The login screen already verifies the session, so it is only a short beat (E-L7). */
+fun splashDelayMillis(isWeb: Boolean, reducedMotion: Boolean): Long =
+    if (isWeb || reducedMotion) 0L else 800L
+
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
+    val delayMillis = splashDelayMillis(isWeb = isWebPlatform, reducedMotion = rememberReducedMotion())
     LaunchedEffect(Unit) {
-        delay(2400)
+        if (delayMillis > 0) delay(delayMillis)
         onFinished()
     }
 
@@ -80,7 +89,7 @@ fun SplashScreen(onFinished: () -> Unit) {
 
             // Tagline
             Text(
-                text = "VIVIENDA ELEVADA",
+                text = stringResource(Res.string.brand_tagline).uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 3.sp
@@ -99,7 +108,7 @@ fun SplashScreen(onFinished: () -> Unit) {
         ) {
             LoadingBar()
             Text(
-                text = "Apto by Nibs",
+                text = stringResource(Res.string.brand_footer),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 1.sp

@@ -4,6 +4,7 @@ import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.Building
 import com.example.condominio.data.model.UnitDto
 import com.example.condominio.data.remote.ApiService
+import com.example.condominio.data.remote.toFailure
 
 interface BuildingRepository {
     suspend fun getBuildings(): Result<List<Building>>
@@ -31,7 +32,7 @@ class RemoteBuildingRepository(
     override suspend fun getBuildingByCode(code: String): Result<Building> = try {
         val r = apiService.getBuildingByCode(code)
         if (r.isSuccessful && r.body() != null) Result.success(r.body()!!)
-        else Result.failure(Exception("Building not found for code: $code"))
+        else Result.failure(r.toFailure())
     } catch (e: Throwable) { e.rethrowIfCancellation(); Result.failure(e) }
 
     override suspend fun getBuildingUnitsByCode(code: String): Result<List<UnitDto>> = try {

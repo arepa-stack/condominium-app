@@ -18,6 +18,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.LocalLoginFormVisible
@@ -56,6 +62,8 @@ fun LoginScreen(
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
     onClearDatabaseClick: () -> Unit,
+    onRetrySessionCheck: () -> Unit,
+    onUseAnotherAccount: () -> Unit,
     onLoginSuccess: (Boolean) -> Unit,
     onPendingApproval: () -> Unit,
     onAdminBlocked: () -> Unit,
@@ -77,11 +85,32 @@ fun LoginScreen(
 
     val busy = uiState.isCheckingSession || uiState.isSuccess || uiState.isPending || uiState.isAdminBlocked || uiState.mustChangePassword
     val loginFormVisible = LocalLoginFormVisible.current
-    SideEffect { loginFormVisible.value = !busy }
+    SideEffect { loginFormVisible.value = !busy && !uiState.sessionCheckFailed }
     DisposableEffect(Unit) { onDispose { loginFormVisible.value = false } }
 
     if (busy) {
         LoadingState()
+        return
+    }
+
+    // A saved session we could not verify (offline / server down): not a logout, so offer to retry (A-17).
+    if (uiState.sessionCheckFailed) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            ErrorState(
+                title = stringResource(Res.string.session_check_failed),
+                onRetry = onRetrySessionCheck,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(
+                onClick = onUseAnotherAccount,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 24.dp)
+                    .defaultMinSize(minHeight = 48.dp)
+            ) {
+                Text(stringResource(Res.string.use_another_account))
+            }
+        }
         return
     }
 
@@ -227,7 +256,8 @@ private fun LoginFormContent(
         Text(
             text = stringResource(Res.string.welcome_back),
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() }
         )
         if (showSubtitle) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -243,10 +273,13 @@ private fun LoginFormContent(
         value = uiState.email,
         onValueChange = onEmailChange,
         label = stringResource(Res.string.email),
-        placeholder = "ejemplo@correo.com",
+        placeholder = stringResource(Res.string.email_placeholder),
         shape = FieldShape,
+        isError = uiState.error != null,
+        contentType = ContentType.EmailAddress,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
+            autoCorrectEnabled = false,
             imeAction = ImeAction.Next
         ),
         keyboardActions = KeyboardActions(
@@ -263,6 +296,8 @@ private fun LoginFormContent(
         modifier = Modifier.focusRequester(passwordFocusRequester),
         placeholder = "••••••••",
         shape = FieldShape,
+        isError = uiState.error != null,
+        contentType = ContentType.Password,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             IconButton(onClick = onTogglePasswordVisible, modifier = hand) {
@@ -281,8 +316,8 @@ private fun LoginFormContent(
             imeAction = ImeAction.Done
         ),
         keyboardActions = KeyboardActions(
-            onDone = { onSubmit() },
-            onGo = { onSubmit() }
+            onDone = { if (!uiState.isLoading) onSubmit() },
+            onGo = { if (!uiState.isLoading) onSubmit() }
         )
     )
 
@@ -293,7 +328,8 @@ private fun LoginFormContent(
             text = uiState.error.asString(),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(start = 4.dp)
+            // Announced when it appears, without moving focus (E-L4).
+            modifier = Modifier.padding(start = 4.dp).semantics { liveRegion = LiveRegionMode.Polite }
         )
     }
 

@@ -489,4 +489,15 @@
     <string name="error_loading_invoice_list">No pudimos cargar tus facturas</string>
     <string name="error_loading_invoice">No pudimos cargar la factura</string>
     <string name="error_loading_invoice_payments">No pudimos cargar los pagos de la factura</string>
+    <string name="brand_tagline">Vivienda elevada</string>
+    <string name="brand_headline">Tu condominio, en orden.</string>
+    <string name="brand_footer">Apto by Nibs</string>
+    <string name="qr_footer">Apto v1.0 • Sistema de gestión residencial</string>
+    <string name="email_placeholder">ejemplo@correo.com</string>
+    <string name="session_check_failed">No pudimos verificar tu sesión</string>
+    <string name="use_another_account">Iniciar sesión con otra cuenta</string>
+    <string name="error_account_pending">Tu cuenta aún está pendiente de aprobación.</string>
+    <string name="error_session_expired">Tu sesión venció. Inicia sesión de nuevo.</string>
+    <string name="error_registration_conflict">Ya existe una solicitud con este correo, o la unidad alcanzó su capacidad máxima.</string>
+    <string name="error_registration_invalid">Datos inválidos. Revisa los campos e inténtalo de nuevo.</string>
 </resources>
