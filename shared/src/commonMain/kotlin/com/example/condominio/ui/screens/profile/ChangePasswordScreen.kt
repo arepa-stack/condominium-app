@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -233,6 +234,7 @@ private fun CurrentPasswordField(
         enabled = !uiState.isLoading,
         visible = uiState.currentPasswordVisible,
         onToggleVisibility = viewModel::toggleCurrentPasswordVisibility,
+        contentType = ContentType.Password,
         modifier = modifier
     )
 }
@@ -250,6 +252,7 @@ private fun NewPasswordField(
         enabled = !uiState.isLoading,
         visible = uiState.newPasswordVisible,
         onToggleVisibility = viewModel::toggleNewPasswordVisibility,
+        contentType = ContentType.NewPassword,
         modifier = modifier
     )
 }
@@ -268,6 +271,7 @@ private fun ConfirmPasswordField(
         enabled = !uiState.isLoading,
         visible = uiState.confirmPasswordVisible,
         onToggleVisibility = viewModel::toggleConfirmPasswordVisibility,
+        contentType = ContentType.NewPassword,
         modifier = modifier,
         keyboardActions = keyboardActions
     )
@@ -285,6 +289,7 @@ private fun PasswordField(
     enabled: Boolean,
     visible: Boolean,
     onToggleVisibility: () -> Unit,
+    contentType: ContentType,
     modifier: Modifier = Modifier,
     keyboardActions: KeyboardActions? = null
 ) {
@@ -294,6 +299,7 @@ private fun PasswordField(
         label = label,
         modifier = modifier,
         enabled = enabled,
+        contentType = contentType,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = if (keyboardActions == null) {
             KeyboardOptions(keyboardType = KeyboardType.Password)

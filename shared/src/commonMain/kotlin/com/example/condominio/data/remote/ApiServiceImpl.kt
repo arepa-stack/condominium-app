@@ -25,8 +25,15 @@ import kotlinx.serialization.json.JsonElement
 class ApiServiceImpl(private val client: HttpClient) : ApiService {
     
     private suspend inline fun <reified T> safeRequest(block: () -> io.ktor.client.statement.HttpResponse): Response<T> {
+        // The request itself failing (offline, DNS, `Fail to fetch` on wasm) is a network error, not an HTTP 500.
+        val response = try {
+            block()
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
+            // No printStackTrace: on web every network failure filled the console with traces (A-20)
+            return Response.networkError(e.message ?: "Network error")
+        }
         return try {
-            val response = block()
             if (response.status.isSuccess()) {
                 Response.success(response.body<T>())
             } else {
@@ -34,7 +41,6 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
-            // No printStackTrace: on web every network failure filled the console with traces (A-20)
             Response.error(500, e.message ?: "Unknown error")
         }
     }

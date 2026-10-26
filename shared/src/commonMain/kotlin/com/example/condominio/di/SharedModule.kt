@@ -67,6 +67,7 @@ val sharedModule = module {
 
     // ViewModels
     viewModelOf(::LoginViewModel)
+    viewModelOf(::QrScannerViewModel)
     viewModelOf(::ForgotPasswordViewModel)
     viewModelOf(::FirstLoginChangePasswordViewModel)
     viewModelOf(::UnitSelectionViewModel)

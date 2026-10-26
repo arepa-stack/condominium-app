@@ -3,7 +3,9 @@ package com.example.condominio.ui.screens.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.repository.AuthRepository
+import com.example.condominio.ui.utils.AuthAction
 import com.example.condominio.ui.utils.UiText
+import com.example.condominio.ui.utils.authErrorText
 import condominio.shared.generated.resources.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +37,7 @@ class ForgotPasswordViewModel(
                 it.copy(
                     isLoading = false,
                     isSuccess = result.isSuccess,
-                    error = result.exceptionOrNull()?.message?.let { msg -> UiText.DynamicString(msg) }
+                    error = result.exceptionOrNull()?.let { e -> authErrorText(e, AuthAction.ResetPassword) }
                 )
             }
         }

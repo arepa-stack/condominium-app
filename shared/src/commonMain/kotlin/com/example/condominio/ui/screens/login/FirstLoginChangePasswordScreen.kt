@@ -15,6 +15,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.input.ImeAction
@@ -35,12 +40,16 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun FirstLoginChangePasswordScreen(
     onSuccess: () -> Unit,
+    onLoggedOut: () -> Unit,
     viewModel: FirstLoginChangePasswordViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) onSuccess()
+    }
+    LaunchedEffect(uiState.loggedOut) {
+        if (uiState.loggedOut) onLoggedOut()
     }
 
     val wide = isWide()
@@ -96,7 +105,8 @@ private fun ColumnScope.FirstLoginForm(
     Text(
         text = stringResource(Res.string.first_login_title),
         style = MaterialTheme.typography.headlineMedium,
-        color = MaterialTheme.colorScheme.onSurface
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.semantics { heading() }
     )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
@@ -111,9 +121,11 @@ private fun ColumnScope.FirstLoginForm(
         onValueChange = viewModel::onNewPasswordChange,
         label = stringResource(Res.string.new_password),
         enabled = !uiState.isLoading,
+        isError = uiState.newPasswordError,
+        contentType = ContentType.NewPassword,
         visualTransformation = if (uiState.newPasswordVisible)
             VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
         trailingIcon = {
             IconButton(onClick = viewModel::toggleNewPasswordVisibility, modifier = hand) {
                 Icon(
@@ -132,15 +144,13 @@ private fun ColumnScope.FirstLoginForm(
         onValueChange = viewModel::onConfirmPasswordChange,
         label = stringResource(Res.string.confirm_new_password),
         enabled = !uiState.isLoading,
+        isError = uiState.confirmPasswordError,
+        contentType = ContentType.NewPassword,
         visualTransformation = if (uiState.confirmPasswordVisible)
             VisualTransformation.None else PasswordVisualTransformation(),
-        // Web: Enter on the last field submits. Phone keeps the original keyboard behavior.
-        keyboardOptions = if (wide)
-            KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done)
-        else KeyboardOptions(keyboardType = KeyboardType.Password),
-        keyboardActions = if (wide)
-            KeyboardActions(onDone = { if (!uiState.isLoading) viewModel.onSubmitClick() })
-        else KeyboardActions.Default,
+        // Enter / the keyboard's Done on the last field submits, on phone and web (E-L3).
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { if (!uiState.isLoading) viewModel.onSubmitClick() }),
         trailingIcon = {
             IconButton(onClick = viewModel::toggleConfirmPasswordVisibility, modifier = hand) {
                 Icon(
@@ -157,7 +167,8 @@ private fun ColumnScope.FirstLoginForm(
     Text(
         text = stringResource(Res.string.first_login_password_policy),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+        // Solid token: onSurface at 50% alpha was 3.3:1 (D-06).
+        color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 
     uiState.error?.let { error ->
@@ -165,7 +176,9 @@ private fun ColumnScope.FirstLoginForm(
         Text(
             text = error.asString(),
             color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            // Announced when it appears, without moving focus (E-L4).
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
         )
     }
 
@@ -177,4 +190,16 @@ private fun ColumnScope.FirstLoginForm(
         isLoading = uiState.isLoading,
         modifier = hand
     )
+
+    // No back stack to leave through: let the user drop the temporary session (A-14).
+    TextButton(
+        onClick = viewModel::onLogoutClick,
+        enabled = !uiState.isLoading,
+        modifier = hand
+            .align(Alignment.CenterHorizontally)
+            .padding(top = 8.dp)
+            .defaultMinSize(minHeight = 48.dp)
+    ) {
+        Text(stringResource(Res.string.logout))
+    }
 }

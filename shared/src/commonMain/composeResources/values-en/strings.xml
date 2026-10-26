@@ -489,4 +489,15 @@
     <string name="error_loading_invoice_list">We couldn\'t load your invoices</string>
     <string name="error_loading_invoice">We couldn\'t load the invoice</string>
     <string name="error_loading_invoice_payments">We couldn\'t load this invoice\'s payments</string>
+    <string name="brand_tagline">Elevated living</string>
+    <string name="brand_headline">Your building, in order.</string>
+    <string name="brand_footer">Apto by Nibs</string>
+    <string name="qr_footer">Apto v1.0 • Residential management system</string>
+    <string name="email_placeholder">example@mail.com</string>
+    <string name="session_check_failed">We couldn\'t verify your session</string>
+    <string name="use_another_account">Sign in with another account</string>
+    <string name="error_account_pending">Your account is still pending approval.</string>
+    <string name="error_session_expired">Your session expired. Please sign in again.</string>
+    <string name="error_registration_conflict">A request with this email already exists, or the unit reached its capacity.</string>
+    <string name="error_registration_invalid">Invalid data. Check the fields and try again.</string>
 </resources>

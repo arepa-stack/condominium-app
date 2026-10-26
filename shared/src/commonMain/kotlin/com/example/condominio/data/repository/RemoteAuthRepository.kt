@@ -4,30 +4,34 @@ import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.local.TokenManager
 import com.example.condominio.data.model.*
 import com.example.condominio.data.remote.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+
+/** How long a successful users/me answer is reused by [RemoteAuthRepository.fetchCurrentUser]. */
+private val UserCacheWindow = 10.seconds
 
 class RemoteAuthRepository
-(private val apiService: ApiService, private val tokenManager: TokenManager) :
+(
+    private val apiService: ApiService,
+    private val tokenManager: TokenManager,
+    private val timeSource: kotlin.time.TimeSource = kotlin.time.TimeSource.Monotonic
+) :
         AuthRepository {
 
     private val _currentUser = MutableStateFlow<User?>(null)
     override val currentUser: Flow<User?> = _currentUser.asStateFlow()
 
-    init {
-        // Load user on init if token exists
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
-            val token = tokenManager.getToken()
-            if (token != null) {
-                // Token exists, fetch current user
-                fetchCurrentUser()
-            }
-        }
-    }
+    /**
+     * When users/me last answered OK. Screens opened right after the startup check (dashboard, history…)
+     * call [fetchCurrentUser] again; within [UserCacheWindow] they reuse the user instead of asking again (A-17).
+     * Any change to the session or the profile resets it.
+     */
+    private var lastFetch: TimeMark? = null
+
+    // No fetch on init: the login screen's startup check is the one that loads the user (A-17).
 
     override fun setCurrentUnit(unit: com.example.condominio.data.model.UserUnit) {
         _currentUser.value = _currentUser.value?.copy(currentUnit = unit)
@@ -51,6 +55,7 @@ class RemoteAuthRepository
                     user = enrichUserWithUnits(user)
                 }
                 _currentUser.value = user
+                lastFetch = null
 
                 Result.success(user)
             } else {
@@ -63,16 +68,14 @@ class RemoteAuthRepository
                             )
                     )
                 } else {
-                    val errorMsg =
-                            "Login failed (${response.code}): ${if (errorBody.isNotEmpty()) errorBody else "Unknown error"}"
-                    println("RemoteAuthRepo: $errorMsg")
-                    Result.failure(Exception(errorMsg))
+                    println("RemoteAuthRepo: Login failed (${response.code})")
+                    Result.failure(response.toFailure())
                 }
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
             println("RemoteAuthRepo: Exception during login")
-            Result.failure(Exception("Login error: ${e.message}"))
+            Result.failure(e)
         }
     }
 
@@ -102,12 +105,11 @@ class RemoteAuthRepository
                 var user = registerResponse.user.toDomain()
                 user = enrichUserWithUnits(user)
                 _currentUser.value = user
+                lastFetch = null
 
                 Result.success(user)
             } else {
-                val errorMsg =
-                        "Registration failed: ${response.errorBody().string()}"
-                Result.failure(Exception(errorMsg))
+                Result.failure(response.toFailure())
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
@@ -121,7 +123,7 @@ class RemoteAuthRepository
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to send reset email (${response.code})"))
+                Result.failure(response.toFailure())
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
@@ -135,10 +137,10 @@ class RemoteAuthRepository
             if (response.isSuccessful && response.body() != null) {
                 // Backend returns a FRESH session; the old (temp) token is now invalid.
                 tokenManager.saveToken(response.body()!!.accessToken)
-                fetchCurrentUser() // repopulate currentUser with must_change_password cleared
+                loadCurrentUser(force = true) // repopulate currentUser with must_change_password cleared
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to change password (${response.code})"))
+                Result.failure(response.toFailure())
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
@@ -146,7 +148,14 @@ class RemoteAuthRepository
         }
     }
 
-    override suspend fun fetchCurrentUser(): Result<User> {
+    override suspend fun fetchCurrentUser(): Result<User> = loadCurrentUser(force = false)
+
+    private suspend fun loadCurrentUser(force: Boolean): Result<User> {
+        if (!force) {
+            val cached = _currentUser.value
+            val mark = lastFetch
+            if (cached != null && mark != null && mark.elapsedNow() < UserCacheWindow) return Result.success(cached)
+        }
         return try {
             val response = apiService.getCurrentUser()
 
@@ -156,10 +165,15 @@ class RemoteAuthRepository
                 user = enrichUserWithUnits(user)
 
                 _currentUser.value = user
+                lastFetch = timeSource.markNow()
                 Result.success(user)
-            } else {
+            } else if (response.code == 401) {
                 // Expired/invalid token: drop it so the app shows login instead of an empty dashboard.
-                if (response.code == 401) tokenManager.clearToken()
+                tokenManager.clearToken()
+                lastFetch = null
+                Result.failure(SessionExpiredException())
+            } else {
+                // Network or server failure: the token may still be good, so it stays.
                 Result.failure(Exception("Failed to fetch user"))
             }
         } catch (e: Throwable) {
@@ -203,6 +217,7 @@ class RemoteAuthRepository
     override suspend fun logout() {
         tokenManager.clearToken()
         _currentUser.value = null
+        lastFetch = null
     }
 
     override suspend fun hasValidSession(): Boolean {
@@ -218,6 +233,7 @@ class RemoteAuthRepository
                             )
             val response = apiService.updateUser(request)
             if (response.isSuccessful) {
+                lastFetch = null // the profile changed: the next fetch must see it
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Failed to update user"))
@@ -238,7 +254,7 @@ class RemoteAuthRepository
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to change password (${response.code})"))
+                Result.failure(response.toFailure())
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
@@ -253,6 +269,7 @@ class RemoteAuthRepository
                 // Account is now banned server-side; clear local session too.
                 tokenManager.clearToken()
                 _currentUser.value = null
+                lastFetch = null
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Failed to delete account"))

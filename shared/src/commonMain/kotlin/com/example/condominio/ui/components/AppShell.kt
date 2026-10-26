@@ -33,10 +33,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.condominio.ui.theme.AptoGradientGold
+import com.example.condominio.ui.theme.AptoOnSecondary
+import com.example.condominio.ui.theme.AptoSecondary
 import com.example.condominio.ui.theme.AptoOnSurface
 import com.example.condominio.ui.theme.AptoOnSurfaceVariant
 import com.example.condominio.ui.theme.AptoOutlineVariant
@@ -45,6 +48,9 @@ import com.example.condominio.ui.theme.brand
 import com.example.condominio.ui.theme.AdminLogoMark
 import com.example.condominio.ui.utils.isWebPlatform
 import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.brand_footer
+import condominio.shared.generated.resources.brand_headline
+import condominio.shared.generated.resources.brand_tagline
 import condominio.shared.generated.resources.login_subtitle
 import condominio.shared.generated.resources.logo
 import org.jetbrains.compose.resources.painterResource
@@ -74,7 +80,7 @@ fun AppSidebar(
             Spacer(Modifier.width(12.dp))
             Column {
                 Text("Apto", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = AptoOnSurface)
-                Text("VIVIENDA ELEVADA", style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp, fontSize = 9.sp), color = AptoOnSurfaceVariant)
+                Text(stringResource(Res.string.brand_tagline).uppercase(), style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp, fontSize = 9.sp), color = AptoOnSurfaceVariant)
             }
         }
         // Tabs: announced as a tab list with the current section selected.
@@ -110,39 +116,44 @@ fun AppSidebar(
         }
         }
         Spacer(Modifier.weight(1f))
-        Text("Apto by Nibs", style = MaterialTheme.typography.labelSmall, color = AptoOnSurfaceVariant, modifier = Modifier.padding(start = 12.dp))
+        Text(stringResource(Res.string.brand_footer), style = MaterialTheme.typography.labelSmall, color = AptoOnSurfaceVariant, modifier = Modifier.padding(start = 12.dp))
     }
 }
+
+// White text over the panel: both stops keep >= 4.5:1 (the old gold start was 1.8–3.2:1, D-04).
+internal val BrandPanelGradient = listOf(AptoSecondaryContainer, AptoSecondary)
+internal val BrandPanelTextColor = AptoOnSecondary
 
 /** Brand panel shown left of the auth/onboarding screens on Expanded (desktop) layouts. */
 @Composable
 fun AuthBrandPanel(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .background(Brush.linearGradient(listOf(AptoGradientGold, AptoSecondaryContainer)))
+            .background(Brush.linearGradient(BrandPanelGradient))
             .padding(56.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(Res.drawable.logo), contentDescription = null, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)))
             Spacer(Modifier.width(12.dp))
-            Text("Apto", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = Color.White)
+            Text("Apto", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = BrandPanelTextColor)
         }
         Column(Modifier.align(Alignment.CenterStart).widthIn(max = 460.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
-                "Tu condominio, en orden.",
+                stringResource(Res.string.brand_headline),
                 style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                color = Color.White
+                color = BrandPanelTextColor,
+                modifier = Modifier.semantics { heading() }
             )
             Text(
                 stringResource(Res.string.login_subtitle),
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White.copy(alpha = 0.9f)
+                color = BrandPanelTextColor // solid: any alpha over the orange drops below 4.5:1
             )
         }
         Text(
-            "VIVIENDA ELEVADA",
+            stringResource(Res.string.brand_tagline).uppercase(),
             style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp, fontWeight = FontWeight.SemiBold),
-            color = Color.White.copy(alpha = 0.8f),
+            color = BrandPanelTextColor,
             modifier = Modifier.align(Alignment.BottomStart)
         )
     }
