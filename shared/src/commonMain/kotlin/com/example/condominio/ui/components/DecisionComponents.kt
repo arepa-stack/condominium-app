@@ -103,11 +103,11 @@ fun formatDecisionDeadline(iso: String?, timeZone: TimeZone = TimeZone.currentSy
 // formatDecisionDate — shared utility "ISO → dd/MM/yyyy"
 // ---------------------------------------------------------------------------
 
-fun formatDecisionDate(iso: String?): String {
+fun formatDecisionDate(iso: String?, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
     if (iso == null) return "—"
     return try {
         val instant = Instant.parse(iso)
-        val dt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+        val dt = instant.toLocalDateTime(timeZone)
         val day = dt.dayOfMonth.toString().padStart(2, '0')
         val month = dt.monthNumber.toString().padStart(2, '0')
         "${day}/${month}/${dt.year}"

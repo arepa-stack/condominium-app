@@ -404,6 +404,20 @@
     <string name="billboard_attachment_image">Imagen adjunta</string>
     <string name="billboard_attachment_open">Abrir</string>
     <string name="billboard_retry">Reintentar</string>
+    <string name="billboard_category_urgent">Urgente</string>
+    <string name="billboard_category_financial">Financiero</string>
+    <string name="billboard_category_maintenance">Mantenimiento</string>
+    <string name="billboard_category_news">Noticias</string>
+    <string name="billboard_category_info">Info</string>
+    <string name="billboard_new">Nuevo</string>
+    <string name="billboard_confirm_read">Confirmar lectura</string>
+    <string name="billboard_expiry_title">Aviso de expiración</string>
+    <string name="billboard_expires_on">Vence: %1$s</string>
+    <string name="billboard_pdf_document">Documento PDF</string>
+    <string name="billboard_download">Descargar</string>
+    <string name="billboard_image_error">No se pudo cargar la imagen</string>
+    <string name="error_loading_announcement">No pudimos cargar el anuncio</string>
+    <string name="error_toggling_reaction">No pudimos registrar tu confirmación de lectura</string>
 
     <!-- Language Settings -->
     <string name="language_settings">Idioma</string>

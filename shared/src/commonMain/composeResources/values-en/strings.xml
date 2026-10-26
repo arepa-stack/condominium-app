@@ -404,6 +404,20 @@
     <string name="billboard_attachment_image">Attached image</string>
     <string name="billboard_attachment_open">Open</string>
     <string name="billboard_retry">Retry</string>
+    <string name="billboard_category_urgent">Urgent</string>
+    <string name="billboard_category_financial">Financial</string>
+    <string name="billboard_category_maintenance">Maintenance</string>
+    <string name="billboard_category_news">News</string>
+    <string name="billboard_category_info">Info</string>
+    <string name="billboard_new">New</string>
+    <string name="billboard_confirm_read">Confirm reading</string>
+    <string name="billboard_expiry_title">Expiration notice</string>
+    <string name="billboard_expires_on">Expires: %1$s</string>
+    <string name="billboard_pdf_document">PDF document</string>
+    <string name="billboard_download">Download</string>
+    <string name="billboard_image_error">The image could not be loaded</string>
+    <string name="error_loading_announcement">We couldn\'t load the announcement</string>
+    <string name="error_toggling_reaction">We couldn\'t register your read confirmation</string>
 
     <!-- Language Settings -->
     <string name="language_settings">Language</string>

@@ -115,9 +115,27 @@ fun testDecisionDetail(status: DecisionStatus = DecisionStatus.VOTING) = Decisio
 
 fun testVote() = VoteDto(id = "v1", decisionId = "d1", round = 1, apartmentId = "u1", quoteId = "q1", createdAt = "2026-01-02T00:00:00Z")
 
+fun testAnnouncement(
+    id: String = "a1",
+    reacted: Boolean = false,
+    reactions: Int = 3,
+    attachmentUrl: String? = null,
+) = AnnouncementDto(
+    id = id, buildingId = "b1", title = "Corte de agua", content = "Contenido", contentPreview = "Contenido",
+    category = AnnouncementCategory.INFO, attachmentUrl = attachmentUrl, isPinned = false,
+    expiresAt = null, createdAt = "2026-03-05T12:00:00Z", updatedAt = "2026-03-05T12:00:00Z",
+    readByCurrentUser = false, reactedByCurrentUser = reacted,
+    metrics = AnnouncementMetricsDto(readsCount = 5, reactionsCount = reactions),
+)
+
 class FakeAnnouncementsRepository : AnnouncementsRepository {
+    var detailResult: Result<AnnouncementDto> = Result.failure(Exception("unset"))
+    var toggleResult: Result<ToggleReactionResponseDto> = Result.failure(Exception("toggle failed"))
+    var detailCount = 0
+    val markedRead = mutableListOf<String>()
+
     override suspend fun list(buildingId: String, category: AnnouncementCategory?, search: String?, isPinned: Boolean?, readStatus: String?, page: Int, limit: Int) = TODO()
-    override suspend fun detail(id: String) = TODO()
-    override suspend fun markRead(id: String) = TODO()
-    override suspend fun toggleReaction(id: String) = TODO()
+    override suspend fun detail(id: String): Result<AnnouncementDto> { detailCount++; return detailResult }
+    override suspend fun markRead(id: String): Result<Unit> { markedRead += id; return Result.success(Unit) }
+    override suspend fun toggleReaction(id: String): Result<ToggleReactionResponseDto> = toggleResult
 }
