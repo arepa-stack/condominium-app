@@ -127,16 +127,19 @@ fun CreatePaymentScreen(
         // Validation is synchronous: move focus to the first invalid field, in on-screen order (E-P1).
         // The amount field only exists on the wide layout; on the phone it comes from the invoices.
         val state = viewModel.uiState.value
-        if (state.bankError != null || state.referenceError != null || state.amountError != null || state.proofError != null) {
-            scope.launch { pagerState.animateScrollToPage(1) }
-        }
         val target = when {
             state.bankError != null -> fieldFocus.bank
             state.referenceError != null -> fieldFocus.reference
             state.amountError != null && wide -> fieldFocus.amount
             else -> null
         }
-        target?.let { runCatching { it.requestFocus() } }
+        if (target != null || state.amountError != null || state.proofError != null) {
+            // Errors live on the form page: show it first, then focus once the pager has settled.
+            scope.launch {
+                pagerState.animateScrollToPage(1)
+                target?.let { runCatching { it.requestFocus() } }
+            }
+        }
     }
 
     LaunchedEffect(uiState.isSuccess) {
@@ -172,7 +175,9 @@ fun CreatePaymentScreen(
             TopBarWithBack(
                 title = stringResource(if (currentStep == 1) Res.string.pay_now else Res.string.payment_details_title),
                 onBackClick = {
-                    if (currentStep == 2) {
+                    if (currentStep == 2 && pagerState.currentPage == 1) {
+                        scope.launch { pagerState.animateScrollToPage(0) }
+                    } else if (currentStep == 2) {
                         currentStep = 1
                     } else {
                         onBackClick()
@@ -245,6 +250,7 @@ fun CreatePaymentScreen(
                         if (page == 0) {
                             PayToAccountContent(
                                 method = uiState.method,
+                                totalText = amountDisplay(uiState.amount),
                                 onMethodChange = viewModel::onMethodChange,
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -953,6 +959,7 @@ private fun WidePaymentForm(
                         WebCard {
                             PayToAccountContent(
                                 method = uiState.method,
+                                totalText = amountDisplay(uiState.amount),
                                 onMethodChange = viewModel::onMethodChange
                             )
                         }

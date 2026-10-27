@@ -1,16 +1,17 @@
 package com.example.condominio.ui.screens.payment
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.QrCode2
-import androidx.compose.material3.*
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,19 +19,25 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.PaymentMethod
-import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
+import com.example.condominio.ui.components.isWide
 import condominio.shared.generated.resources.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 // ponytail: hardcoded for Residencias Granada; move to a building endpoint when the API exposes it.
@@ -67,23 +74,28 @@ internal fun PaymentPagerTabs(pagerState: PagerState) {
 @Composable
 internal fun PayToAccountContent(
     method: PaymentMethod,
+    totalText: String,
     onMethodChange: (PaymentMethod) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isTransfer = method == PaymentMethod.TRANSFER
     @Suppress("DEPRECATION") // see PayToRow
     val clipboard = LocalClipboardManager.current
-    val rows = if (isTransfer) listOf(
-        Res.string.pay_to_bank to PayTo.BANK,
-        Res.string.pay_to_holder to PayTo.HOLDER,
-        Res.string.pay_to_rif to PayTo.RIF,
-        Res.string.pay_to_account to PayTo.ACCOUNT,
-        Res.string.pay_to_email to PayTo.EMAIL
-    ) else listOf(
-        Res.string.pay_to_bank to PayTo.BANK,
-        Res.string.pay_to_phone to PayTo.PHONE,
-        Res.string.pay_to_rif to PayTo.RIF
-    )
+    // Cash (picked in the form's dropdown) has no account to pay to: no rows, copy or QR.
+    val rows = when (method) {
+        PaymentMethod.TRANSFER -> listOf(
+            Res.string.pay_to_bank to PayTo.BANK,
+            Res.string.pay_to_holder to PayTo.HOLDER,
+            Res.string.pay_to_rif to PayTo.RIF,
+            Res.string.pay_to_account to PayTo.ACCOUNT,
+            Res.string.pay_to_email to PayTo.EMAIL
+        )
+        PaymentMethod.PAGO_MOVIL -> listOf(
+            Res.string.pay_to_bank to PayTo.BANK,
+            Res.string.pay_to_phone to PayTo.PHONE,
+            Res.string.pay_to_rif to PayTo.RIF
+        )
+        PaymentMethod.CASH -> emptyList()
+    }
     Column(modifier = modifier) {
         Text(
             text = stringResource(Res.string.pay_to_title),
@@ -92,16 +104,40 @@ internal fun PayToAccountContent(
             modifier = Modifier.semantics { heading() }
         )
         Text(
-            text = stringResource(Res.string.pay_to_hint),
+            // No mouse drag on the web pager: point to the tab instead of "swipe".
+            text = stringResource(if (isWide()) Res.string.pay_to_hint_wide else Res.string.pay_to_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
         )
 
+        // Amount to pay, so it is in sight while paying in the bank app.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(Res.string.total_to_pay).uppercase(),
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.outline
+            )
+            Text(
+                text = totalText,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1
+            )
+        }
+
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             listOf(PaymentMethod.PAGO_MOVIL, PaymentMethod.TRANSFER).forEachIndexed { index, option ->
                 SegmentedButton(
-                    selected = (option == PaymentMethod.TRANSFER) == isTransfer,
+                    selected = method == option,
                     onClick = { onMethodChange(option) },
                     shape = SegmentedButtonDefaults.itemShape(index, 2),
                     modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
@@ -118,6 +154,15 @@ internal fun PayToAccountContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (rows.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.cash_zelle_payment_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            return@Column
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -133,6 +178,12 @@ internal fun PayToAccountContent(
         // "Copy all": one "Label: value" line per row of the selected method, ready to paste in the bank app.
         val allText = rows.map { (label, value) -> "${stringResource(label)}: $value" }.joinToString("\n")
         var copied by remember(method) { mutableStateOf(false) }
+        LaunchedEffect(copied) {
+            if (copied) {
+                delay(2000)
+                copied = false
+            }
+        }
         OutlinedButton(
             onClick = {
                 clipboard.setText(AnnotatedString(allText))
@@ -151,26 +202,26 @@ internal fun PayToAccountContent(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(if (copied) Res.string.pay_to_copied_all else Res.string.pay_to_copy_all))
+            Text(
+                text = stringResource(if (copied) Res.string.pay_to_copied_all else Res.string.pay_to_copy_all),
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            )
         }
 
-        if (!isTransfer) {
+        if (method == PaymentMethod.PAGO_MOVIL) {
             Spacer(modifier = Modifier.height(16.dp))
-            // ponytail: placeholder until the real QR image is added to composeResources/drawable.
-            Box(
+            // Bancaribe "Suiche 7B" Pago Móvil QR, white background so it scans in dark mode too.
+            Image(
+                painter = painterResource(Res.drawable.pago_movil_qr),
+                contentDescription = stringResource(Res.string.pay_to_qr_desc),
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .size(180.dp)
-                    .background(AptoSurfaceContainerHigh, RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.QrCode2,
-                    contentDescription = stringResource(Res.string.pay_to_qr_desc),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(150.dp)
-                )
-            }
+                    .size(200.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                    .padding(8.dp)
+            )
         }
     }
 }

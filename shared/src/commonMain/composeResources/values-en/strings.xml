@@ -521,6 +521,7 @@
     <string name="logging_out">Logging out…</string>
     <string name="pay_to_title">Pay to</string>
     <string name="pay_to_hint">Pay to this account, then swipe to register your payment.</string>
+    <string name="pay_to_hint_wide">Pay to this account, then register your payment in tab 2.</string>
     <string name="pay_to_tab_account">1. Pay to</string>
     <string name="pay_to_tab_register">2. Register payment</string>
     <string name="pay_to_bank">Bank</string>

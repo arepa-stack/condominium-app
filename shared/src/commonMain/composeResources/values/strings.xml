@@ -521,6 +521,7 @@
     <string name="logging_out">Cerrando sesión…</string>
     <string name="pay_to_title">Datos para pagar</string>
     <string name="pay_to_hint">Paga a esta cuenta y luego desliza para registrar tu pago.</string>
+    <string name="pay_to_hint_wide">Paga a esta cuenta y luego registra tu pago en la pestaña 2.</string>
     <string name="pay_to_tab_account">1. Datos de pago</string>
     <string name="pay_to_tab_register">2. Registrar pago</string>
     <string name="pay_to_bank">Banco</string>
