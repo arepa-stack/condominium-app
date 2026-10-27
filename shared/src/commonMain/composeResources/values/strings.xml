@@ -84,8 +84,8 @@
     <string name="full_name">Nombre completo</string>
     <string name="apartment_unit_label">Apartamento / Unidad</string>
     <string name="building_tower">Edificio / Torre</string>
-    <string name="select_building_first">Seleccione edificio primero</string>
-    <string name="select_unit_placeholder">Seleccione unidad</string>
+    <string name="select_building_first">Selecciona un edificio primero</string>
+    <string name="select_unit_placeholder">Selecciona una unidad</string>
     <string name="sign_up">Registrarse</string>
     <string name="already_have_account">¿Ya tienes cuenta? Inicia sesión</string>
 
