@@ -531,6 +531,9 @@
     <string name="pay_to_phone">Phone</string>
     <string name="pay_to_email">Email</string>
     <string name="pay_to_qr_desc">Payment QR code</string>
+    <string name="pay_to_info_loading">Loading the building payment details…</string>
+    <string name="pay_to_info_failed">Could not load the payment details.</string>
+    <string name="pay_to_not_configured">Your building has not set up its details for this payment method yet. Ask the condominium board.</string>
     <string name="pay_to_copy">Copy %1$s</string>
     <string name="pay_to_done">I already paid, register payment</string>
     <string name="bcv_rate_loading">Getting BCV rate…</string>

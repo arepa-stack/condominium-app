@@ -252,6 +252,7 @@ fun CreatePaymentScreen(
                                 uiState = uiState,
                                 onMethodChange = viewModel::onMethodChange,
                                 onRetryRate = viewModel::loadBcvRate,
+                                onRetryPaymentInfo = viewModel::retryPaymentInfo,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .verticalScroll(rememberScrollState())
@@ -960,7 +961,8 @@ private fun WidePaymentForm(
                             PayToAccountContent(
                                 uiState = uiState,
                                 onMethodChange = viewModel::onMethodChange,
-                                onRetryRate = viewModel::loadBcvRate
+                                onRetryRate = viewModel::loadBcvRate,
+                                onRetryPaymentInfo = viewModel::retryPaymentInfo
                             )
                         }
                     } else {

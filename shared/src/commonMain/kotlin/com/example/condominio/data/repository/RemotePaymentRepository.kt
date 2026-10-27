@@ -298,4 +298,15 @@ class RemotePaymentRepository(
             Result.failure(e)
         }
     }
+
+    override suspend fun getPaymentInfo(buildingId: String): Result<BuildingPaymentInfoDto> {
+        return try {
+            val response = apiService.getBuildingPaymentInfo(buildingId)
+            val body = response.body()
+            if (response.isSuccessful && body != null) Result.success(body) else Result.failure(response.toFailure())
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
+            Result.failure(e)
+        }
+    }
 }

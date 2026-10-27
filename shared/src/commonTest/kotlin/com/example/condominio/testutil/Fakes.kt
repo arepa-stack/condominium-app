@@ -113,6 +113,13 @@ class FakePaymentRepository : PaymentRepository {
         bcvRateCount++
         return bcvRateResult
     }
+
+    var paymentInfoResult: Result<BuildingPaymentInfoDto> = Result.success(BuildingPaymentInfoDto())
+    val paymentInfoRequests = mutableListOf<String>()
+    override suspend fun getPaymentInfo(buildingId: String): Result<BuildingPaymentInfoDto> {
+        paymentInfoRequests += buildingId
+        return paymentInfoResult
+    }
 }
 
 class FakeBuildingRepository : BuildingRepository {
