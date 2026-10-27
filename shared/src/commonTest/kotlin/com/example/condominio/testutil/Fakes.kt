@@ -107,6 +107,7 @@ class FakePaymentRepository : PaymentRepository {
     override suspend fun getInvoices(unitId: String, status: String?) = TODO()
     override suspend fun getInvoice(id: String) = TODO()
     override suspend fun getInvoicePayments(invoiceId: String) = TODO()
+    override suspend fun getBcvRate() = TODO()
 }
 
 class FakeBuildingRepository : BuildingRepository {

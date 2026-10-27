@@ -249,9 +249,9 @@ fun CreatePaymentScreen(
                     ) { page ->
                         if (page == 0) {
                             PayToAccountContent(
-                                method = uiState.method,
-                                totalText = amountDisplay(uiState.amount),
+                                uiState = uiState,
                                 onMethodChange = viewModel::onMethodChange,
+                                onRetryRate = viewModel::loadBcvRate,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .verticalScroll(rememberScrollState())
@@ -958,9 +958,9 @@ private fun WidePaymentForm(
                     if (page == 0) {
                         WebCard {
                             PayToAccountContent(
-                                method = uiState.method,
-                                totalText = amountDisplay(uiState.amount),
-                                onMethodChange = viewModel::onMethodChange
+                                uiState = uiState,
+                                onMethodChange = viewModel::onMethodChange,
+                                onRetryRate = viewModel::loadBcvRate
                             )
                         }
                     } else {

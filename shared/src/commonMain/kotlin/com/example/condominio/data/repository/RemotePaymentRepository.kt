@@ -282,4 +282,19 @@ class RemotePaymentRepository(
             Result.failure(e)
         }
     }
+
+    override suspend fun getBcvRate(): Result<ExchangeRateDto> {
+        return try {
+            val response = apiService.getExchangeRates()
+            val rate = response.body()?.rates?.dolarOficial
+            if (response.isSuccessful && rate != null) {
+                Result.success(rate)
+            } else {
+                Result.failure(Exception(response.errorBody().string()))
+            }
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
+            Result.failure(e)
+        }
+    }
 }

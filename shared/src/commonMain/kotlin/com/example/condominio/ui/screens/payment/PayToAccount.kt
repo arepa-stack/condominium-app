@@ -33,6 +33,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.ui.components.isWide
+import com.example.condominio.ui.utils.formatBs
+import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.parseAmount
 import condominio.shared.generated.resources.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -73,11 +76,16 @@ internal fun PaymentPagerTabs(pagerState: PagerState) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PayToAccountContent(
-    method: PaymentMethod,
-    totalText: String,
+    uiState: CreatePaymentUiState,
     onMethodChange: (PaymentMethod) -> Unit,
+    onRetryRate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val method = uiState.method
+    val totalUsd = parseAmount(uiState.amount) ?: 0.0
+    // Fees are in USD but paid in Bs at the BCV rate. Bank apps take "9901,08" (no grouping) in the amount field.
+    val totalBs = uiState.bcvRate?.let { formatBs(totalUsd * it) }
+    val totalBsPlain = totalBs?.replace(".", "")
     @Suppress("DEPRECATION") // see PayToRow
     val clipboard = LocalClipboardManager.current
     // Cash (picked in the form's dropdown) has no account to pay to: no rows, copy or QR.
@@ -111,27 +119,95 @@ internal fun PayToAccountContent(
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
         )
 
-        // Amount to pay, so it is in sight while paying in the bank app.
-        Row(
+        // Amount to pay (USD and Bs at today's BCV rate), in sight while paying in the bank app.
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.total_to_pay).uppercase(),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.outline
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(Res.string.total_to_pay).uppercase(),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.outline
+                )
+                Text(
+                    text = stringResource(Res.string.currency_amount, formatCurrency(totalUsd)),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+            }
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                modifier = Modifier.padding(vertical = 8.dp)
             )
-            Text(
-                text = totalText,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1
-            )
+
+            when {
+                uiState.isLoadingRate -> Text(
+                    text = stringResource(Res.string.bcv_rate_loading),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+                uiState.bcvRate == null -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(Res.string.bcv_rate_unavailable),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = onRetryRate, modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)) {
+                        Text(stringResource(Res.string.retry))
+                    }
+                }
+                else -> {
+                    Text(
+                        text = stringResource(
+                            Res.string.bcv_rate_value,
+                            bcvDateLabel(uiState.bcvRateDate),
+                            formatBs(uiState.bcvRate ?: 0.0)
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(Res.string.amount_in_bs).uppercase(),
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                            Text(
+                                text = stringResource(Res.string.bs_amount, totalBs.orEmpty()),
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1
+                            )
+                        }
+                        val amountLabel = stringResource(Res.string.amount_in_bs)
+                        IconButton(
+                            onClick = { clipboard.setText(AnnotatedString(totalBsPlain.orEmpty())) },
+                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = stringResource(Res.string.pay_to_copy, amountLabel),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -176,7 +252,9 @@ internal fun PayToAccountContent(
         }
 
         // "Copy all": one "Label: value" line per row of the selected method, ready to paste in the bank app.
-        val allText = rows.map { (label, value) -> "${stringResource(label)}: $value" }.joinToString("\n")
+        val amountLine = totalBsPlain?.let { "${stringResource(Res.string.amount_in_bs)}: $it" }
+        val allText = (rows.map { (label, value) -> "${stringResource(label)}: $value" } + listOfNotNull(amountLine))
+            .joinToString("\n")
         var copied by remember(method) { mutableStateOf(false) }
         LaunchedEffect(copied) {
             if (copied) {
@@ -260,3 +338,7 @@ private fun PayToRow(label: StringResource, value: String, divider: Boolean = tr
     }
     if (divider) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
+
+/** "2026-10-27" -> "27/10/2026"; anything else as is. */
+private fun bcvDateLabel(date: String?): String =
+    date?.take(10)?.split("-")?.takeIf { it.size == 3 }?.reversed()?.joinToString("/") ?: date.orEmpty()

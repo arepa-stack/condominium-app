@@ -32,6 +32,13 @@ fun formatAmountInput(amount: Double): String {
     return "${cents / 100}.${(cents % 100).toString().padStart(2, '0')}"
 }
 
+/** Venezuelan bolívar format, same on every platform: 9901.084 -> "9.901,08" (dot grouping, comma decimals). */
+fun formatBs(amount: Double): String {
+    val cents = kotlin.math.round(amount * 100).toLong()
+    val grouped = (cents / 100).toString().reversed().chunked(3).joinToString(".").reversed()
+    return "$grouped,${(cents % 100).toString().padStart(2, '0')}"
+}
+
 expect fun formatDate(timestamp: Long, formatString: String = "MMM dd, yyyy"): String
 
 expect fun formatMonthYear(timestamp: Long): String
