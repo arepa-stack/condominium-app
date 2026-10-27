@@ -31,6 +31,16 @@ class CreatePaymentViewModel (
 
     init {
         loadPendingInvoices()
+        loadBcvRate()
+    }
+
+    /** BCV rate for the Bs amount on the pay-to page; a failure only hides the conversion. */
+    fun loadBcvRate() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingRate = true) }
+            val rate = paymentRepository.getBcvRate().getOrNull()
+            _uiState.update { it.copy(isLoadingRate = false, bcvRate = rate?.bsPerUnit, bcvRateDate = rate?.rateDate) }
+        }
     }
 
     fun loadPendingInvoices() {
@@ -257,7 +267,11 @@ data class CreatePaymentUiState(
     val proofError: UiText? = null,
     /** Form-level error: invoice selection, invoices not loaded, submit failure. */
     val error: UiText? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    /** BCV dollar rate (Bs per USD) and its date ("2026-10-27"); null when it could not be loaded. */
+    val bcvRate: Double? = null,
+    val bcvRateDate: String? = null,
+    val isLoadingRate: Boolean = false
 ) {
     val hasFieldErrors: Boolean
         get() = amountError != null || bankError != null || referenceError != null || proofError != null

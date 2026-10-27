@@ -519,4 +519,25 @@
     <string name="logout_confirm_title">¿Cerrar sesión?</string>
     <string name="logout_confirm_message">Tendrás que iniciar sesión de nuevo para volver a entrar.</string>
     <string name="logging_out">Cerrando sesión…</string>
+    <string name="pay_to_title">Datos para pagar</string>
+    <string name="pay_to_hint">Paga a esta cuenta y luego desliza para registrar tu pago.</string>
+    <string name="pay_to_hint_wide">Paga a esta cuenta y luego registra tu pago en la pestaña 2.</string>
+    <string name="pay_to_tab_account">1. Datos de pago</string>
+    <string name="pay_to_tab_register">2. Registrar pago</string>
+    <string name="pay_to_bank">Banco</string>
+    <string name="pay_to_holder">A nombre de</string>
+    <string name="pay_to_rif">RIF</string>
+    <string name="pay_to_account">Cuenta</string>
+    <string name="pay_to_phone">Teléfono</string>
+    <string name="pay_to_email">Correo</string>
+    <string name="pay_to_qr_desc">Código QR de pago</string>
+    <string name="pay_to_copy">Copiar %1$s</string>
+    <string name="pay_to_done">Ya pagué, registrar pago</string>
+    <string name="bcv_rate_loading">Consultando tasa BCV…</string>
+    <string name="bcv_rate_unavailable">Tasa BCV no disponible</string>
+    <string name="bcv_rate_value">Tasa BCV del %1$s: Bs. %2$s por $1</string>
+    <string name="amount_in_bs">Monto en Bs</string>
+    <string name="bs_amount">Bs. %1$s</string>
+    <string name="pay_to_copy_all">Copiar todos los datos</string>
+    <string name="pay_to_copied_all">Datos copiados</string>
 </resources>
