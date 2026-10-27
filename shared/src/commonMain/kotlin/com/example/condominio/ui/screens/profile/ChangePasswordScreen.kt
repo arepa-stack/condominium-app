@@ -14,6 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.Modifier
@@ -42,7 +47,7 @@ import org.koin.compose.viewmodel.koinViewModel
 /** Mirrors the minimum length enforced by [ChangePasswordViewModel]. */
 private const val MIN_PASSWORD_LENGTH = 6
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ChangePasswordScreen(
     onBackClick: () -> Unit,
@@ -50,19 +55,47 @@ fun ChangePasswordScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showDiscardDialog by remember { mutableStateOf(false) }
+    val changedMessage = stringResource(Res.string.password_changed)
+
+    // Typed passwords: ask before leaving by the top bar or the system back (E-R4).
+    val askBeforeLeaving = uiState.hasChanges && !uiState.isLoading
+    val onBack: () -> Unit = {
+        if (askBeforeLeaving) {
+            showDiscardDialog = true
+        } else {
             onBackClick()
         }
+    }
+    BackHandler(enabled = askBeforeLeaving) { showDiscardDialog = true }
+
+    // The change is confirmed here; the form is already wiped by the ViewModel.
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            viewModel.onSuccessShown()
+            snackbarHostState.showSnackbar(changedMessage)
+        }
+    }
+
+    if (showDiscardDialog) {
+        DiscardChangesDialog(
+            onDiscard = {
+                showDiscardDialog = false
+                onBackClick()
+            },
+            onKeepEditing = { showDiscardDialog = false }
+        )
     }
 
     Scaffold(
         topBar = {
             TopBarWithBack(
                 title = stringResource(Res.string.change_password),
-                onBackClick = onBackClick
+                onBackClick = onBack
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = screenBackground(MaterialTheme.colorScheme.background)
     ) { paddingValues ->
         if (isWide()) {
@@ -81,7 +114,7 @@ fun ChangePasswordScreen(
             Text(
                 text = stringResource(Res.string.change_password_desc),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
@@ -100,7 +133,7 @@ fun ChangePasswordScreen(
             Text(
                 text = stringResource(Res.string.password_min_length),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             // Error Message
@@ -178,7 +211,7 @@ private fun WideChangePasswordContent(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = if (meetsMinLength) AptoSuccess else AptoOnSurfaceVariant.copy(alpha = 0.5f),
+                    tint = if (meetsMinLength) AptoSuccess else AptoOnSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -235,6 +268,7 @@ private fun CurrentPasswordField(
         visible = uiState.currentPasswordVisible,
         onToggleVisibility = viewModel::toggleCurrentPasswordVisibility,
         contentType = ContentType.Password,
+        isError = uiState.currentPasswordError,
         modifier = modifier
     )
 }
@@ -253,6 +287,7 @@ private fun NewPasswordField(
         visible = uiState.newPasswordVisible,
         onToggleVisibility = viewModel::toggleNewPasswordVisibility,
         contentType = ContentType.NewPassword,
+        isError = uiState.newPasswordError,
         modifier = modifier
     )
 }
@@ -272,6 +307,7 @@ private fun ConfirmPasswordField(
         visible = uiState.confirmPasswordVisible,
         onToggleVisibility = viewModel::toggleConfirmPasswordVisibility,
         contentType = ContentType.NewPassword,
+        isError = uiState.confirmPasswordError,
         modifier = modifier,
         keyboardActions = keyboardActions
     )
@@ -290,6 +326,7 @@ private fun PasswordField(
     visible: Boolean,
     onToggleVisibility: () -> Unit,
     contentType: ContentType,
+    isError: Boolean,
     modifier: Modifier = Modifier,
     keyboardActions: KeyboardActions? = null
 ) {
@@ -300,6 +337,7 @@ private fun PasswordField(
         modifier = modifier,
         enabled = enabled,
         contentType = contentType,
+        isError = isError,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = if (keyboardActions == null) {
             KeyboardOptions(keyboardType = KeyboardType.Password)

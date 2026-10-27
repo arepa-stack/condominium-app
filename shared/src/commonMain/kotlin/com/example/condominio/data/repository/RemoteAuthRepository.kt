@@ -226,17 +226,16 @@ class RemoteAuthRepository
 
     override suspend fun updateUser(user: User): Result<Unit> {
         return try {
-            val request =
-                    com.example.condominio.data.model.UpdateUserRequest(
-                            name = user.name
-                            // phone = ... if available in User model
-                            )
+            // PATCH users/me accepts name, phone and settings, never the unit (A-10); the app has no phone yet.
+            val request = com.example.condominio.data.model.UpdateUserRequest(name = user.name)
             val response = apiService.updateUser(request)
             if (response.isSuccessful) {
                 lastFetch = null // the profile changed: the next fetch must see it
+                // Screens already open (Profile) read currentUser: show the new name without another request.
+                _currentUser.value = _currentUser.value?.copy(name = user.name)
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to update user"))
+                Result.failure(response.toFailure())
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
@@ -272,7 +271,7 @@ class RemoteAuthRepository
                 lastFetch = null
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to delete account"))
+                Result.failure(response.toFailure())
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()

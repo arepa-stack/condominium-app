@@ -509,4 +509,14 @@
     <string name="error_session_expired">Your session expired. Please sign in again.</string>
     <string name="error_registration_conflict">A request with this email already exists, or the unit reached its capacity.</string>
     <string name="error_registration_invalid">Invalid data. Check the fields and try again.</string>
+    <string name="unsaved_changes_title">Discard changes?</string>
+    <string name="unsaved_changes_message">You have unsaved changes. If you leave, they will be lost.</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Keep editing</string>
+    <string name="profile_saved">Profile updated</string>
+    <string name="password_changed">Password updated</string>
+    <string name="apartment_unit_read_only">The unit can't be changed from here</string>
+    <string name="logout_confirm_title">Log out?</string>
+    <string name="logout_confirm_message">You will need to sign in again to get back in.</string>
+    <string name="logging_out">Logging out…</string>
 </resources>
