@@ -1,7 +1,12 @@
 package com.example.condominio.data.repository
 
 import com.example.condominio.data.model.SessionExpiredException
+import com.example.condominio.data.model.User
+import com.example.condominio.data.model.UserUnit
+import com.example.condominio.data.remote.ApiFailureException
+import com.example.condominio.data.remote.NetworkFailureException
 import com.example.condominio.data.remote.Response
+import kotlinx.coroutines.flow.first
 import com.example.condominio.testutil.FakeApiService
 import com.example.condominio.testutil.FakeTokenManager
 import kotlinx.coroutines.Dispatchers
@@ -73,5 +78,50 @@ class RemoteAuthRepositoryTest {
         repo.logout()
         repo.fetchCurrentUser()
         assertEquals(2, api.currentUserCount)
+    }
+
+    // --- Perfil (paso 8) ---
+
+    @Test fun `updating the profile sends only the name`() = runTest {
+        repo().updateUser(User(id = "1", name = "Ana Maria", email = "a@b.c", units = listOf(UserUnit("u1", "b1", "1A", "B"))))
+        val sent = api.updateRequests.single()
+        assertEquals("Ana Maria", sent.name)
+        assertNull(sent.unit)
+        assertNull(sent.phone)
+    }
+
+    @Test fun `an updated name shows in the current user without asking the server`() = runTest {
+        val repo = repo()
+        repo.fetchCurrentUser()
+        repo.updateUser(User(id = "1", name = "Ana Maria", email = "a@b.c"))
+        assertEquals("Ana Maria", repo.currentUser.first()?.name)
+    }
+
+    @Test fun `a failed update leaves the current user as it was`() = runTest {
+        val repo = repo()
+        repo.fetchCurrentUser()
+        api.updateUserResponse = Response.error(500, "x")
+        val result = repo.updateUser(User(id = "1", name = "Ana Maria", email = "a@b.c"))
+        assertIs<ApiFailureException>(result.exceptionOrNull())
+        assertEquals("Ana", repo.currentUser.first()?.name)
+    }
+
+    @Test fun `an update without network is a network failure`() = runTest {
+        api.updateUserResponse = Response.networkError("Fail to fetch")
+        val result = repo().updateUser(User(id = "1", name = "Ana", email = "a@b.c"))
+        assertIs<NetworkFailureException>(result.exceptionOrNull())
+    }
+
+    @Test fun `a rejected password change is typed with its code`() = runTest {
+        api.changePasswordResponse = Response.error(400, "x")
+        val result = repo().changePassword("a", "b")
+        assertEquals(400, assertIs<ApiFailureException>(result.exceptionOrNull()).code)
+    }
+
+    @Test fun `a failed account deletion is typed and keeps the session`() = runTest {
+        api.deleteAccountResponse = Response.error(500, "x")
+        val result = repo().deleteAccount(null)
+        assertIs<ApiFailureException>(result.exceptionOrNull())
+        assertEquals("saved-token", tokens.token)
     }
 }

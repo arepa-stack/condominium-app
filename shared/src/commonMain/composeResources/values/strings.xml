@@ -509,4 +509,14 @@
     <string name="error_session_expired">Tu sesión venció. Inicia sesión de nuevo.</string>
     <string name="error_registration_conflict">Ya existe una solicitud con este correo, o la unidad alcanzó su capacidad máxima.</string>
     <string name="error_registration_invalid">Datos inválidos. Revisa los campos e inténtalo de nuevo.</string>
+    <string name="unsaved_changes_title">¿Descartar los cambios?</string>
+    <string name="unsaved_changes_message">Tienes cambios sin guardar. Si sales, se perderán.</string>
+    <string name="discard">Descartar</string>
+    <string name="keep_editing">Seguir editando</string>
+    <string name="profile_saved">Perfil actualizado</string>
+    <string name="password_changed">Contraseña actualizada</string>
+    <string name="apartment_unit_read_only">La unidad no se puede cambiar desde aquí</string>
+    <string name="logout_confirm_title">¿Cerrar sesión?</string>
+    <string name="logout_confirm_message">Tendrás que iniciar sesión de nuevo para volver a entrar.</string>
+    <string name="logging_out">Cerrando sesión…</string>
 </resources>

@@ -28,10 +28,14 @@ class FakeApiService : ApiService {
 
     override suspend fun login(credentials: Map<String, String>): Response<LoginResponse> = loginResponse
     override suspend fun resetPassword(email: String): Response<SuccessDto> = resetResponse
-    override suspend fun changePassword(newPassword: String): Response<SuccessDto> = TODO()
+    var changePasswordResponse: Response<SuccessDto> = Response.success(SuccessDto(true))
+    override suspend fun changePassword(newPassword: String): Response<SuccessDto> = changePasswordResponse
     override suspend fun changePasswordFirstLogin(newPassword: String): Response<ChangePasswordFirstLoginResponse> = firstLoginResponse
-    override suspend fun updateUser(updates: UpdateUserRequest): Response<UserProfile> = TODO()
-    override suspend fun deleteAccount(reason: String?): Response<SuccessDto> = TODO()
+    var updateUserResponse: Response<UserProfile> = Response.success(UserProfile(id = "1", name = "Ana", email = "a@b.c"))
+    val updateRequests = mutableListOf<UpdateUserRequest>()
+    override suspend fun updateUser(updates: UpdateUserRequest): Response<UserProfile> { updateRequests += updates; return updateUserResponse }
+    var deleteAccountResponse: Response<SuccessDto> = Response.success(SuccessDto(true))
+    override suspend fun deleteAccount(reason: String?): Response<SuccessDto> = deleteAccountResponse
     override suspend fun getBuildings(): Response<List<Building>> = TODO()
     override suspend fun getBuilding(id: String): Response<Building> = TODO()
     override suspend fun getBuildingByCode(code: String): Response<Building> = buildingByCodeResponse

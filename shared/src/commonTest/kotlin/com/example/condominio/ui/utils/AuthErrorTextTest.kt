@@ -29,6 +29,13 @@ class AuthErrorTextTest {
         }
     }
 
+    @Test fun `profile update and account deletion have their own codes`() {
+        assertEquals(Res.string.error_session_expired, res(ApiFailureException(401), AuthAction.UpdateProfile))
+        assertEquals(Res.string.error_unknown, res(ApiFailureException(500), AuthAction.UpdateProfile))
+        assertEquals(Res.string.error_session_expired, res(ApiFailureException(401), AuthAction.DeleteAccount))
+        assertEquals(Res.string.error_unknown, res(ApiFailureException(400), AuthAction.DeleteAccount))
+    }
+
     @Test fun `a pending account has its own text`() {
         assertEquals(Res.string.error_account_pending, res(UserPendingException("Your account is pending approval"), AuthAction.Login))
     }

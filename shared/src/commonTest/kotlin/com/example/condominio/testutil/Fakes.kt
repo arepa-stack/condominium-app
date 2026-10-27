@@ -37,6 +37,8 @@ class FakeAuthRepository(var user: User = testUser) : AuthRepository {
     /** When set, [login] suspends until it completes (to test the in-flight state). */
     var loginGate: CompletableDeferred<Unit>? = null
     var logoutCount = 0
+    /** When set, [logout] suspends until it completes (to test the in-flight state). */
+    var logoutGate: CompletableDeferred<Unit>? = null
     var resetResult: Result<Unit> = Result.success(Unit)
     var firstLoginResult: Result<Unit> = Result.success(Unit)
     override val currentUser: Flow<User?> = MutableStateFlow(user)
@@ -52,11 +54,28 @@ class FakeAuthRepository(var user: User = testUser) : AuthRepository {
     override suspend fun resetPassword(email: String) = resetResult
     override suspend fun getUnits(buildingId: String) = TODO()
     override suspend fun getUnit(unitId: String) = TODO()
-    override suspend fun logout() { logoutCount++ }
-    override suspend fun updateUser(user: User) = TODO()
-    override suspend fun changePassword(currentPassword: String, newPassword: String) = TODO()
+    override suspend fun logout() { logoutCount++; logoutGate?.await() }
+    var updateResult: Result<Unit> = Result.success(Unit)
+    val updates = mutableListOf<User>()
+    /** When set, [updateUser] suspends until it completes (to test the in-flight state). */
+    var updateGate: CompletableDeferred<Unit>? = null
+    override suspend fun updateUser(user: User): Result<Unit> {
+        updates += user
+        updateGate?.await()
+        return updateResult
+    }
+    var changePasswordResult: Result<Unit> = Result.success(Unit)
+    val passwordChanges = mutableListOf<Pair<String, String>>()
+    /** When set, [changePassword] suspends until it completes (to test the in-flight state). */
+    var changePasswordGate: CompletableDeferred<Unit>? = null
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
+        passwordChanges += currentPassword to newPassword
+        changePasswordGate?.await()
+        return changePasswordResult
+    }
     override suspend fun changePasswordFirstLogin(newPassword: String) = firstLoginResult
-    override suspend fun deleteAccount(reason: String?) = TODO()
+    var deleteResult: Result<Unit> = Result.success(Unit)
+    override suspend fun deleteAccount(reason: String?): Result<Unit> = deleteResult
     override fun setCurrentUnit(unit: UserUnit) {}
     override suspend fun hasValidSession() = hasSession
 }
