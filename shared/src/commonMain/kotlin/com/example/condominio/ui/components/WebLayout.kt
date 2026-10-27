@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.condominio.ui.theme.AptoOutlineVariant
+import com.example.condominio.ui.theme.brand
 import com.example.condominio.ui.theme.AptoSurfaceContainerLowest
 
 /**
@@ -62,7 +63,7 @@ val WebFormWidth = 720.dp
 fun Modifier.formWidth(): Modifier = if (isWide()) this.widthIn(max = WebFormWidth) else this
 
 /** Gray canvas behind web pages; screens on wide layouts draw white [WebCard]s on top of it. */
-val AptoWebCanvas = Color(0xFFF4F6F8)
+val AptoWebCanvas = brand(0xFFF4F6F8, 0xFFF3F1ED) // web POC: condominium-admin --background
 
 @Composable
 fun isWide(): Boolean = LocalWidthClass.current != WidthClass.Compact
@@ -89,13 +90,17 @@ fun screenBackground(default: Color): Color = if (isWide()) Color.Transparent el
 fun WebCard(
     modifier: Modifier = Modifier,
     contentPadding: Dp = 24.dp,
+    color: Color = AptoSurfaceContainerLowest,
+    border: BorderStroke? = BorderStroke(1.dp, AptoOutlineVariant),
+    shadowElevation: Dp = 0.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = AptoSurfaceContainerLowest,
-        border = BorderStroke(1.dp, AptoOutlineVariant)
+        color = color,
+        border = border,
+        shadowElevation = shadowElevation
     ) {
         Column(Modifier.padding(contentPadding), content = content)
     }

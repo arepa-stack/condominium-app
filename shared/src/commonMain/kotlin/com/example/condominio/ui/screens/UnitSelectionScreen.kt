@@ -6,6 +6,9 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import com.example.condominio.ui.components.formWidth
+import androidx.compose.ui.graphics.compositeOver
+import com.example.condominio.ui.utils.isWebPlatform
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
@@ -39,13 +42,21 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.condominio.data.model.UserUnit
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import com.example.condominio.ui.components.EmptyState
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LoadingState
+import com.example.condominio.ui.components.WebEmptyFrame
 import com.example.condominio.ui.components.WebCard
 import com.example.condominio.ui.components.isWide
 import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.*
 import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +65,7 @@ fun UnitSelectionScreen(
     uiState: UnitSelectionUiState,
     onBuildingSelected: (BuildingGroup) -> Unit,
     onUnitSelected: (UserUnit) -> Unit,
+    onRetry: () -> Unit,
     onNavigateToDashboard: () -> Unit
 ) {
     LaunchedEffect(uiState.unitSelected) {
@@ -66,7 +78,8 @@ fun UnitSelectionScreen(
         WideUnitSelection(
             uiState = uiState,
             onBuildingSelected = onBuildingSelected,
-            onUnitSelected = onUnitSelected
+            onUnitSelected = onUnitSelected,
+            onRetry = onRetry
         )
         return
     }
@@ -94,6 +107,8 @@ fun UnitSelectionScreen(
         ) {
             if (uiState.isLoading) {
                 LoadingState()
+            } else if (uiState.error != null || uiState.isEmpty) {
+                UnitSelectionMessage(uiState = uiState, onRetry = onRetry)
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -118,6 +133,21 @@ fun UnitSelectionScreen(
                 }
             }
         }
+    }
+}
+
+/** Load failure (with retry) or a user with no units: never a blank list or an endless spinner (A-07, E-U1). */
+@Composable
+private fun UnitSelectionMessage(uiState: UnitSelectionUiState, onRetry: () -> Unit) {
+    val error = uiState.error
+    if (error != null) {
+        ErrorState(title = error.asString(), onRetry = onRetry)
+    } else {
+        EmptyState(
+            title = stringResource(Res.string.units_empty_title),
+            subtitle = stringResource(Res.string.units_empty_subtitle),
+            icon = Icons.Default.Apartment,
+        )
     }
 }
 
@@ -159,11 +189,15 @@ fun BuildingCard(
         else -> stringResource(Res.string.role_resident)
     }
     val isPrivileged = group.role == "board" || group.role == "admin"
+    val expandedLabel = stringResource(Res.string.state_expanded)
+    val collapsedLabel = stringResource(Res.string.state_collapsed)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onBuildingClick),
+            .clickable(role = Role.Button, onClick = onBuildingClick)
+            // The chevron is decorative: expose expanded/collapsed to screen readers (E-U3)
+            .semantics { if (group.units.size > 1) stateDescription = if (isExpanded) expandedLabel else collapsedLabel },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = AptoSurfaceContainerLowest),
         border = BorderStroke(1.dp, AptoOutlineVariant),
@@ -225,7 +259,7 @@ fun BuildingCard(
                         text = if (group.units.size == 1)
                             stringResource(Res.string.unit_label_short, group.units.first().unitName)
                         else
-                            stringResource(Res.string.units_count_label, group.units.size),
+                            pluralStringResource(Res.plurals.units_count_label, group.units.size, group.units.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = AptoOnSurfaceVariant
                     )
@@ -343,7 +377,8 @@ private fun UnitRow(unit: UserUnit, onClick: () -> Unit) {
 private fun WideUnitSelection(
     uiState: UnitSelectionUiState,
     onBuildingSelected: (BuildingGroup) -> Unit,
-    onUnitSelected: (UserUnit) -> Unit
+    onUnitSelected: (UserUnit) -> Unit,
+    onRetry: () -> Unit
 ) {
     Scaffold(containerColor = screenBackground(AptoBackground)) { paddingValues ->
         Box(
@@ -353,6 +388,8 @@ private fun WideUnitSelection(
         ) {
             if (uiState.isLoading) {
                 LoadingState()
+            } else if (uiState.error != null || uiState.isEmpty) {
+                WebEmptyFrame { UnitSelectionMessage(uiState = uiState, onRetry = onRetry) }
             } else {
                 val selectedGroup = uiState.buildings.firstOrNull { it.buildingId == uiState.expandedBuildingId }
                 Column(
@@ -383,7 +420,8 @@ private fun WideUnitSelection(
                         )
                     }
 
-                    AdaptiveTileGrid(items = uiState.buildings, minCellWidth = 190.dp) { group ->
+                    // Tiles and the units card share one width (formWidth): nothing jumps when a building expands.
+                    AdaptiveTileGrid(items = uiState.buildings, minCellWidth = 190.dp, modifier = Modifier.formWidth()) { group ->
                         BuildingTile(
                             group = group,
                             isSelected = group.buildingId == uiState.expandedBuildingId,
@@ -397,7 +435,7 @@ private fun WideUnitSelection(
                         exit = shrinkVertically()
                     ) {
                         if (selectedGroup != null) {
-                            WebCard {
+                            WebCard(modifier = Modifier.formWidth()) {
                                 Text(
                                     text = selectedGroup.buildingName,
                                     style = MaterialTheme.typography.titleMedium,
@@ -423,16 +461,20 @@ private fun WideUnitSelection(
     }
 }
 
-/** Two columns when both fit at [minCellWidth], one otherwise; cells in a row share height. */
+/**
+ * Two columns when both fit at [minCellWidth], one otherwise; cells in a row share height.
+ * A single item takes the whole row, so it lines up with the full-width card below it.
+ */
 @Composable
 private fun <T> AdaptiveTileGrid(
     items: List<T>,
     minCellWidth: Dp,
+    modifier: Modifier = Modifier,
     spacing: Dp = 12.dp,
     cell: @Composable (T) -> Unit
 ) {
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= minCellWidth * 2 + spacing) 2 else 1
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val columns = if (items.size > 1 && maxWidth >= minCellWidth * 2 + spacing) 2 else 1
         Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
             items.chunked(columns).forEach { rowItems ->
                 Row(
@@ -465,26 +507,37 @@ private fun BuildingTile(
     val isPrivileged = group.role == "board" || group.role == "admin"
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val expandedLabel = stringResource(Res.string.state_expanded)
+    val collapsedLabel = stringResource(Res.string.state_collapsed)
+    val selectedLabel = stringResource(Res.string.state_selected)
 
     Card(
         onClick = onClick,
         interactionSource = interactionSource,
         modifier = Modifier
             .fillMaxSize()
-            .pointerHoverIcon(PointerIcon.Hand),
+            .pointerHoverIcon(PointerIcon.Hand)
+            // Selection is only a border/icon colour otherwise (E-U3)
+            .semantics {
+                selected = isSelected
+                if (group.units.size > 1) stateDescription = if (isSelected) expandedLabel else collapsedLabel
+                else if (isSelected) stateDescription = selectedLabel
+            },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) AptoSecondaryFixed.copy(alpha = 0.35f) else AptoSurfaceContainerLowest
+            containerColor = if (isSelected) AptoSecondaryFixed.copy(alpha = 0.35f).compositeOver(Color.White) else AptoSurfaceContainerLowest
         ),
         border = BorderStroke(
             width = if (isSelected) 2.dp else 1.dp,
             color = when {
                 isSelected -> AptoSecondaryContainer
-                isHovered -> AptoOutline
+                isHovered -> if (isWebPlatform) AptoSecondaryContainer.copy(alpha = 0.4f) else AptoOutline
                 else -> AptoOutlineVariant
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isHovered && !isSelected) 3.dp else 0.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isHovered && !isSelected) (if (isWebPlatform) 1.dp else 3.dp) else 0.dp
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -548,7 +601,7 @@ private fun BuildingTile(
                 text = if (group.units.size == 1)
                     stringResource(Res.string.unit_label_short, group.units.first().unitName)
                 else
-                    stringResource(Res.string.units_count_label, group.units.size),
+                    pluralStringResource(Res.plurals.units_count_label, group.units.size, group.units.size),
                 style = MaterialTheme.typography.bodySmall,
                 color = AptoOnSurfaceVariant
             )
@@ -569,7 +622,8 @@ private fun UnitTile(unit: UserUnit, onClick: () -> Unit) {
             .pointerHoverIcon(PointerIcon.Hand),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isHovered) AptoSecondaryFixed.copy(alpha = 0.35f) else AptoSurfaceContainerLow
+            // Opaque on purpose: Card adds a hover shadow, which shows through a translucent container.
+            containerColor = if (isHovered) AptoSecondaryFixed.copy(alpha = 0.35f).compositeOver(Color.White) else AptoSurfaceContainerLow
         ),
         border = BorderStroke(1.dp, if (isHovered) AptoSecondaryContainer else AptoOutlineVariant)
     ) {

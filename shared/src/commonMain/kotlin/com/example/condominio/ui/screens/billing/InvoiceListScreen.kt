@@ -2,7 +2,6 @@ package com.example.condominio.ui.screens.billing
 
 import com.example.condominio.ui.components.isWide
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.BorderStroke
@@ -11,17 +10,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -29,15 +25,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.Invoice
 import androidx.compose.foundation.layout.PaddingValues
 import com.example.condominio.data.model.InvoiceStatus
 import com.example.condominio.ui.components.EmptyState
-import com.example.condominio.ui.components.ListItemCard
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.WebCard
@@ -45,9 +46,10 @@ import com.example.condominio.ui.components.WebEmptyFrame
 import com.example.condominio.ui.components.isExpanded
 import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
+import com.example.condominio.ui.screens.payment.formatPaymentDate
+import com.example.condominio.ui.screens.payment.invoiceMonthLabel
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
-import com.example.condominio.ui.utils.formatDate
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -61,7 +63,8 @@ fun InvoiceListScreen(
     viewModel: InvoiceListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedTab by remember { mutableStateOf(0) }
+    // In the ViewModel so it survives going to the detail and back (E-F4)
+    val selectedTab = uiState.selectedTab
     val tabs = listOf(
         stringResource(Res.string.tab_all),
         stringResource(Res.string.tab_pending),
@@ -115,9 +118,10 @@ fun InvoiceListScreen(
                 modifier = Modifier.padding(paddingValues),
                 tabs = tabs,
                 selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it },
+                onTabSelected = viewModel::onTabSelected,
                 isLoading = uiState.isLoading,
                 error = uiState.error?.asString(),
+                onRetry = viewModel::refresh,
                 invoices = filteredInvoices,
                 onInvoiceClick = onInvoiceClick,
                 onPayNowClick = onPayNowClick
@@ -146,7 +150,7 @@ fun InvoiceListScreen(
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        onClick = { viewModel.onTabSelected(index) },
                         selectedContentColor = AptoSecondaryContainer,
                         unselectedContentColor = AptoOnSurfaceVariant,
                         text = {
@@ -164,10 +168,9 @@ fun InvoiceListScreen(
                 uiState.isLoading -> {
                     LoadingState()
                 }
+                // Error with retry instead of plain red text (A-07)
                 uiState.error != null -> WebEmptyFrame {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = uiState.error!!.asString(), color = AptoStatusError)
-                    }
+                    ErrorState(title = uiState.error!!.asString(), onRetry = viewModel::refresh)
                 }
                 filteredInvoices.isEmpty() -> WebEmptyFrame { InvoiceEmptyState() }
                 else -> {
@@ -179,7 +182,7 @@ fun InvoiceListScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(filteredInvoices) { invoice ->
+                        items(filteredInvoices, key = { it.id }) { invoice ->
                             InvoiceItem(
                                 invoice = invoice,
                                 onClick = { onInvoiceClick(invoice) },
@@ -204,89 +207,112 @@ fun InvoiceItem(
             invoice.status != InvoiceStatus.CANCELLED
     val showPaidColumn = invoice.paid > 0 || invoice.status == InvoiceStatus.PAID
 
-    ListItemCard(
-        onClick = onClick,
-        padding = PaddingValues(24.dp)
+    // Same look as ListItemCard, but only the info area is clickable: the "Pay" button is its sibling,
+    // not nested inside a clickable card (E-F1).
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+        Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClickLabel = stringResource(Res.string.invoice_detail),
+                        role = Role.Button,
+                        onClick = onClick
+                    )
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = if (isActionable) 16.dp else 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                    Text(
-                        text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = AptoOnSurface
-                    )
-                    Text(
-                        text = stringResource(Res.string.period_label, invoice.period),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AptoOnSurfaceVariant
-                    )
-                }
-                InvoiceStatusBadge(status = invoice.status)
-            }
-
-            HorizontalDivider(color = AptoOutlineVariant)
-
-            if (showPaidColumn) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        InvoiceAmountLabel(stringResource(Res.string.total_label))
-                        Text(
-                            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.amount)),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = AptoOnSurface
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        InvoiceAmountLabel(stringResource(Res.string.paid_label))
-                        Text(
-                            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.paid)),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = AptoStatusSuccess,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                        InvoiceAmountLabel(stringResource(Res.string.remaining_label))
-                        val remainingColor = if (invoice.remaining <= 0) AptoStatusSuccess else AptoSecondaryContainer
-                        Text(
-                            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = remainingColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            } else {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Column {
-                        InvoiceAmountLabel(stringResource(Res.string.total_label))
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text(
-                            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.amount)),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = AptoOnSurface
+                            text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AptoOnSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = stringResource(Res.string.period_label, invoiceMonthLabel(invoice.period)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AptoOnSurfaceVariant
                         )
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        InvoiceAmountLabel(stringResource(Res.string.remaining_label))
-                        Text(
-                            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = AptoSecondaryContainer
-                        )
+                    InvoiceStatusBadge(status = invoice.status)
+                }
+
+                HorizontalDivider(color = AptoOutlineVariant)
+
+                if (showPaidColumn) {
+                    // Each column as wide as its content and amounts on one line, so they never split (E-F3);
+                    // "Paid" left-aligned like "Total" instead of centered.
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            InvoiceAmountLabel(stringResource(Res.string.total_label))
+                            InvoiceAmountText(
+                                text = stringResource(Res.string.currency_amount, formatCurrency(invoice.amount)),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = AptoOnSurface
+                            )
+                        }
+                        Column {
+                            InvoiceAmountLabel(stringResource(Res.string.paid_label))
+                            InvoiceAmountText(
+                                text = stringResource(Res.string.currency_amount, formatCurrency(invoice.paid)),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = AptoStatusSuccess,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            InvoiceAmountLabel(stringResource(Res.string.remaining_label))
+                            val remainingColor = if (invoice.remaining <= 0) AptoStatusSuccess else AptoSecondaryContainer
+                            InvoiceAmountText(
+                                text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = remainingColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            InvoiceAmountLabel(stringResource(Res.string.total_label))
+                            InvoiceAmountText(
+                                text = stringResource(Res.string.currency_amount, formatCurrency(invoice.amount)),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = AptoOnSurface
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            InvoiceAmountLabel(stringResource(Res.string.remaining_label))
+                            InvoiceAmountText(
+                                text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AptoSecondaryContainer
+                            )
+                        }
                     }
                 }
             }
@@ -296,7 +322,8 @@ fun InvoiceItem(
                     onClick = onPayNow,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 4.dp),
+                        .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+                        .pointerHoverIcon(PointerIcon.Hand),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AptoSecondaryContainer,
@@ -314,17 +341,31 @@ fun InvoiceItem(
     }
 }
 
+@Composable
+private fun InvoiceAmountText(
+    text: String,
+    style: TextStyle,
+    color: androidx.compose.ui.graphics.Color,
+    fontWeight: FontWeight? = null
+) {
+    Text(
+        text = text,
+        style = style,
+        color = color,
+        fontWeight = fontWeight,
+        maxLines = 1,
+        softWrap = false
+    )
+}
+
 // ---------------------------------------------------------------------------
 // Expanded (desktop web): filter chips + invoice table inside a WebCard.
 // Compact/Medium keep the original TabRow + grid above.
 // ---------------------------------------------------------------------------
 
-private const val COL_CONCEPT = 2.4f
-private const val COL_DUE = 1.2f
-private const val COL_AMOUNT = 1.1f
-private const val COL_REMAINING = 1.1f
-private const val COL_STATUS = 1.1f
-private const val COL_ACTION = 1.3f
+private val ColumnSpacing = 16.dp
+private val RowHorizontalPadding = 24.dp
+private val StatusBadgeHorizontalPadding = 12.dp
 
 @Composable
 private fun InvoiceWebContent(
@@ -334,6 +375,7 @@ private fun InvoiceWebContent(
     onTabSelected: (Int) -> Unit,
     isLoading: Boolean,
     error: String?,
+    onRetry: () -> Unit,
     invoices: List<Invoice>,
     onInvoiceClick: (Invoice) -> Unit,
     onPayNowClick: (Invoice) -> Unit
@@ -381,51 +423,107 @@ private fun InvoiceWebContent(
             isLoading -> LoadingState()
             error != null -> WebCard {
                 Box(Modifier.fillMaxWidth().height(320.dp), contentAlignment = Alignment.Center) {
-                    Text(text = error, color = AptoStatusError)
+                    ErrorState(title = error, onRetry = onRetry)
                 }
             }
             // Fixed height: EmptyState fills its parent, which would stretch the card to the whole page.
             invoices.isEmpty() -> WebCard { Box(Modifier.fillMaxWidth().height(320.dp)) { InvoiceEmptyState() } }
-            else -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 32.dp)
-                ) {
-                    WebCard(contentPadding = 0.dp) {
-                        InvoiceTableHeader()
-                        invoices.forEach { invoice ->
-                            HorizontalDivider(color = AptoOutlineVariant)
-                            InvoiceTableRow(
-                                invoice = invoice,
-                                onClick = { onInvoiceClick(invoice) },
-                                onPayNow = { onPayNowClick(invoice) }
-                            )
-                        }
-                    }
-                }
+            else -> InvoiceTable(
+                invoices = invoices,
+                onInvoiceClick = onInvoiceClick,
+                onPayNowClick = onPayNowClick,
+                // Card as tall as its rows, up to the bottom of the page; rows scroll inside it.
+                modifier = Modifier.weight(1f, fill = false).padding(bottom = 32.dp)
+            )
+        }
+    }
+}
+
+/** Widths of the fixed columns, measured like the dashboard table so cells never wrap (E-F3). */
+private data class InvoiceColumnWidths(val due: Dp, val total: Dp, val remaining: Dp, val status: Dp, val action: Dp)
+
+@Composable
+private fun InvoiceTable(
+    invoices: List<Invoice>,
+    onInvoiceClick: (Invoice) -> Unit,
+    onPayNowClick: (Invoice) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dueHeader = stringResource(Res.string.web_invoices_col_due)
+    val totalHeader = stringResource(Res.string.total_label)
+    val remainingHeader = stringResource(Res.string.remaining_label)
+    val statusHeader = stringResource(Res.string.web_invoices_col_status)
+    val payNow = stringResource(Res.string.pay_now)
+    val dueDates = invoices.map { invoiceDueText(it) }
+    val totals = invoices.map { stringResource(Res.string.currency_amount, formatCurrency(it.amount)) }
+    val remainings = invoices.map { stringResource(Res.string.currency_amount, formatCurrency(it.remaining)) }
+    val statusLabels = InvoiceStatus.entries.map { invoiceStatusLabel(it) }
+
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val headerStyle = invoiceHeaderStyle()
+    val cellStyle = MaterialTheme.typography.bodyMedium
+    val boldCellStyle = cellStyle.copy(fontWeight = FontWeight.Bold)
+    val badgeStyle = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+    val buttonStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+    fun widthOf(texts: List<String>, style: TextStyle, extra: Dp = 0.dp): Dp = with(density) {
+        texts.maxOf { measurer.measure(it, style, maxLines = 1, softWrap = false).size.width }.toDp() + extra + 1.dp
+    }
+    fun headerWidth(text: String) = widthOf(listOf(text.uppercase()), headerStyle)
+    val widths = InvoiceColumnWidths(
+        due = maxOf(headerWidth(dueHeader), widthOf(dueDates + "00/00/0000", cellStyle)),
+        total = maxOf(headerWidth(totalHeader), widthOf(totals, cellStyle)),
+        remaining = maxOf(headerWidth(remainingHeader), widthOf(remainings, boldCellStyle)),
+        // Badge: 12dp padding per side + 1dp border per side.
+        status = maxOf(headerWidth(statusHeader), widthOf(statusLabels, badgeStyle, StatusBadgeHorizontalPadding * 2 + 2.dp)),
+        // Button: 16dp content padding per side; never narrower than Material's minimum button width.
+        action = maxOf(ButtonDefaults.MinWidth, widthOf(listOf(payNow), buttonStyle, 32.dp))
+    )
+
+    WebCard(modifier = modifier, contentPadding = 0.dp) {
+        InvoiceTableHeader(widths)
+        // Lazy: only the visible rows are composed (E-F2).
+        LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+            itemsIndexed(invoices, key = { _, invoice -> invoice.id }) { index, invoice ->
+                HorizontalDivider(color = AptoOutlineVariant)
+                InvoiceTableRow(
+                    invoice = invoice,
+                    dueText = dueDates[index],
+                    totalText = totals[index],
+                    remainingText = remainings[index],
+                    widths = widths,
+                    onClick = { onInvoiceClick(invoice) },
+                    onPayNow = { onPayNowClick(invoice) }
+                )
             }
         }
     }
 }
 
+private fun invoiceDueText(invoice: Invoice): String =
+    // dd/MM/yyyy like Pagos and Dashboard (C-08)
+    invoice.dueDate?.let { formatPaymentDate(it) } ?: "—"
+
 @Composable
-private fun InvoiceTableHeader() {
+private fun invoiceHeaderStyle(): TextStyle =
+    MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold)
+
+@Composable
+private fun InvoiceTableHeader(widths: InvoiceColumnWidths) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AptoSurfaceContainerLow)
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+            .background(TableHeaderBg)
+            .padding(horizontal = RowHorizontalPadding, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(ColumnSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        InvoiceHeaderCell(stringResource(Res.string.description_label), Modifier.weight(COL_CONCEPT))
-        InvoiceHeaderCell(stringResource(Res.string.web_invoices_col_due), Modifier.weight(COL_DUE))
-        InvoiceHeaderCell(stringResource(Res.string.total_label), Modifier.weight(COL_AMOUNT), TextAlign.End)
-        InvoiceHeaderCell(stringResource(Res.string.remaining_label), Modifier.weight(COL_REMAINING), TextAlign.End)
-        Spacer(Modifier.width(24.dp))
-        InvoiceHeaderCell(stringResource(Res.string.web_invoices_col_status), Modifier.weight(COL_STATUS))
-        Spacer(Modifier.weight(COL_ACTION))
+        InvoiceHeaderCell(stringResource(Res.string.description_label), Modifier.weight(1f))
+        InvoiceHeaderCell(stringResource(Res.string.web_invoices_col_due), Modifier.width(widths.due))
+        InvoiceHeaderCell(stringResource(Res.string.total_label), Modifier.width(widths.total), TextAlign.End)
+        InvoiceHeaderCell(stringResource(Res.string.remaining_label), Modifier.width(widths.remaining), TextAlign.End)
+        InvoiceHeaderCell(stringResource(Res.string.web_invoices_col_status), Modifier.width(widths.status))
+        Spacer(Modifier.width(widths.action))
     }
 }
 
@@ -434,16 +532,21 @@ private fun InvoiceHeaderCell(text: String, modifier: Modifier, textAlign: TextA
     Text(
         text = text.uppercase(),
         modifier = modifier,
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.SemiBold,
+        style = invoiceHeaderStyle(),
         color = AptoOnSurfaceVariant,
-        textAlign = textAlign
+        textAlign = textAlign,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
     )
 }
 
 @Composable
 private fun InvoiceTableRow(
     invoice: Invoice,
+    dueText: String,
+    totalText: String,
+    remainingText: String,
+    widths: InvoiceColumnWidths,
     onClick: () -> Unit,
     onPayNow: () -> Unit
 ) {
@@ -458,52 +561,72 @@ private fun InvoiceTableRow(
             .fillMaxWidth()
             .background(if (hovered) AptoSurfaceContainerLow else AptoSurfaceContainerLowest)
             .hoverable(interactionSource)
-            .clickable(onClick = onClick)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(end = RowHorizontalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(COL_CONCEPT).padding(end = 16.dp)) {
+        // Only the data cells open the detail; the "Pay" button is a sibling, not nested in the clickable row (E-F1).
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .clickable(
+                    onClickLabel = stringResource(Res.string.invoice_detail),
+                    role = Role.Button,
+                    onClick = onClick
+                )
+                .pointerHoverIcon(PointerIcon.Hand)
+                .padding(start = RowHorizontalPadding, end = ColumnSpacing, top = 16.dp, bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(ColumnSpacing),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AptoOnSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = stringResource(Res.string.period_label, invoiceMonthLabel(invoice.period)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AptoOnSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             Text(
-                text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = AptoOnSurface,
+                text = dueText,
+                modifier = Modifier.width(widths.due),
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (invoice.status == InvoiceStatus.OVERDUE) AptoStatusError else AptoOnSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                softWrap = false
             )
             Text(
-                text = stringResource(Res.string.period_label, invoice.period),
-                style = MaterialTheme.typography.bodySmall,
-                color = AptoOnSurfaceVariant
+                text = totalText,
+                modifier = Modifier.width(widths.total),
+                style = MaterialTheme.typography.bodyMedium,
+                color = AptoOnSurface,
+                textAlign = TextAlign.End,
+                maxLines = 1,
+                softWrap = false
             )
+            Text(
+                text = remainingText,
+                modifier = Modifier.width(widths.remaining),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (invoice.remaining <= 0) AptoStatusSuccess else AptoSecondaryContainer,
+                textAlign = TextAlign.End,
+                maxLines = 1,
+                softWrap = false
+            )
+            Box(modifier = Modifier.width(widths.status)) {
+                InvoiceStatusBadge(status = invoice.status)
+            }
         }
-        Text(
-            text = invoice.dueDate?.let { formatDate(it) } ?: "—",
-            modifier = Modifier.weight(COL_DUE),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (invoice.status == InvoiceStatus.OVERDUE) AptoStatusError else AptoOnSurfaceVariant
-        )
-        Text(
-            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.amount)),
-            modifier = Modifier.weight(COL_AMOUNT),
-            style = MaterialTheme.typography.bodyMedium,
-            color = AptoOnSurface,
-            textAlign = TextAlign.End
-        )
-        Text(
-            text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
-            modifier = Modifier.weight(COL_REMAINING),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = if (invoice.remaining <= 0) AptoStatusSuccess else AptoSecondaryContainer,
-            textAlign = TextAlign.End
-        )
-        Spacer(Modifier.width(24.dp))
-        Box(modifier = Modifier.weight(COL_STATUS)) {
-            InvoiceStatusBadge(status = invoice.status)
-        }
-        Box(modifier = Modifier.weight(COL_ACTION), contentAlignment = Alignment.CenterEnd) {
+        Box(modifier = Modifier.width(widths.action), contentAlignment = Alignment.CenterEnd) {
             if (isActionable) {
                 Button(
                     onClick = onPayNow,
@@ -519,7 +642,8 @@ private fun InvoiceTableRow(
                         text = stringResource(Res.string.pay_now),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
             }
@@ -532,50 +656,45 @@ private fun InvoiceAmountLabel(text: String) {
     Text(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelSmall,
-        color = AptoOnSurfaceVariant
+        color = AptoOnSurfaceVariant,
+        maxLines = 1,
+        softWrap = false
     )
 }
 
 @Composable
+private fun invoiceStatusLabel(status: InvoiceStatus): String = when (status) {
+    InvoiceStatus.PAID -> stringResource(Res.string.status_paid)
+    InvoiceStatus.OVERDUE -> stringResource(Res.string.status_overdue)
+    InvoiceStatus.CANCELLED -> stringResource(Res.string.status_cancelled)
+    InvoiceStatus.PENDING -> stringResource(Res.string.status_pending)
+    InvoiceStatus.PARTIAL -> stringResource(Res.string.status_partial)
+}.uppercase()
+
+@Composable
 fun InvoiceStatusBadge(status: InvoiceStatus) {
-    val (text, containerColor, contentColor) = when (status) {
-        InvoiceStatus.PAID -> Triple(
-            stringResource(Res.string.status_paid),
-            AptoStatusSuccess.copy(alpha = 0.1f),
-            AptoStatusSuccess
-        )
-        InvoiceStatus.OVERDUE -> Triple(
-            stringResource(Res.string.status_overdue),
-            AptoStatusError.copy(alpha = 0.1f),
-            AptoStatusError
-        )
-        InvoiceStatus.CANCELLED -> Triple(
-            stringResource(Res.string.status_cancelled),
-            AptoStatusError.copy(alpha = 0.1f),
-            AptoStatusError
-        )
-        InvoiceStatus.PENDING -> Triple(
-            stringResource(Res.string.status_pending),
-            AptoSecondaryFixed,
-            AptoSecondary
-        )
-        InvoiceStatus.PARTIAL -> Triple(
-            stringResource(Res.string.status_partial),
-            AptoSecondaryFixed,
-            AptoSecondary
-        )
+    val text = invoiceStatusLabel(status)
+    val (containerColor, contentColor) = when (status) {
+        InvoiceStatus.PAID -> AptoStatusSuccess.copy(alpha = 0.1f) to AptoStatusSuccess
+        InvoiceStatus.OVERDUE -> AptoStatusError.copy(alpha = 0.1f) to AptoStatusError
+        InvoiceStatus.CANCELLED -> AptoStatusError.copy(alpha = 0.1f) to AptoStatusError
+        InvoiceStatus.PENDING -> AptoSecondaryFixed to AptoSecondary
+        InvoiceStatus.PARTIAL -> AptoSecondaryFixed to AptoSecondary
     }
 
     Surface(
-        color = containerColor,
-        contentColor = contentColor,
-        shape = CircleShape
+        color = badgeBg(containerColor, contentColor),
+        contentColor = onStatusContainer(contentColor),
+        shape = CircleShape,
+        border = badgeBorder(contentColor)
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = StatusBadgeHorizontalPadding, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }

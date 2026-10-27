@@ -9,6 +9,9 @@ import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.PettyCashRepository
 import com.example.condominio.domain.usecase.billboard.GetUnreadAnnouncementsCountUseCase
 import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.error_loading_dashboard
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -25,12 +28,19 @@ class DashboardViewModel(
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState = _uiState.asStateFlow()
 
+    /** Current load; a new one cancels it (and its child requests) so a stale response never lands (A-06). */
+    private var loadJob: Job? = null
+
+    /** The user went forward to a child screen; set by [onOpenChild], consumed by the next [onScreenReturn] (A-19). */
+    private var childOpened = false
+
     init {
         loadData()
     }
 
     private fun loadData() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             val userResult = authRepository.fetchCurrentUser()
@@ -42,17 +52,22 @@ class DashboardViewModel(
                 val distinctBuildings = user?.units?.map { it.buildingId }?.distinct() ?: emptyList()
                 val multipleUnits = distinctBuildings.size > 1 || (user?.units?.size ?: 0) > 1
 
+                val unitId = currentUnit?.unitId
+                val buildingId = currentUnit?.buildingId
+
                 _uiState.update { state ->
-                    state.copy(
+                    // Another unit: drop the previous unit's balance/payments instead of showing them meanwhile.
+                    val base = if (state.unitId == unitId) state else DashboardUiState(isLoading = true)
+                    base.copy(
+                        unitId = unitId,
                         userName = user?.name ?: "",
                         userBuilding = currentUnit?.buildingName ?: "",
                         userApartment = currentUnit?.unitName ?: "",
-                        hasMultipleUnits = multipleUnits
+                        hasMultipleUnits = multipleUnits,
+                        balanceFailed = false,
+                        paymentsFailed = false
                     )
                 }
-
-                val unitId = currentUnit?.unitId
-                val buildingId = currentUnit?.buildingId
 
                 if (!unitId.isNullOrEmpty()) {
                     launch {
@@ -66,23 +81,20 @@ class DashboardViewModel(
                                     pendingInvoices = balance.pendingInvoices,
                                 )
                             }
-                        }.onFailure { error ->
-                            _uiState.update { it.copy(error = error.message?.let { UiText.DynamicString(it) }) }
+                        }.onFailure {
+                            // Keep a balance already shown; with none, the card shows the error (A-05)
+                            _uiState.update { it.copy(balanceFailed = true) }
                         }
                     }
 
                     launch {
-                        try {
-                            val payments = paymentRepository.getPayments(unitId)
-                            _uiState.update {
-                                it.copy(
-                                    recentPayments = payments.take(5),
-                                    isLoading = false
-                                )
+                        paymentRepository.fetchPayments(unitId)
+                            .onSuccess { payments ->
+                                _uiState.update { it.copy(recentPayments = payments.take(5), isLoading = false) }
                             }
-                        } catch (e: Exception) {
-                            _uiState.update { it.copy(isLoading = false, error = e.message?.let { UiText.DynamicString(it) }) }
-                        }
+                            .onFailure {
+                                _uiState.update { it.copy(isLoading = false, paymentsFailed = true) }
+                            }
                     }
                 } else {
                     _uiState.update { it.copy(isLoading = false) }
@@ -101,7 +113,8 @@ class DashboardViewModel(
                     }
                 }
             } else {
-                _uiState.update { it.copy(isLoading = false, error = userResult.exceptionOrNull()?.message?.let { UiText.DynamicString(it) }) }
+                // Shown full screen only while there is nothing loaded yet (A-07).
+                _uiState.update { it.copy(isLoading = false, error = UiText.StringResource(Res.string.error_loading_dashboard)) }
             }
         }
     }
@@ -109,9 +122,37 @@ class DashboardViewModel(
     fun refresh() {
         loadData()
     }
+
+    /** The screen is about to navigate forward (payment, action, profile...): coming back must reload. */
+    fun onOpenChild() {
+        childOpened = true
+    }
+
+    /**
+     * Screen entered composition again ([com.example.condominio.ui.utils.OnScreenReturn]). Reloads only coming
+     * back from a child screen; opening and rotation/recreation (the ViewModel survives) don't, `init` loaded.
+     */
+    fun onScreenReturn() {
+        if (!childOpened) return
+        childOpened = false
+        reloadIfIdle()
+    }
+
+    /** App back from background: reload. */
+    fun onBackgroundReturn() {
+        reloadIfIdle()
+    }
+
+    private fun reloadIfIdle() {
+        // A load already running is as fresh as a new one: don't cancel and restart it on a duplicate signal.
+        if (loadJob?.isActive == true) return
+        loadData()
+    }
 }
 
 data class DashboardUiState(
+    /** Unit the data below belongs to. */
+    val unitId: String? = null,
     val userName: String = "",
     val userBuilding: String = "",
     val userApartment: String = "",
@@ -119,10 +160,15 @@ data class DashboardUiState(
     val solvencyStatus: SolvencyStatus = SolvencyStatus.PENDING,
     val recentPayments: List<Payment> = emptyList(),
     val isLoading: Boolean = false,
-    val totalDebt: Double = 0.0,
+    /** Null until the balance loads: unknown, never "al día" (A-05). */
+    val totalDebt: Double? = null,
     val pendingInvoices: List<com.example.condominio.data.model.Invoice> = emptyList(),
+    /** Last balance load failed (network/HTTP). */
+    val balanceFailed: Boolean = false,
+    /** Last payments load failed: not the same as "no transactions". */
+    val paymentsFailed: Boolean = false,
     val pettyCashBalance: PettyCashBalanceDto? = null,
     val unreadAnnouncementsCount: Int = 0,
+    /** The user/unit could not be loaded. */
     val error: UiText? = null
 )
-

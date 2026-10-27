@@ -14,14 +14,17 @@ import androidx.compose.ui.unit.sp
 // 1. Use `MaterialTheme.typography.X` in components — never hardcode fontSize.
 // 2. Apto look = "heavy/firm": titles Bold/ExtraBold, body Medium (not Normal).
 // 3. Letter spacing tightens for large titles, widens for small labels.
+// 4. Tabular figures everywhere: amounts, dates and table columns line up.
 // =============================================================================
 
 private val ApFamily = FontFamily.Default
+private const val Tnum = "tnum"
 
 val Typography = Typography(
     // --- Display: largest hero text (splash, oversized avatar) ----------------
     displayLarge = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 48.sp,
         lineHeight = 56.sp,
         fontWeight = FontWeight.Bold,
@@ -29,6 +32,7 @@ val Typography = Typography(
     ),
     displayMedium = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 40.sp,
         lineHeight = 48.sp,
         fontWeight = FontWeight.ExtraBold,
@@ -36,6 +40,7 @@ val Typography = Typography(
     ),
     displaySmall = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 36.sp,
         lineHeight = 44.sp,
         fontWeight = FontWeight.Bold,
@@ -45,6 +50,7 @@ val Typography = Typography(
     // --- Headline: page-level titles and hero amounts ------------------------
     headlineLarge = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 32.sp,
         lineHeight = 40.sp,
         fontWeight = FontWeight.ExtraBold,
@@ -52,6 +58,7 @@ val Typography = Typography(
     ),
     headlineMedium = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 28.sp,
         lineHeight = 36.sp,
         fontWeight = FontWeight.Bold,
@@ -59,6 +66,7 @@ val Typography = Typography(
     ),
     headlineSmall = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 24.sp,
         lineHeight = 32.sp,
         fontWeight = FontWeight.ExtraBold,
@@ -68,6 +76,7 @@ val Typography = Typography(
     // --- Title: card titles and topbar -------------------------------------
     titleLarge = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 22.sp,
         lineHeight = 28.sp,
         fontWeight = FontWeight.Bold,
@@ -75,6 +84,7 @@ val Typography = Typography(
     ),
     titleMedium = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 20.sp,
         lineHeight = 26.sp,
         fontWeight = FontWeight.Bold,
@@ -82,6 +92,7 @@ val Typography = Typography(
     ),
     titleSmall = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 18.sp,
         lineHeight = 24.sp,
         fontWeight = FontWeight.Bold,
@@ -91,6 +102,7 @@ val Typography = Typography(
     // --- Body: main content text -------------------------------------------
     bodyLarge = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 16.sp,
         lineHeight = 24.sp,
         fontWeight = FontWeight.Medium,
@@ -98,6 +110,7 @@ val Typography = Typography(
     ),
     bodyMedium = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         fontWeight = FontWeight.Medium,
@@ -105,6 +118,7 @@ val Typography = Typography(
     ),
     bodySmall = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 13.sp,
         lineHeight = 18.sp,
         fontWeight = FontWeight.Normal,
@@ -114,6 +128,7 @@ val Typography = Typography(
     // --- Label: buttons, badges, eyebrows ----------------------------------
     labelLarge = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         fontWeight = FontWeight.SemiBold,
@@ -121,6 +136,7 @@ val Typography = Typography(
     ),
     labelMedium = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 12.sp,
         lineHeight = 16.sp,
         fontWeight = FontWeight.Bold,
@@ -128,9 +144,14 @@ val Typography = Typography(
     ),
     labelSmall = TextStyle(
         fontFamily = ApFamily,
+        fontFeatureSettings = Tnum,
         fontSize = 11.sp,
         lineHeight = 14.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 0.5.sp
     ),
 )
+
+/** Web POC: Outfit + DM Serif Display (condominium-admin). Android/iOS return [Typography] unchanged. */
+@androidx.compose.runtime.Composable
+internal expect fun platformTypography(): Typography

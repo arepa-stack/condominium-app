@@ -31,3 +31,5 @@ actual fun formatMonthYear(timestamp: Long): String =
     monthName(timestamp.toDouble(), "es-ES", "long").replaceFirstChar { it.uppercase() }
 
 actual val platformRendersEmoji: Boolean = false
+
+actual val isWebPlatform: Boolean = true

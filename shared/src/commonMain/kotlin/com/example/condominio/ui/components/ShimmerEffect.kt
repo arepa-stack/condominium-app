@@ -8,6 +8,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.example.condominio.ui.utils.rememberReducedMotion
 
 fun Modifier.shimmerEffect(): Modifier = composed {
     val shimmerColors = listOf(
@@ -15,6 +16,9 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         Color.LightGray.copy(alpha = 0.2f),
         Color.LightGray.copy(alpha = 0.6f),
     )
+
+    // Reduced motion: plain placeholder block, no sweeping gradient.
+    if (rememberReducedMotion()) return@composed background(Color.LightGray.copy(alpha = 0.4f))
 
     val transition = rememberInfiniteTransition()
     val translateAnim by transition.animateFloat(

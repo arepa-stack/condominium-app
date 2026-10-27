@@ -33,4 +33,5 @@ Reglas clave al tocar UI:
 
 - `docs/condominium_app_documentation.md` — documentación general de la app.
 - `docs/web-pwa-handoff.md` — historial de decisiones de la migración a web/PWA.
+- `docs/ui-audit.md` — auditoría de UI con estado por hallazgo (actualizar el estado al corregir).
 - `api_reference.md`, `swagger.json` — referencia de la API.

@@ -3,6 +3,8 @@
 import com.example.condominio.ui.utils.emojiSafe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,7 +23,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import com.example.condominio.ui.utils.UiText
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -63,12 +67,23 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var deleteReason by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.isLoggedOut) {
         if (uiState.isLoggedOut) {
             onLogoutSuccess()
         }
+    }
+
+    if (showLogoutDialog) {
+        LogoutConfirmDialog(
+            onConfirm = {
+                showLogoutDialog = false
+                viewModel.onLogoutClick()
+            },
+            onDismiss = { showLogoutDialog = false }
+        )
     }
 
     if (showDeleteDialog) {
@@ -116,7 +131,8 @@ fun ProfileScreen(
                 onNotificationSettingsClick = onNotificationSettingsClick,
                 onLanguageClick = { showLanguageDialog = true },
                 onChangePasswordClick = onChangePasswordClick,
-                onLogoutClick = viewModel::onLogoutClick,
+                isLoggingOut = uiState.isLoggingOut,
+                onLogoutClick = { showLogoutDialog = true },
                 onDeleteAccountClick = { showDeleteDialog = true }
             )
             return@Scaffold
@@ -282,31 +298,12 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Logout Button
-            Button(
-                onClick = viewModel::onLogoutClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
-                shape = RoundedCornerShape(12.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.logout),
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                )
-            }
+            // Logout: a calm outlined action (it is routine, not destructive); asks first and shows progress.
+            LogoutButton(
+                isLoggingOut = uiState.isLoggingOut,
+                onClick = { showLogoutDialog = true },
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -347,6 +344,7 @@ private fun ProfileWideContent(
     onNotificationSettingsClick: () -> Unit,
     onLanguageClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
+    isLoggingOut: Boolean,
     onLogoutClick: () -> Unit,
     onDeleteAccountClick: () -> Unit
 ) {
@@ -408,27 +406,11 @@ private fun ProfileWideContent(
                         color = AptoError
                     )
                 }
-                Button(
+                LogoutButton(
+                    isLoggingOut = isLoggingOut,
                     onClick = onLogoutClick,
-                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.error
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(Res.string.logout),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                )
             }
         }
     }
@@ -595,7 +577,7 @@ private fun DeleteAccountDialog(
     reason: String,
     onReasonChange: (String) -> Unit,
     isDeleting: Boolean,
-    errorMessage: String?,
+    errorMessage: UiText?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -624,7 +606,7 @@ private fun DeleteAccountDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 if (errorMessage != null) {
-                    Text(text = errorMessage, fontSize = 12.sp, color = AptoError)
+                    Text(text = errorMessage.asString(), fontSize = 12.sp, color = AptoError)
                 }
             }
         },
@@ -763,17 +745,22 @@ private fun LanguageSelectionDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 AppLanguage.entries.forEach { language ->
                     val isSelected = language == currentLanguage
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            // Clip first so the ripple and focus ring follow the rounded corners (E-R3).
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
-                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(12.dp)
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
                             )
-                            .clickable { onLanguageSelected(language) }
+                            .selectable(
+                                selected = isSelected,
+                                onClick = { onLanguageSelected(language) },
+                                role = Role.RadioButton
+                            )
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -813,5 +800,48 @@ private fun LanguageSelectionDialog(
         },
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(24.dp)
+    )
+}
+
+/** Logout is routine, so it is an outlined neutral button (not red, not filled); disabled with a spinner while it runs (E-R1). */
+@Composable
+private fun LogoutButton(isLoggingOut: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = !isLoggingOut,
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+    ) {
+        if (isLoggingOut) {
+            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(if (isLoggingOut) Res.string.logging_out else Res.string.logout),
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+        )
+    }
+}
+
+@Composable
+private fun LogoutConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.logout_confirm_title)) },
+        text = { Text(stringResource(Res.string.logout_confirm_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(Res.string.logout)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+        }
     )
 }
