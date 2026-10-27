@@ -35,6 +35,9 @@ interface PaymentRepository {
 
     /** Today's BCV dollar rate (Bs per USD): condominium fees are paid in Bs at this rate. */
     suspend fun getBcvRate(): Result<com.example.condominio.data.model.ExchangeRateDto>
+
+    /** Bank account, Pago Móvil and QR of the building, as set in the admin panel. */
+    suspend fun getPaymentInfo(buildingId: String): Result<com.example.condominio.data.model.BuildingPaymentInfoDto>
 }
 
 

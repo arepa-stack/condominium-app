@@ -531,6 +531,9 @@
     <string name="pay_to_phone">Teléfono</string>
     <string name="pay_to_email">Correo</string>
     <string name="pay_to_qr_desc">Código QR de pago</string>
+    <string name="pay_to_info_loading">Cargando los datos de pago del condominio…</string>
+    <string name="pay_to_info_failed">No se pudieron cargar los datos de pago.</string>
+    <string name="pay_to_not_configured">Tu condominio aún no ha cargado sus datos para este método de pago. Consulta con la junta de condominio.</string>
     <string name="pay_to_copy">Copiar %1$s</string>
     <string name="pay_to_done">Ya pagué, registrar pago</string>
     <string name="bcv_rate_loading">Consultando tasa BCV…</string>

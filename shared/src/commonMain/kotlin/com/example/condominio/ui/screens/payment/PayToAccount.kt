@@ -1,6 +1,5 @@
 package com.example.condominio.ui.screens.payment
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -22,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -36,22 +36,12 @@ import com.example.condominio.ui.components.isWide
 import com.example.condominio.ui.utils.formatBs
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.parseAmount
+import coil3.compose.AsyncImage
 import condominio.shared.generated.resources.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-
-// ponytail: hardcoded for Residencias Granada; move to a building endpoint when the API exposes it.
-private object PayTo {
-    const val BANK = "Bancaribe (0114)"
-    const val HOLDER = "Edificio Residencias Granada"
-    const val RIF = "J-315383128"
-    const val ACCOUNT = "0114-0184-8618-4005-4353"
-    const val PHONE = "0412-3870654"
-    const val EMAIL = "condominio.granada2026@gmail.com"
-}
 
 /** "1. Datos de pago | 2. Registrar pago" header of the payment pager; tapping a tab scrolls to it. */
 @Composable
@@ -79,6 +69,7 @@ internal fun PayToAccountContent(
     uiState: CreatePaymentUiState,
     onMethodChange: (PaymentMethod) -> Unit,
     onRetryRate: () -> Unit,
+    onRetryPaymentInfo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val method = uiState.method
@@ -88,22 +79,26 @@ internal fun PayToAccountContent(
     val totalBsPlain = totalBs?.replace(".", "")
     @Suppress("DEPRECATION") // see PayToRow
     val clipboard = LocalClipboardManager.current
+    // Set per building in the admin panel; fields the board left blank are not shown.
+    val info = uiState.paymentInfo
+    val bank = listOfNotNull(info?.bankName, info?.bankCode?.let { "($it)" }).joinToString(" ").ifBlank { null }
     // Cash (picked in the form's dropdown) has no account to pay to: no rows, copy or QR.
     val rows = when (method) {
         PaymentMethod.TRANSFER -> listOf(
-            Res.string.pay_to_bank to PayTo.BANK,
-            Res.string.pay_to_holder to PayTo.HOLDER,
-            Res.string.pay_to_rif to PayTo.RIF,
-            Res.string.pay_to_account to PayTo.ACCOUNT,
-            Res.string.pay_to_email to PayTo.EMAIL
+            Res.string.pay_to_bank to bank,
+            Res.string.pay_to_holder to info?.accountHolder,
+            Res.string.pay_to_rif to info?.rif,
+            Res.string.pay_to_account to info?.accountNumber,
+            Res.string.pay_to_email to info?.email
         )
         PaymentMethod.PAGO_MOVIL -> listOf(
-            Res.string.pay_to_bank to PayTo.BANK,
-            Res.string.pay_to_phone to PayTo.PHONE,
-            Res.string.pay_to_rif to PayTo.RIF
+            Res.string.pay_to_bank to bank,
+            Res.string.pay_to_phone to info?.pagoMovilPhone,
+            Res.string.pay_to_rif to info?.rif
         )
         PaymentMethod.CASH -> emptyList()
-    }
+    }.mapNotNull { (label, value) -> value?.takeIf { it.isNotBlank() }?.let { label to it } }
+    val qrUrl = info?.qrUrl?.takeIf { method == PaymentMethod.PAGO_MOVIL }
     Column(modifier = modifier) {
         Text(
             text = stringResource(Res.string.pay_to_title),
@@ -230,7 +225,7 @@ internal fun PayToAccountContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (rows.isEmpty()) {
+        if (method == PaymentMethod.CASH) {
             Text(
                 text = stringResource(Res.string.cash_zelle_payment_hint),
                 style = MaterialTheme.typography.bodyMedium,
@@ -238,60 +233,96 @@ internal fun PayToAccountContent(
             )
             return@Column
         }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            rows.forEachIndexed { index, (label, value) ->
-                PayToRow(label, value, divider = index < rows.lastIndex)
+        when {
+            uiState.isLoadingPaymentInfo -> {
+                Text(
+                    text = stringResource(Res.string.pay_to_info_loading),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+                return@Column
+            }
+            uiState.paymentInfoFailed -> {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(Res.string.pay_to_info_failed),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = onRetryPaymentInfo, modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)) {
+                        Text(stringResource(Res.string.retry))
+                    }
+                }
+                return@Column
+            }
+            rows.isEmpty() && qrUrl == null -> {
+                // Board hasn't filled this method in the admin panel yet.
+                Text(
+                    text = stringResource(Res.string.pay_to_not_configured),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                return@Column
             }
         }
 
-        // "Copy all": one "Label: value" line per row of the selected method, ready to paste in the bank app.
-        val amountLine = totalBsPlain?.takeIf { totalUsd > 0 }?.let { "${stringResource(Res.string.amount_in_bs)}: $it" }
-        val allText = (rows.map { (label, value) -> "${stringResource(label)}: $value" } + listOfNotNull(amountLine))
-            .joinToString("\n")
-        var copied by remember(method) { mutableStateOf(false) }
-        LaunchedEffect(copied) {
-            if (copied) {
-                delay(2000)
-                copied = false
+        if (rows.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                rows.forEachIndexed { index, (label, value) ->
+                    PayToRow(label, value, divider = index < rows.lastIndex)
+                }
+            }
+
+            // "Copy all": one "Label: value" line per row of the selected method, ready to paste in the bank app.
+            val amountLine = totalBsPlain?.takeIf { totalUsd > 0 }?.let { "${stringResource(Res.string.amount_in_bs)}: $it" }
+            val allText = (rows.map { (label, value) -> "${stringResource(label)}: $value" } + listOfNotNull(amountLine))
+                .joinToString("\n")
+            var copied by remember(method) { mutableStateOf(false) }
+            LaunchedEffect(copied) {
+                if (copied) {
+                    delay(2000)
+                    copied = false
+                }
+            }
+            OutlinedButton(
+                onClick = {
+                    clipboard.setText(AnnotatedString(allText))
+                    copied = true
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .height(48.dp)
+                    .pointerHoverIcon(PointerIcon.Hand)
+            ) {
+                Icon(
+                    imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(if (copied) Res.string.pay_to_copied_all else Res.string.pay_to_copy_all),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                )
             }
         }
-        OutlinedButton(
-            onClick = {
-                clipboard.setText(AnnotatedString(allText))
-                copied = true
-            },
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-                .height(48.dp)
-                .pointerHoverIcon(PointerIcon.Hand)
-        ) {
-            Icon(
-                imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(if (copied) Res.string.pay_to_copied_all else Res.string.pay_to_copy_all),
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
-            )
-        }
 
-        if (method == PaymentMethod.PAGO_MOVIL) {
+        if (qrUrl != null) {
             Spacer(modifier = Modifier.height(16.dp))
-            // Bancaribe "Suiche 7B" Pago Móvil QR, white background so it scans in dark mode too.
-            Image(
-                painter = painterResource(Res.drawable.pago_movil_qr),
+            // The building's Pago Móvil QR (uploaded in the admin panel), white background so it scans in dark mode too.
+            AsyncImage(
+                model = qrUrl,
                 contentDescription = stringResource(Res.string.pay_to_qr_desc),
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .size(200.dp)
