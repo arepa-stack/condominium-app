@@ -31,9 +31,9 @@ Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit)
 |---|---|---|---|---|---|---|
 | A. Errores de producto | 28 | 1 | 0 | 0 | 24 | 3 |
 | B. Componentes compartidos | 10 | 0 | 0 | 0 | 10 | 0 |
-| C. Textos e i18n | 9 | 0 | 0 | 1 | 8 | 0 |
+| C. Textos e i18n | 9 | 0 | 0 | 0 | 9 | 0 |
 | D. Contraste | 6 | 0 | 0 | 0 | 6 | 0 |
-| E. Por pantalla (prioritarios) | 39 | 0 | 2 | 0 | 36 | 1 |
+| E. Por pantalla (prioritarios) | 39 | 0 | 0 | 0 | 38 | 1 |
 
 ---
 
@@ -93,7 +93,7 @@ Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit)
 | C-02 | Claves faltantes en `values-en`: `download_invoice`, `no_invoices_for_filter`, `billboard_detail_title`, `decisions_see_detail`, `decisions_urgent`, `decisions_finalized_on` (y `settings`, `share`, sin uso). A la inversa, `values-en` tiene 36 claves que no existen en `values` (caja chica: `cat_*`, `category_*`, `register_expense`…), todas sin uso: borrar | `values-en/strings.xml` | ✅ Hecho | `1893483` — 36 claves en-only borradas (sin uso verificado); 8 traducciones añadidas |
 | C-03 | Title Case en español ("Deuda Total", "Iniciar Sesión", "Cerrar Sesión", "Historial de Pagos"…): pasar a sentence case | `values/strings.xml` | ✅ Hecho | `1893483` |
 | C-04 | Mayúsculas dentro del texto ("GANADOR", "CORREO ELECTRÓNICO", estados): aplicar con estilo, no en el recurso | `values/strings.xml`, `RegisterScreen.kt` | ✅ Hecho | `1893483` |
-| C-05 | Tono mezclado tú / usted / vos ("Seleccione", "acérquese", "Debés") | `values/strings.xml:144`, `CreatePaymentScreen.kt:500` | 🔄 En curso | `6292019` — Pagos hecho ("Adjunta el comprobante", "acércate", "Nombre del banco"); falta revisar el resto de `strings.xml` (p. ej. `select_unit_placeholder` "Seleccione unidad") |
+| C-05 | Tono mezclado tú / usted / vos ("Seleccione", "acérquese", "Debés") | `values/strings.xml:144`, `CreatePaymentScreen.kt:500` | ✅ Hecho | `6292019` — Pagos ("Adjunta el comprobante", "acércate", "Nombre del banco"); `worktree-agent-a896bf10977ae45bb` — resto de `strings.xml`: `select_building_first` y `select_unit_placeholder` pasan a tú (barrido sin más formas de usted) |
 | C-06 | "..." en vez de "…" (`loading`, `qr_scan_scanning`) y falta de ortografía "Registrate" | `values*/strings.xml:24, 79` | ✅ Hecho | `1893483` |
 | C-07 | Plurales armados a mano ("1 presupuestos", "entendido(s)", "recibo(s) seleccionado(s)"): usar `<plurals>` | `values*/strings.xml`, `CreatePaymentScreen.kt:357, 986` | ✅ Hecho | `1893483` — `<plurals>` de `strings.xml` hechos; `6292019` — `CreatePaymentScreen.kt` usa `invoices_selected_count` (`<plurals>`). `cd3a223` — Cartelera: sin plurales a mano (`billboard_reads_count`/`billboard_understood_count` son `<plurals>` y ahora también describen las métricas); `units_count_label` ya es `<plurals>` (es/en) y se usa con `pluralStringResource` (`79dc0d9`): "1 unidad" / "2 unidades" |
 | C-08 | Fechas: formatos distintos entre pantallas, ISO crudo en cartelera, meses en español también en inglés | `InvoiceListScreen.kt:482`, `InvoiceDetailScreen.kt:749`, `BillboardDetailScreen.kt:313`, `PaymentHistoryScreen.kt:258`, `DecisionComponents.kt:87` | ✅ Hecho | `6292019` — Pagos hecho: `dd/MM/yyyy` en historial, detalle y crear pago (como el detalle de factura); meses de facturas por recurso `month_*`; `72230f5` — dashboard `dd/MM/yyyy` (`formatPaymentDate`) en móvil y tabla web; `3ee3188` — Facturación hecha: vencimiento de la tabla web y fechas del detalle con `formatPaymentDate`; periodo "2025-03" → "Marzo 2025"/"March 2025" con `invoiceMonthLabel` (ahora `internal`, de crear pago; ya no antepone "Enero" a periodos que no son `YYYY-MM`) en lista y detalle; falta cartelera y votaciones; `cd3a223` — Cartelera hecha: fecha de creación (móvil y web) y vencimiento con `formatDecisionDate` (`dd/MM/yyyy`, zona local; ahora acepta `timeZone` como `formatDecisionDeadline`). Verificado: no queda ninguna fecha ISO cruda ni formato distinto en `ui/` (pagos, dashboard, facturación, votaciones y cartelera usan `dd/MM/yyyy`); C-08 completo |
@@ -188,8 +188,8 @@ Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco s
 ### Web (index.html / PWA)
 | ID | Problema | Dónde | Estado | Ref |
 |---|---|---|---|---|
-| E-W1 | Falta `<meta name="color-scheme" content="light">`, `translate="no"` y `<noscript>`; `lang` fijo en `es` | `wasmJsMain/resources/index.html` | ⬜ Pendiente | |
-| E-W2 | Ícono `"any maskable"` combinado; manifest sin `lang`, `id`, `description` | `manifest.webmanifest` | ⬜ Pendiente | |
+| E-W1 | Falta `<meta name="color-scheme" content="light">`, `translate="no"` y `<noscript>`; `lang` fijo en `es` | `wasmJsMain/resources/index.html` | ✅ Hecho | `worktree-agent-a896bf10977ae45bb` — `color-scheme` light, `translate="no"` + `notranslate`, `<noscript>` es/en, `description`; `lang` y el texto de carga/no compatible siguen `navigator.language` (es/en). Sin CSP (ver nota) |
+| E-W2 | Ícono `"any maskable"` combinado; manifest sin `lang`, `id`, `description` | `manifest.webmanifest` | ✅ Hecho | `worktree-agent-a896bf10977ae45bb` — íconos `any` y `maskable` separados; añadidos `id`, `lang`, `dir`, `description`. Nota: `icon-512.png` trae fondo gris/blanco horneado y poco margen; un ícono maskable propio (fondo naranja a sangre) requiere el arte de diseño |
 
 ## F. Barrido general (sin ID, aplicar al tocar cada pantalla)
 
@@ -223,3 +223,5 @@ Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco s
 | 2026-10-26 | Paso 6, ajuste tras prueba manual: A-24 → ✅ (errores de auth tipados y traducidos, sin texto del servidor) y nuevo A-25 → ✅ (el escáner QR valida el código antes de navegar). Nuevas claves `error_account_pending`, `error_session_expired`, `error_registration_conflict`, `error_registration_invalid`; nuevo `QrScannerViewModel` |
 | 2026-10-26 | Paso 7, Selector de propiedad (`79dc0d9`): A-07 (completo), C-07 (`units_count_label` → `<plurals>`; C-07 pasa a ✅) y E-U1…E-U3 → ✅. Nuevas claves `error_loading_units`, `units_empty_title`, `units_empty_subtitle`, `state_expanded`, `state_collapsed`, `state_selected`; `UnitSelectionScreen` pide `onRetry` |
 | 2026-10-26 | Paso 8, Perfil (`2bfb74c`): A-10, D-06 (completo) y E-R1…E-R4 → ✅; A-09 y A-11 → ⏸️ (falta backend). Nuevos A-26 (errores crudos en perfil) y A-27 (nombre desactualizado tras guardar) → ✅, y A-28 (selector de propiedad: «No pudimos cargar tus propiedades» con red, causa probable anotada) → 🔍. Nuevas claves `unsaved_changes_title/message`, `discard`, `keep_editing`, `profile_saved`, `password_changed`, `apartment_unit_read_only`, `logout_confirm_title/message`, `logging_out`; nueva dependencia `org.jetbrains.compose.ui:ui-backhandler` |
+
+| 2026-10-26 | Paso 9, Web (`worktree-agent-a896bf10977ae45bb`): E-W1, E-W2 y C-05 (completo) → ✅. `index.html`: `color-scheme`, `translate="no"`, `<noscript>`, `lang`/texto de carga según `navigator.language`; `manifest.webmanifest`: `id`, `lang`, `dir`, `description`, íconos `any`/`maskable` separados; `select_building_first` y `select_unit_placeholder` en tú. Sin CSP (riesgo con wasm/inline script sin poder probarlo) |
