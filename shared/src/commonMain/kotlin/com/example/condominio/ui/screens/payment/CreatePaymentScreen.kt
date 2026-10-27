@@ -39,12 +39,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import com.example.condominio.data.model.PaymentMethod
-import com.example.condominio.data.utils.rememberImagePickerLauncher
+import com.example.condominio.data.utils.PlatformFileReader
+import com.example.condominio.data.utils.rememberDocumentPickerLauncher
 import com.example.condominio.data.model.Invoice
 import com.example.condominio.ui.components.AdaptiveColumns
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LabeledOutlinedField
-import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
 import com.example.condominio.ui.components.TopBarWithBack
@@ -55,11 +66,27 @@ import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.AptoSuccess
 import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
+import com.example.condominio.ui.utils.UiText
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
+import com.example.condominio.ui.utils.isWebPlatform
+import com.example.condominio.ui.utils.parseAmount
 import condominio.shared.generated.resources.*
+import kotlin.time.Clock
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+
+/** Same limit as the decisions quote upload and the "máx. 5 MB" hint. */
+private const val MAX_PROOF_BYTES = 5 * 1024 * 1024
+
+/** Text fields that can receive focus when validation fails (E-P1). */
+private class PaymentFieldFocus {
+    val bank = FocusRequester()
+    val reference = FocusRequester()
+    val amount = FocusRequester()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,10 +100,33 @@ fun CreatePaymentScreen(
 
     var currentStep by remember { mutableIntStateOf(1) }
 
-    val imagePickerLauncher = rememberImagePickerLauncher { uri ->
-        if (uri != null) {
-            viewModel.onProofUrlChange(uri)
+    // Images or PDF, as the upload hint promises; Android used to offer images only (E-P3).
+    // Same checks as the decisions quote upload: readable and at most 5 MB.
+    val fileReader = koinInject<PlatformFileReader>()
+    val imagePickerLauncher = rememberDocumentPickerLauncher { uri, _ ->
+        if (uri == null) return@rememberDocumentPickerLauncher
+        val bytes = fileReader.readBytes(uri)
+        when {
+            bytes == null -> viewModel.onProofRejected(UiText.StringResource(Res.string.decisions_upload_file_read_failed))
+            bytes.size > MAX_PROOF_BYTES -> viewModel.onProofRejected(UiText.StringResource(Res.string.decisions_upload_file_too_large))
+            else -> viewModel.onProofUrlChange(uri)
         }
+    }
+
+    val wide = isWide()
+    val fieldFocus = remember { PaymentFieldFocus() }
+    val onSubmit: () -> Unit = {
+        viewModel.onSubmitClick()
+        // Validation is synchronous: move focus to the first invalid field, in on-screen order (E-P1).
+        // The amount field only exists on the wide layout; on the phone it comes from the invoices.
+        val state = viewModel.uiState.value
+        val target = when {
+            state.bankError != null -> fieldFocus.bank
+            state.referenceError != null -> fieldFocus.reference
+            state.amountError != null && wide -> fieldFocus.amount
+            else -> null
+        }
+        target?.let { runCatching { it.requestFocus() } }
     }
 
     LaunchedEffect(uiState.isSuccess) {
@@ -85,11 +135,11 @@ fun CreatePaymentScreen(
         }
     }
 
-    if (isWide()) {
+    if (wide) {
         // Web / tablet: single page, form on the left, invoices + summary + submit on the right.
         Scaffold(
             topBar = {
-                TopBarWithBack(title = "Pagar Ahora", onBackClick = onBackClick)
+                TopBarWithBack(title = stringResource(Res.string.pay_now), onBackClick = onBackClick)
             },
             containerColor = screenBackground(MaterialTheme.colorScheme.background)
         ) { paddingValues ->
@@ -97,6 +147,8 @@ fun CreatePaymentScreen(
                 uiState = uiState,
                 isImageSelected = isImageSelected,
                 viewModel = viewModel,
+                fieldFocus = fieldFocus,
+                onSubmit = onSubmit,
                 onUploadClick = { imagePickerLauncher() },
                 modifier = Modifier.fillMaxSize().padding(paddingValues)
             )
@@ -107,7 +159,7 @@ fun CreatePaymentScreen(
     Scaffold(
         topBar = {
             TopBarWithBack(
-                title = if (currentStep == 1) "Pagar Ahora" else "Detalles del Pago",
+                title = stringResource(if (currentStep == 1) Res.string.pay_now else Res.string.payment_details_title),
                 onBackClick = {
                     if (currentStep == 2) {
                         currentStep = 1
@@ -127,8 +179,9 @@ fun CreatePaymentScreen(
             } else {
                 Step2BottomBar(
                     isLoading = uiState.isLoading,
-                    onSubmit = viewModel::onSubmitClick,
-                    onCancel = { currentStep = 1 }
+                    onSubmit = onSubmit,
+                    // Cancels the whole operation; going back to step 1 is the top bar's back arrow (E-P5)
+                    onCancel = onBackClick
                 )
             }
         },
@@ -153,13 +206,15 @@ fun CreatePaymentScreen(
             if (step == 1) {
                 Step1Invoices(
                     uiState = uiState,
-                    onToggleInvoice = viewModel::toggleInvoiceSelection
+                    onToggleInvoice = viewModel::toggleInvoiceSelection,
+                    onRetry = viewModel::loadPendingInvoices
                 )
             } else {
                 Step2Details(
                     uiState = uiState,
                     isImageSelected = isImageSelected,
                     viewModel = viewModel,
+                    fieldFocus = fieldFocus,
                     onUploadClick = { imagePickerLauncher() }
                 )
             }
@@ -170,7 +225,8 @@ fun CreatePaymentScreen(
 @Composable
 private fun Step1Invoices(
     uiState: CreatePaymentUiState,
-    onToggleInvoice: (String) -> Unit
+    onToggleInvoice: (String) -> Unit,
+    onRetry: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -179,13 +235,13 @@ private fun Step1Invoices(
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
         Text(
-            text = "Seleccionar Recibos",
+            text = stringResource(Res.string.select_invoices_label),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp).semantics { heading() }
         )
         Text(
-            text = "Elige los recibos pendientes que deseas liquidar hoy.",
+            text = stringResource(Res.string.create_payment_select_invoices_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -195,6 +251,13 @@ private fun Step1Invoices(
             LoadingState(
                 modifier = Modifier.fillMaxWidth().height(100.dp),
                 fullScreen = false
+            )
+        } else if (uiState.invoicesError != null) {
+            // Load failure with retry, not "no pending invoices" (A-07)
+            ErrorState(
+                title = uiState.invoicesError.asString(),
+                onRetry = onRetry,
+                modifier = Modifier.heightIn(max = 320.dp)
             )
         } else if (uiState.pendingInvoices.isNotEmpty()) {
             val invoices = uiState.pendingInvoices.sortedBy { it.period }
@@ -210,7 +273,7 @@ private fun Step1Invoices(
             }
         } else {
             Text(
-                text = "No tienes recibos pendientes.",
+                text = stringResource(Res.string.no_pending_invoices),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(vertical = 24.dp)
@@ -236,7 +299,7 @@ private fun Step1Invoices(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Al realizar el pago se generará un comprobante digital inmediato disponible en tu sección de Historial.",
+                text = stringResource(Res.string.create_payment_history_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -256,62 +319,69 @@ private fun InvoiceCard(
 ) {
     val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
 
-    ListItemCard(
-        onClick = onClick,
-        modifier = modifier,
-        borderColor = borderColor
+    // Exposed as a checkbox (role + checked state) instead of a plain button (E-P2)
+    Surface(
+        checked = isSelected,
+        onCheckedChange = { onClick() },
+        modifier = modifier.fillMaxWidth().semantics { role = Role.Checkbox },
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, borderColor)
     ) {
-        // Custom Checkbox
-        Box(
-            modifier = Modifier
-                .size(24.dp)
-                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
-                .border(
-                    width = if (isSelected) 0.dp else 2.dp,
-                    color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
-                    shape = RoundedCornerShape(6.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(16.dp)
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Custom Checkbox
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
+                    .border(
+                        width = if (isSelected) 0.dp else 2.dp,
+                        color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(6.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                val monthName = invoiceMonthLabel(invoice.period)
+
+                Text(
+                    text = monthName.uppercase(),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            val monthName = invoiceMonthLabel(invoice.period)
-
-            Text(
-                text = monthName.uppercase(),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                text = invoice.description ?: "Mantenimiento Mensual",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "$${formatCurrency(invoice.remaining)}",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "Pendiente",
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.error
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = stringResource(Res.string.currency_amount, formatCurrency(invoice.remaining)),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Text(
+                    text = stringResource(Res.string.status_pending),
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
@@ -322,7 +392,7 @@ private fun Step1BottomBar(
     selectedCount: Int,
     onContinue: () -> Unit
 ) {
-    val amountToDisplay = if (totalAmount.isBlank() || totalAmount == "0" || totalAmount == "0.0") "0.00" else totalAmount
+    val amountToDisplay = amountDisplay(totalAmount)
     val isEnabled = selectedCount > 0
 
     Surface(
@@ -343,25 +413,25 @@ private fun Step1BottomBar(
             ) {
                 Column {
                     Text(
-                        text = "TOTAL A PAGAR",
+                        text = stringResource(Res.string.total_to_pay).uppercase(),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.outline
                     )
                     Text(
-                        text = "$$amountToDisplay",
+                        text = amountToDisplay,
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
-                    text = "$selectedCount recibo${if (selectedCount == 1) "" else "s"} seleccionado${if (selectedCount == 1) "" else "s"}",
+                    text = pluralStringResource(Res.plurals.invoices_selected_count, selectedCount, selectedCount),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
             PrimaryButton(
-                text = "Continuar al Pago",
+                text = stringResource(Res.string.continue_to_payment),
                 onClick = onContinue,
                 enabled = isEnabled,
                 trailingIcon = Icons.AutoMirrored.Filled.ArrowForward
@@ -376,6 +446,7 @@ private fun Step2Details(
     uiState: CreatePaymentUiState,
     isImageSelected: Boolean,
     viewModel: CreatePaymentViewModel,
+    fieldFocus: PaymentFieldFocus,
     onUploadClick: () -> Unit
 ) {
     Column(
@@ -410,12 +481,12 @@ private fun Step2Details(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Total a Registrar",
+                        text = stringResource(Res.string.total_to_register),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.outline
                     )
                     Text(
-                        text = "$${uiState.amount}",
+                        text = amountDisplay(uiState.amount),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -427,7 +498,7 @@ private fun Step2Details(
                     .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = "Paso 2 de 2",
+                    text = stringResource(Res.string.step_of, 2, 2),
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -438,7 +509,7 @@ private fun Step2Details(
 
         // Method Selector
         Text(
-            text = "Método de Pago",
+            text = stringResource(Res.string.payment_method),
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
@@ -453,51 +524,28 @@ private fun Step2Details(
         // Dynamic Form Fields
         when (uiState.method) {
             PaymentMethod.PAGO_MOVIL -> {
-                LabeledOutlinedField(
-                    value = uiState.bank,
-                    onValueChange = viewModel::onBankChange,
-                    label = "Banco Emisor",
-                    placeholder = "Seleccione el banco"
-                )
+                BankField(uiState, viewModel, fieldFocus)
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabeledOutlinedField(
-                        value = uiState.phone,
-                        onValueChange = viewModel::onPhoneChange,
-                        label = "Teléfono",
-                        placeholder = "0414-0000000",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        modifier = Modifier.weight(1f)
-                    )
-                    LabeledOutlinedField(
-                        value = uiState.reference,
-                        onValueChange = viewModel::onReferenceChange,
-                        label = "Referencia",
-                        placeholder = "Últimos 6 dígitos",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    PhoneField(uiState, viewModel, Modifier.weight(1f))
+                    ReferenceField(
+                        uiState, viewModel, fieldFocus,
+                        placeholder = stringResource(Res.string.reference_placeholder_last6),
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
             PaymentMethod.TRANSFER -> {
-                LabeledOutlinedField(
-                    value = uiState.bank,
-                    onValueChange = viewModel::onBankChange,
-                    label = "Banco Emisor",
-                    placeholder = "Seleccione el banco"
-                )
+                BankField(uiState, viewModel, fieldFocus)
                 Spacer(modifier = Modifier.height(16.dp))
-                LabeledOutlinedField(
-                    value = uiState.reference,
-                    onValueChange = viewModel::onReferenceChange,
-                    label = "Referencia",
-                    placeholder = "Últimos dígitos de confirmación",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                ReferenceField(
+                    uiState, viewModel, fieldFocus,
+                    placeholder = stringResource(Res.string.reference_placeholder_confirmation)
                 )
             }
             PaymentMethod.CASH -> {
                 Text(
-                    text = "Para pagos en efectivo o Zelle, acérquese a la administración o adjunte captura del Zelle.",
+                    text = stringResource(Res.string.cash_zelle_payment_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 8.dp)
@@ -509,7 +557,7 @@ private fun Step2Details(
 
         // Upload Area
         Text(
-            text = "Comprobante de Pago",
+            text = stringResource(Res.string.payment_proof),
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
@@ -517,15 +565,14 @@ private fun Step2Details(
 
         ProofUploadBox(
             isImageSelected = isImageSelected,
+            isError = uiState.proofError != null,
             onUploadClick = onUploadClick
         )
+        uiState.proofError?.let { FieldErrorText(it) }
 
-        if (uiState.error != null) {
-            Text(
-                text = uiState.error!!.asString(),
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 16.dp)
-            )
+        // No amount field on the phone (it comes from the invoices): its error is shown here
+        (uiState.amountError ?: uiState.error)?.let { error ->
+            FormErrorText(error, Modifier.padding(top = 16.dp))
         }
 
         Spacer(modifier = Modifier.height(100.dp)) // padding for bottom bar
@@ -549,7 +596,7 @@ private fun Step2BottomBar(
                 .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
             PrimaryButton(
-                text = "Registrar Pago",
+                text = stringResource(Res.string.register_payment),
                 onClick = onSubmit,
                 enabled = !isLoading,
                 isLoading = isLoading
@@ -559,10 +606,11 @@ private fun Step2BottomBar(
 
             TextButton(
                 onClick = onCancel,
+                enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth().height(48.dp)
             ) {
                 Text(
-                    text = "CANCELAR OPERACIÓN",
+                    text = stringResource(Res.string.cancel_payment).uppercase(),
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 1.sp
@@ -592,11 +640,7 @@ private fun PaymentMethodDropdown(
         modifier = Modifier.fillMaxWidth()
     ) {
         OutlinedTextField(
-            value = when(method) {
-                PaymentMethod.PAGO_MOVIL -> "Pago Móvil"
-                PaymentMethod.TRANSFER -> "Transferencia Bancaria"
-                PaymentMethod.CASH -> "Efectivo / Zelle"
-            },
+            value = methodOptionLabel(method),
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -616,13 +660,7 @@ private fun PaymentMethodDropdown(
         ) {
             PaymentMethod.entries.forEach { option ->
                 DropdownMenuItem(
-                    text = {
-                        Text(when (option) {
-                            PaymentMethod.PAGO_MOVIL -> "Pago Móvil"
-                            PaymentMethod.TRANSFER -> "Transferencia Bancaria"
-                            PaymentMethod.CASH -> "Efectivo / Zelle"
-                        })
-                    },
+                    text = { Text(methodOptionLabel(option)) },
                     onClick = {
                         onMethodChange(option)
                         expanded = false
@@ -634,19 +672,118 @@ private fun PaymentMethodDropdown(
 }
 
 @Composable
+private fun methodOptionLabel(method: PaymentMethod): String = stringResource(
+    when (method) {
+        PaymentMethod.PAGO_MOVIL -> Res.string.method_pago_movil
+        PaymentMethod.TRANSFER -> Res.string.method_transfer_bank
+        PaymentMethod.CASH -> Res.string.method_cash_zelle
+    }
+)
+
+@Composable
+private fun BankField(
+    uiState: CreatePaymentUiState,
+    viewModel: CreatePaymentViewModel,
+    fieldFocus: PaymentFieldFocus,
+    modifier: Modifier = Modifier
+) {
+    LabeledOutlinedField(
+        value = uiState.bank,
+        onValueChange = viewModel::onBankChange,
+        label = stringResource(Res.string.bank_issuing),
+        placeholder = stringResource(Res.string.bank_placeholder),
+        isError = uiState.bankError != null,
+        supportingText = uiState.bankError?.asString(),
+        modifier = modifier.focusRequester(fieldFocus.bank)
+    )
+}
+
+@Composable
+private fun PhoneField(
+    uiState: CreatePaymentUiState,
+    viewModel: CreatePaymentViewModel,
+    modifier: Modifier = Modifier
+) {
+    LabeledOutlinedField(
+        value = uiState.phone,
+        onValueChange = viewModel::onPhoneChange,
+        label = stringResource(Res.string.phone_label),
+        placeholder = "0414-0000000",
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+        contentType = ContentType.PhoneNumber,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ReferenceField(
+    uiState: CreatePaymentUiState,
+    viewModel: CreatePaymentViewModel,
+    fieldFocus: PaymentFieldFocus,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    LabeledOutlinedField(
+        value = uiState.reference,
+        onValueChange = viewModel::onReferenceChange,
+        label = stringResource(Res.string.reference_label),
+        placeholder = placeholder,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        isError = uiState.referenceError != null,
+        supportingText = uiState.referenceError?.asString(),
+        modifier = modifier.focusRequester(fieldFocus.reference)
+    )
+}
+
+/** Inline error under a non-text field (the proof box). */
+@Composable
+private fun FieldErrorText(error: UiText) {
+    Text(
+        text = error.asString(),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier
+            .padding(start = 16.dp, top = 4.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite }
+    )
+}
+
+/** Form-level error (submit failure, invoice selection), announced by screen readers. */
+@Composable
+private fun FormErrorText(error: UiText, modifier: Modifier = Modifier) {
+    Text(
+        text = error.asString(),
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite }
+    )
+}
+
+/** "$1500.00" for the typed or auto-filled amount; input that can't be parsed shows $0.00. */
+@Composable
+private fun amountDisplay(amount: String): String =
+    stringResource(Res.string.currency_amount, formatCurrency(parseAmount(amount) ?: 0.0))
+
+@Composable
 private fun ProofUploadBox(
     isImageSelected: Boolean,
     onUploadClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isError: Boolean = false
 ) {
+    val borderColor = when {
+        isError -> MaterialTheme.colorScheme.error
+        isImageSelected -> AptoSuccess
+        else -> MaterialTheme.colorScheme.outlineVariant
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
             // Note: Dashed borders require custom drawing in Compose, using solid for simplicity or basic border
-            .border(2.dp, if (isImageSelected) AptoSuccess else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onUploadClick)
+            .clickable(role = Role.Button, onClick = onUploadClick)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -669,12 +806,12 @@ private fun ProofUploadBox(
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = if (isImageSelected) "Archivo Cargado" else "Subir Comprobante",
+                text = stringResource(if (isImageSelected) Res.string.proof_uploaded else Res.string.proof_upload),
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = if (isImageSelected) "Toca para cambiar archivo" else "JPG, PNG o PDF (Máx. 5MB)",
+                text = stringResource(if (isImageSelected) Res.string.proof_change_hint else Res.string.proof_formats_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(top = 4.dp)
@@ -700,19 +837,26 @@ private fun ValidationNotice() {
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = "Tu pago será validado por la administración en un lapso de 24 a 48 horas hábiles.",
+            text = stringResource(Res.string.payment_validation_notice),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
-/** "2025-03" -> "Marzo 2025" (falls back to the raw period). */
-private fun invoiceMonthLabel(period: String): String {
+private val monthNames = listOf(
+    Res.string.month_january, Res.string.month_february, Res.string.month_march, Res.string.month_april,
+    Res.string.month_may, Res.string.month_june, Res.string.month_july, Res.string.month_august,
+    Res.string.month_september, Res.string.month_october, Res.string.month_november, Res.string.month_december
+)
+
+/** "2025-03" -> "Marzo 2025" / "March 2025" in the app language (falls back to the raw period). Also used by billing. */
+@Composable
+internal fun invoiceMonthLabel(period: String): String {
     val parts = period.split("-")
-    val monthNum = if (parts.size > 1) parts[1].toIntOrNull() ?: 1 else 1
-    val months = listOf("", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
-    return if (monthNum in 1..12) "${months[monthNum]} ${parts[0]}" else period
+    // Not "YYYY-MM" (the backend doesn't enforce it): show it as is instead of "Enero <period>".
+    val monthNum = if (parts.size == 2) parts[1].toIntOrNull() ?: 0 else 0
+    return if (monthNum in 1..12) "${stringResource(monthNames[monthNum - 1])} ${parts[0]}" else period
 }
 
 /** Preview of how [amount] is spread over the selected invoices (oldest first), same rule the ViewModel applies on submit. */
@@ -735,6 +879,8 @@ private fun WidePaymentForm(
     uiState: CreatePaymentUiState,
     isImageSelected: Boolean,
     viewModel: CreatePaymentViewModel,
+    fieldFocus: PaymentFieldFocus,
+    onSubmit: () -> Unit,
     onUploadClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -758,7 +904,7 @@ private fun WidePaymentForm(
                             onMethodChange = viewModel::onMethodChange
                         )
                         Spacer(modifier = Modifier.height(20.dp))
-                        WideMethodFields(uiState = uiState, viewModel = viewModel)
+                        WideMethodFields(uiState = uiState, viewModel = viewModel, fieldFocus = fieldFocus)
                     }
 
                     // Amount + date
@@ -767,13 +913,16 @@ private fun WidePaymentForm(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            // Comma or dot decimals ("150,50", "1.500,25"): parsed with parseAmount (A-01)
                             LabeledOutlinedField(
                                 value = uiState.amount,
                                 onValueChange = viewModel::onAmountChange,
                                 label = stringResource(Res.string.payment_amount),
                                 placeholder = "0.00",
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                modifier = Modifier.weight(1f)
+                                isError = uiState.amountError != null,
+                                supportingText = uiState.amountError?.asString(),
+                                modifier = Modifier.weight(1f).focusRequester(fieldFocus.amount)
                             )
                             LabeledOutlinedField(
                                 value = formatDate(uiState.date, "dd/MM/yyyy"),
@@ -813,11 +962,13 @@ private fun WidePaymentForm(
                         WideSectionTitle(stringResource(Res.string.payment_proof))
                         ProofUploadBox(
                             isImageSelected = isImageSelected,
+                            isError = uiState.proofError != null,
                             onUploadClick = onUploadClick,
                             modifier = Modifier
                                 .heightIn(min = 220.dp)
                                 .pointerHoverIcon(PointerIcon.Hand)
                         )
+                        uiState.proofError?.let { FieldErrorText(it) }
                     }
                 }
             },
@@ -827,11 +978,12 @@ private fun WidePaymentForm(
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
                     WideInvoicesCard(
                         uiState = uiState,
-                        onToggleInvoice = viewModel::toggleInvoiceSelection
+                        onToggleInvoice = viewModel::toggleInvoiceSelection,
+                        onRetry = viewModel::loadPendingInvoices
                     )
                     WideSummaryCard(
                         uiState = uiState,
-                        onSubmit = viewModel::onSubmitClick
+                        onSubmit = onSubmit
                     )
                 }
             }
@@ -839,7 +991,18 @@ private fun WidePaymentForm(
     }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = localMillisToPickerUtc(uiState.date))
+        // A payment can't be reported for a future day (E-P4); the picker works in UTC-midnight millis.
+        val todayPickerUtc = remember { localMillisToPickerUtc(Clock.System.now().toEpochMilliseconds()) }
+        val currentYear = remember {
+            Instant.fromEpochMilliseconds(todayPickerUtc).toLocalDateTime(TimeZone.UTC).year
+        }
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = localMillisToPickerUtc(uiState.date),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis <= todayPickerUtc
+                override fun isSelectableYear(year: Int): Boolean = year <= currentYear
+            }
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -856,7 +1019,11 @@ private fun WidePaymentForm(
                 }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                // Web only: Material3's wasm formatter renders the UTC-midnight millis in local time (A-16)
+                dateFormatter = if (isWebPlatform) rememberUtcDateFormatter() else remember { DatePickerDefaults.dateFormatter() }
+            )
         }
     }
 }
@@ -867,42 +1034,27 @@ private fun WideSectionTitle(text: String) {
         text = text,
         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 16.dp)
+        modifier = Modifier.padding(bottom = 16.dp).semantics { heading() }
     )
 }
 
 @Composable
 private fun WideMethodFields(
     uiState: CreatePaymentUiState,
-    viewModel: CreatePaymentViewModel
+    viewModel: CreatePaymentViewModel,
+    fieldFocus: PaymentFieldFocus
 ) {
     when (uiState.method) {
         PaymentMethod.PAGO_MOVIL -> {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                LabeledOutlinedField(
-                    value = uiState.bank,
-                    onValueChange = viewModel::onBankChange,
-                    label = "Banco Emisor",
-                    placeholder = "Seleccione el banco",
-                    modifier = Modifier.weight(1f)
-                )
-                LabeledOutlinedField(
-                    value = uiState.phone,
-                    onValueChange = viewModel::onPhoneChange,
-                    label = "Teléfono",
-                    placeholder = "0414-0000000",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    modifier = Modifier.weight(1f)
-                )
+                BankField(uiState, viewModel, fieldFocus, Modifier.weight(1f))
+                PhoneField(uiState, viewModel, Modifier.weight(1f))
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                LabeledOutlinedField(
-                    value = uiState.reference,
-                    onValueChange = viewModel::onReferenceChange,
-                    label = "Referencia",
-                    placeholder = "Últimos 6 dígitos",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                ReferenceField(
+                    uiState, viewModel, fieldFocus,
+                    placeholder = stringResource(Res.string.reference_placeholder_last6),
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -910,26 +1062,17 @@ private fun WideMethodFields(
         }
         PaymentMethod.TRANSFER -> {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                LabeledOutlinedField(
-                    value = uiState.bank,
-                    onValueChange = viewModel::onBankChange,
-                    label = "Banco Emisor",
-                    placeholder = "Seleccione el banco",
-                    modifier = Modifier.weight(1f)
-                )
-                LabeledOutlinedField(
-                    value = uiState.reference,
-                    onValueChange = viewModel::onReferenceChange,
-                    label = "Referencia",
-                    placeholder = "Últimos dígitos de confirmación",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                BankField(uiState, viewModel, fieldFocus, Modifier.weight(1f))
+                ReferenceField(
+                    uiState, viewModel, fieldFocus,
+                    placeholder = stringResource(Res.string.reference_placeholder_confirmation),
                     modifier = Modifier.weight(1f)
                 )
             }
         }
         PaymentMethod.CASH -> {
             Text(
-                text = "Para pagos en efectivo o Zelle, acérquese a la administración o adjunte captura del Zelle.",
+                text = stringResource(Res.string.cash_zelle_payment_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -940,7 +1083,8 @@ private fun WideMethodFields(
 @Composable
 private fun WideInvoicesCard(
     uiState: CreatePaymentUiState,
-    onToggleInvoice: (String) -> Unit
+    onToggleInvoice: (String) -> Unit,
+    onRetry: () -> Unit
 ) {
     WebCard {
         WideSectionTitle(stringResource(Res.string.select_invoices_label))
@@ -948,6 +1092,12 @@ private fun WideInvoicesCard(
             uiState.isLoadingInvoices -> LoadingState(
                 modifier = Modifier.fillMaxWidth().height(100.dp),
                 fullScreen = false
+            )
+            // Load failure with retry, not "no pending invoices" (A-07)
+            uiState.invoicesError != null -> ErrorState(
+                title = uiState.invoicesError.asString(),
+                onRetry = onRetry,
+                modifier = Modifier.heightIn(max = 320.dp)
             )
             uiState.pendingInvoices.isNotEmpty() -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 uiState.pendingInvoices.sortedBy { it.period }.forEach { invoice ->
@@ -960,7 +1110,7 @@ private fun WideInvoicesCard(
                 }
             }
             else -> Text(
-                text = "No tienes recibos pendientes.",
+                text = stringResource(Res.string.no_pending_invoices),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline
             )
@@ -974,16 +1124,15 @@ private fun WideSummaryCard(
     onSubmit: () -> Unit
 ) {
     val amount = uiState.amount
-    val amountToDisplay = if (amount.isBlank() || amount == "0" || amount == "0.0") "0.00" else amount
     val selectedCount = uiState.selectedInvoiceIds.size
     val allocations = previewAllocations(
-        amount = amount.toDoubleOrNull() ?: 0.0,
+        amount = parseAmount(amount) ?: 0.0,
         selected = uiState.pendingInvoices.filter { uiState.selectedInvoiceIds.contains(it.id) }
     )
 
     WebCard {
         Text(
-            text = "$selectedCount recibo${if (selectedCount == 1) "" else "s"} seleccionado${if (selectedCount == 1) "" else "s"}",
+            text = pluralStringResource(Res.plurals.invoices_selected_count, selectedCount, selectedCount),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 12.dp)
@@ -1001,15 +1150,16 @@ private fun WideSummaryCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = invoice.description ?: "Mantenimiento Mensual",
+                        text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
                 Text(
-                    text = "$${formatCurrency(allocated)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(allocated)),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
                 )
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -1021,28 +1171,24 @@ private fun WideSummaryCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "TOTAL A PAGAR",
+                text = stringResource(Res.string.total_to_pay).uppercase(),
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.outline
             )
             Text(
-                text = "$$amountToDisplay",
+                text = amountDisplay(amount),
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
         }
 
         uiState.error?.let { error ->
-            Text(
-                text = error.asString(),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            FormErrorText(error, Modifier.padding(bottom = 16.dp))
         }
 
         PrimaryButton(
-            text = "Registrar Pago",
+            text = stringResource(Res.string.register_payment),
             onClick = onSubmit,
             enabled = !uiState.isLoading,
             isLoading = uiState.isLoading,
@@ -1052,6 +1198,33 @@ private fun WideSummaryCard(
         Spacer(modifier = Modifier.height(16.dp))
 
         ValidationNotice()
+    }
+}
+
+/**
+ * Headline ("21/10/2026"), month label ("Octubre 2026") and day descriptions formatted in UTC with kotlinx-datetime.
+ * Material3 1.9 on Kotlin/Wasm formats skeletons with a JS `Date` in the local zone, so west of UTC
+ * the picker's UTC midnights showed the previous day and month (A-16).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun rememberUtcDateFormatter(): DatePickerFormatter {
+    val months = monthNames.map { stringResource(it) }
+    return remember(months) {
+        object : DatePickerFormatter {
+            private fun utcDate(millis: Long) = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.UTC).date
+
+            override fun formatMonthYear(monthMillis: Long?, locale: CalendarLocale): String? =
+                monthMillis?.let { utcDate(it) }?.let { "${months[it.monthNumber - 1]} ${it.year}" }
+
+            // Headline: numeric like the date field (a long month name cut off the year at headlineLarge);
+            // screen readers keep the long form.
+            override fun formatDate(dateMillis: Long?, locale: CalendarLocale, forContentDescription: Boolean): String? =
+                dateMillis?.let { utcDate(it) }?.let {
+                    if (forContentDescription) "${it.dayOfMonth} ${months[it.monthNumber - 1]} ${it.year}"
+                    else "${it.dayOfMonth.toString().padStart(2, '0')}/${it.monthNumber.toString().padStart(2, '0')}/${it.year}"
+                }
+        }
     }
 }
 

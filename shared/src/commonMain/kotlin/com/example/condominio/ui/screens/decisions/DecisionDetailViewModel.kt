@@ -6,6 +6,8 @@ import com.example.condominio.data.model.DecisionDetailDto
 import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.DecisionsRepository
 import com.example.condominio.ui.utils.UiText
+import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.decisions_no_active_unit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -72,6 +74,7 @@ class DecisionDetailViewModel(
     }
 
     fun closeUploadSheet() {
+        if (_uiState.value.isSubmitting) return
         _uiState.update { it.copy(showUploadSheet = false, submissionError = null) }
     }
 
@@ -83,8 +86,9 @@ class DecisionDetailViewModel(
         mimeType: String
     ) {
         val id = decisionId ?: return
+        if (_uiState.value.isSubmitting) return
         val unitId = _uiState.value.currentUnitId ?: run {
-            _uiState.update { it.copy(submissionError = UiText.DynamicString("No hay unidad activa")) }
+            _uiState.update { it.copy(submissionError = UiText.StringResource(Res.string.decisions_no_active_unit)) }
             return
         }
         _uiState.update { it.copy(isSubmitting = true, submissionError = null) }
@@ -117,13 +121,15 @@ class DecisionDetailViewModel(
     }
 
     fun closeVoteSheet() {
+        if (_uiState.value.isSubmitting) return
         _uiState.update { it.copy(showVoteSheet = false, submissionError = null) }
     }
 
     fun submitVote(quoteId: String) {
         val id = decisionId ?: return
+        if (_uiState.value.isSubmitting) return
         val unitId = _uiState.value.currentUnitId ?: run {
-            _uiState.update { it.copy(submissionError = UiText.DynamicString("No hay unidad activa")) }
+            _uiState.update { it.copy(submissionError = UiText.StringResource(Res.string.decisions_no_active_unit)) }
             return
         }
         _uiState.update { it.copy(isSubmitting = true, submissionError = null) }

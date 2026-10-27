@@ -1,5 +1,6 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.data.model.AnnouncementDto
 import com.example.condominio.data.model.AnnouncementsPageDto
@@ -59,7 +60,8 @@ class RemoteAnnouncementsRepositoryImpl(
                 val errorMsg = translateAnnouncementError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -73,7 +75,8 @@ class RemoteAnnouncementsRepositoryImpl(
                 val errorMsg = translateAnnouncementError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -87,7 +90,8 @@ class RemoteAnnouncementsRepositoryImpl(
                 val errorMsg = translateAnnouncementError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -101,7 +105,8 @@ class RemoteAnnouncementsRepositoryImpl(
                 val errorMsg = translateAnnouncementError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }

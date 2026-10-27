@@ -18,6 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
@@ -167,7 +173,8 @@ private fun RegisterTitle() {
         Text(
             text = stringResource(Res.string.register_title),
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() }
         )
         Text(
             text = stringResource(Res.string.register_subtitle),
@@ -206,7 +213,7 @@ private fun RegisterFormBody(
     // Unit selector
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = stringResource(Res.string.register_select_unit_label),
+            text = stringResource(Res.string.register_select_unit_label).uppercase(),
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 4.dp)
@@ -232,6 +239,7 @@ private fun RegisterFormBody(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
+                isError = RegisterField.Unit in uiState.missingFields,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
                 modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable).then(hand),
                 shape = FieldShape,
@@ -263,15 +271,21 @@ private fun RegisterFormBody(
         LabeledOutlinedField(
             value = uiState.firstName,
             onValueChange = viewModel::onFirstNameChange,
-            label = stringResource(Res.string.register_first_name_label),
+            label = stringResource(Res.string.register_first_name_label).uppercase(),
             placeholder = stringResource(Res.string.register_first_name_hint),
+            isError = RegisterField.FirstName in uiState.missingFields,
+            contentType = ContentType.PersonFirstName,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
             modifier = Modifier.weight(1f)
         )
         LabeledOutlinedField(
             value = uiState.lastName,
             onValueChange = viewModel::onLastNameChange,
-            label = stringResource(Res.string.register_last_name_label),
+            label = stringResource(Res.string.register_last_name_label).uppercase(),
             placeholder = stringResource(Res.string.register_last_name_hint),
+            isError = RegisterField.LastName in uiState.missingFields,
+            contentType = ContentType.PersonLastName,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
             modifier = Modifier.weight(1f)
         )
     }
@@ -279,31 +293,29 @@ private fun RegisterFormBody(
     LabeledOutlinedField(
         value = uiState.email,
         onValueChange = viewModel::onEmailChange,
-        label = stringResource(Res.string.register_email_label),
+        label = stringResource(Res.string.register_email_label).uppercase(),
         placeholder = stringResource(Res.string.register_email_hint),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+        isError = RegisterField.Email in uiState.missingFields,
+        contentType = ContentType.EmailAddress,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Email,
+            autoCorrectEnabled = false,
+            imeAction = ImeAction.Next
+        )
     )
 
-    if (wide) {
-        // Web: Enter on the last field submits the form.
-        LabeledOutlinedField(
-            value = uiState.documentId,
-            onValueChange = viewModel::onDocumentIdChange,
-            label = stringResource(Res.string.register_document_id_label),
-            placeholder = stringResource(Res.string.register_document_id_hint),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {
-                if (!uiState.isLoading) viewModel.onRegisterClick()
-            })
-        )
-    } else {
-        LabeledOutlinedField(
-            value = uiState.documentId,
-            onValueChange = viewModel::onDocumentIdChange,
-            label = stringResource(Res.string.register_document_id_label),
-            placeholder = stringResource(Res.string.register_document_id_hint)
-        )
-    }
+    // Enter / the keyboard's Done on the last field submits, on phone and web (E-L3).
+    LabeledOutlinedField(
+        value = uiState.documentId,
+        onValueChange = viewModel::onDocumentIdChange,
+        label = stringResource(Res.string.register_document_id_label).uppercase(),
+        placeholder = stringResource(Res.string.register_document_id_hint),
+        isError = RegisterField.DocumentId in uiState.missingFields,
+        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = {
+            if (!uiState.isLoading) viewModel.onRegisterClick()
+        })
+    )
 
     // Error
     if (uiState.error != null) {
@@ -311,7 +323,8 @@ private fun RegisterFormBody(
             text = uiState.error!!.asString(),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(start = 4.dp)
+            // Announced when it appears, without moving focus (E-L4).
+            modifier = Modifier.padding(start = 4.dp).semantics { liveRegion = LiveRegionMode.Polite }
         )
     }
 
@@ -363,7 +376,7 @@ private fun BuildingCard(name: String) {
         }
         Column {
             Text(
-                text = "EDIFICIO",
+                text = stringResource(Res.string.register_building_label).uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

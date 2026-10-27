@@ -20,9 +20,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.condominio.ui.theme.AptoOnSurface
+import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.back
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Phone: Material top app bar with back arrow (original look).
@@ -38,6 +44,7 @@ fun TopBarWithBack(
     containerColor: Color = MaterialTheme.colorScheme.surface,
     titleColor: Color = MaterialTheme.colorScheme.primary,
 ) {
+    val backLabel = stringResource(Res.string.back)
     if (isWide()) {
         Row(
             // Fixed min height: pages with and without header actions keep their titles aligned.
@@ -46,7 +53,7 @@ fun TopBarWithBack(
         ) {
             if (LocalShowBack.current) {
                 IconButton(onClick = onBackClick) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = AptoOnSurface)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = backLabel, tint = AptoOnSurface)
                 }
                 Spacer(Modifier.width(4.dp))
             } else {
@@ -57,7 +64,8 @@ fun TopBarWithBack(
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = AptoOnSurface,
                 maxLines = 1,
-                modifier = Modifier.weight(1f)
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).semantics { heading() }
             )
             actions()
         }
@@ -69,14 +77,16 @@ fun TopBarWithBack(
                 text = title,
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = titleColor,
-                maxLines = 1
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.semantics { heading() }
             )
         },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
+                    contentDescription = backLabel,
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }

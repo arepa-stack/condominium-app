@@ -20,3 +20,5 @@ actual fun formatMonthYear(timestamp: Long): String {
     return formatter.format(date).replaceFirstChar { it.uppercase() }
 }
 actual val platformRendersEmoji: Boolean = true
+
+actual val isWebPlatform: Boolean = false

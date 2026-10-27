@@ -50,11 +50,15 @@ import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.components.shimmerEffect
 import com.example.condominio.ui.theme.*
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.example.condominio.data.utils.rememberExternalViewerLauncher
+import com.example.condominio.ui.components.ErrorState
+import com.example.condominio.ui.components.WebEmptyFrame
 import com.example.condominio.ui.utils.formatCurrency
-import condominio.shared.generated.resources.Res
-import condominio.shared.generated.resources.allocations_label
-import condominio.shared.generated.resources.period_label_short
-import kotlinx.datetime.*
+import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -67,6 +71,11 @@ fun PaymentDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val payment = uiState.payment
     var showFullImage by remember { mutableStateOf(false) }
+    // PDF proofs (accepted by the upload since E-P3) can't be drawn as an image: open them externally.
+    val externalViewer = rememberExternalViewerLauncher()
+    val openProof: () -> Unit = {
+        payment?.proofUrl?.let { url -> if (isPdfUrl(url)) externalViewer(url) else showFullImage = true }
+    }
 
     LaunchedEffect(uiState.pdfFile) {
         uiState.pdfFile?.let { file ->
@@ -79,9 +88,11 @@ fun PaymentDetailScreen(
         PaymentDetailWeb(
             payment = payment,
             isLoading = uiState.isLoading,
+            loadFailed = uiState.loadFailed,
+            onRetry = viewModel::loadPayment,
             onBackClick = onBackClick,
             onDownloadClick = { viewModel.onDownloadReceiptClick() },
-            onShowFullImage = { showFullImage = true }
+            onShowFullImage = openProof
         )
         if (showFullImage && payment?.proofUrl != null) {
             FullScreenImageDialog(
@@ -95,7 +106,7 @@ fun PaymentDetailScreen(
     Scaffold(
         topBar = {
             TopBarWithBack(
-                title = "Detalle del Pago",
+                title = stringResource(Res.string.payment_details_title),
                 onBackClick = onBackClick
             )
         },
@@ -107,14 +118,14 @@ fun PaymentDetailScreen(
                     .padding(16.dp)
             ) {
                 PrimaryButton(
-                    text = "Descargar Recibo",
+                    text = stringResource(Res.string.download_receipt),
                     onClick = { viewModel.onDownloadReceiptClick() },
                     isLoading = uiState.isLoading,
                     icon = Icons.Default.Download
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 SecondaryOutlinedButton(
-                    text = "Contactar Soporte",
+                    text = stringResource(Res.string.contact_support),
                     onClick = { /* Contact Support */ },
                     icon = Icons.Default.Mail
                 )
@@ -153,13 +164,13 @@ fun PaymentDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "$${formatCurrency(payment.amount)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                     style = MaterialTheme.typography.headlineLarge.copy(letterSpacing = (-0.5).sp),
                     color = AptoPrimary
                 )
 
                 Text(
-                    text = statusConfig.first,
+                    text = stringResource(statusConfig.first),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = AptoOnSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -183,19 +194,15 @@ fun PaymentDetailScreen(
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
                         Text(
-                            text = "Detalles de la Transacción",
+                            text = stringResource(Res.string.transaction_details),
                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                            color = AptoPrimary
+                            color = AptoPrimary,
+                            modifier = Modifier.semantics { heading() }
                         )
                     }
 
                     Column(modifier = Modifier.padding(16.dp)) {
-                        DetailRow("ID de Transacción", "#TXN-${payment.id.take(8)}")
-                        DetailRow("Fecha", formatDate(payment.date))
-                        DetailRow("Método", payment.method.label)
-                        payment.userName?.let { DetailRow("Pagado por", it) }
-                        DetailRow("Banco", payment.bank ?: "—")
-                        DetailRow("Referencia", payment.reference ?: "—")
+                        TransactionDetailRows(payment)
                     }
                 }
 
@@ -210,23 +217,25 @@ fun PaymentDetailScreen(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        text = "Comprobante de Pago",
+                        text = stringResource(Res.string.payment_proof),
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                        color = AptoPrimary
+                        color = AptoPrimary,
+                        modifier = Modifier.semantics { heading() }
                     )
-                    Text(
-                        text = "Ver Completo",
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                        color = AptoSecondary,
-                        modifier = Modifier.clickable {
-                            if (payment.proofUrl != null) showFullImage = true
-                        }
-                    )
+                    // Only offered when there is a proof to open (E-P6)
+                    if (payment.proofUrl != null) {
+                        Text(
+                            text = stringResource(Res.string.view_full),
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                            color = AptoSecondary,
+                            modifier = Modifier.clickable(role = Role.Button, onClick = openProof)
+                        )
+                    }
                 }
 
                 ReceiptImageBox(
                     proofUrl = payment.proofUrl,
-                    onClick = { if (payment.proofUrl != null) showFullImage = true }
+                    onClick = openProof
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -240,9 +249,30 @@ fun PaymentDetailScreen(
             }
         } else if (uiState.isLoading) {
             LoadingState()
+        } else if (uiState.loadFailed) {
+            // Error with retry instead of a blank screen (A-07)
+            ErrorState(
+                title = stringResource(Res.string.error_loading_payment),
+                onRetry = viewModel::loadPayment,
+                modifier = Modifier.padding(paddingValues)
+            )
         }
     }
 }
+
+/** Rows shared by the phone card and the web card. */
+@Composable
+private fun TransactionDetailRows(payment: Payment) {
+    DetailRow(stringResource(Res.string.transaction_id), "#TXN-${payment.id.take(8)}")
+    DetailRow(stringResource(Res.string.date_label), formatPaymentDate(payment.date))
+    DetailRow(stringResource(Res.string.method_label), paymentMethodLabel(payment.method))
+    payment.userName?.let { DetailRow(stringResource(Res.string.paid_by_label), it) }
+    DetailRow(stringResource(Res.string.bank_label), payment.bank ?: "—")
+    DetailRow(stringResource(Res.string.reference_label), payment.reference ?: "—")
+}
+
+/** Storage URLs keep the uploaded extension; query strings (signed URLs) are ignored. */
+private fun isPdfUrl(url: String): Boolean = url.substringBefore('?').endsWith(".pdf", ignoreCase = true)
 
 @Composable
 fun DetailRow(label: String, value: String) {
@@ -266,16 +296,10 @@ fun DetailRow(label: String, value: String) {
     HorizontalDivider(color = AptoOutlineVariant, thickness = 0.5.dp)
 }
 
-private fun formatDate(timestamp: Long): String {
-    val instant = Instant.fromEpochMilliseconds(timestamp)
-    val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    return "${dateTime.dayOfMonth}/${dateTime.monthNumber}/${dateTime.year}"
-}
-
-private fun paymentStatusConfig(status: PaymentStatus): Triple<String, Color, ImageVector> = when (status) {
-    PaymentStatus.APPROVED -> Triple("Pago Aprobado", AptoStatusSuccess, Icons.Default.CheckCircle)
-    PaymentStatus.REJECTED -> Triple("Pago Rechazado", AptoStatusError, Icons.Default.Warning)
-    PaymentStatus.PENDING -> Triple("Pago Pendiente", AptoStatusWarning, Icons.Default.Info)
+private fun paymentStatusConfig(status: PaymentStatus): Triple<StringResource, Color, ImageVector> = when (status) {
+    PaymentStatus.APPROVED -> Triple(Res.string.payment_approved, AptoStatusSuccess, Icons.Default.CheckCircle)
+    PaymentStatus.REJECTED -> Triple(Res.string.payment_rejected, AptoStatusError, Icons.Default.Warning)
+    PaymentStatus.PENDING -> Triple(Res.string.payment_pending_approval, AptoStatusWarning, Icons.Default.Info)
 }
 
 @Composable
@@ -284,6 +308,7 @@ private fun ReceiptImageBox(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val proofLabel = stringResource(Res.string.payment_proof_desc)
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -291,13 +316,33 @@ private fun ReceiptImageBox(
             .background(AptoSurfaceContainerLow, RoundedCornerShape(12.dp))
             .border(1.dp, AptoOutlineVariant, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() },
+            // Clickable only when there is something to open (E-P6)
+            .then(
+                if (proofUrl != null) {
+                    Modifier.clickable(onClickLabel = stringResource(Res.string.view_full), role = Role.Button, onClick = onClick)
+                } else Modifier
+            ),
         contentAlignment = Alignment.Center
     ) {
-        if (proofUrl != null) {
+        if (proofUrl != null && isPdfUrl(proofUrl)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Description,
+                    contentDescription = proofLabel,
+                    modifier = Modifier.size(64.dp),
+                    tint = AptoSecondary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(Res.string.billboard_attachment_pdf),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = AptoSecondary
+                )
+            }
+        } else if (proofUrl != null) {
             SubcomposeAsyncImage(
                 model = proofUrl,
-                contentDescription = "Comprobante de Pago",
+                contentDescription = proofLabel,
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop,
                 loading = {
@@ -314,7 +359,7 @@ private fun ReceiptImageBox(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Sin Comprobante",
+                    text = stringResource(Res.string.no_proof_uploaded),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = AptoOutline
                 )
@@ -339,6 +384,8 @@ private fun WebCardTitle(text: String) {
 private fun PaymentDetailWeb(
     payment: Payment?,
     isLoading: Boolean,
+    loadFailed: Boolean,
+    onRetry: () -> Unit,
     onBackClick: () -> Unit,
     onDownloadClick: () -> Unit,
     onShowFullImage: () -> Unit
@@ -346,7 +393,7 @@ private fun PaymentDetailWeb(
     Scaffold(
         topBar = {
             TopBarWithBack(
-                title = "Detalle del Pago",
+                title = stringResource(Res.string.payment_details_title),
                 onBackClick = onBackClick,
                 actions = {
                     if (payment != null) {
@@ -357,7 +404,7 @@ private fun PaymentDetailWeb(
                         ) {
                             Icon(Icons.Default.Mail, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Contactar Soporte")
+                            Text(stringResource(Res.string.contact_support))
                         }
                         Spacer(Modifier.width(12.dp))
                         Button(
@@ -376,7 +423,7 @@ private fun PaymentDetailWeb(
                                 Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
                             }
                             Spacer(Modifier.width(8.dp))
-                            Text("Descargar Recibo")
+                            Text(stringResource(Res.string.download_receipt))
                         }
                     }
                 }
@@ -408,7 +455,7 @@ private fun PaymentDetailWeb(
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                text = "$${formatCurrency(payment.amount)}",
+                                text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = (-0.5).sp
@@ -417,7 +464,7 @@ private fun PaymentDetailWeb(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                text = "${formatDate(payment.date)} · ${payment.method.label}",
+                                text = "${formatPaymentDate(payment.date)} · ${paymentMethodLabel(payment.method)}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = AptoOutline
                             )
@@ -425,13 +472,8 @@ private fun PaymentDetailWeb(
 
                         // Transaction details
                         WebCard {
-                            WebCardTitle("Detalles de la Transacción")
-                            DetailRow("ID de Transacción", "#TXN-${payment.id.take(8)}")
-                            DetailRow("Fecha", formatDate(payment.date))
-                            DetailRow("Método", payment.method.label)
-                            payment.userName?.let { DetailRow("Pagado por", it) }
-                            DetailRow("Banco", payment.bank ?: "—")
-                            DetailRow("Referencia", payment.reference ?: "—")
+                            WebCardTitle(stringResource(Res.string.transaction_details))
+                            TransactionDetailRows(payment)
                         }
 
                         // Invoice allocations
@@ -446,7 +488,7 @@ private fun PaymentDetailWeb(
                                         } else {
                                             "#${allocation.invoiceId.take(8)}"
                                         },
-                                        value = "$${formatCurrency(allocation.amount)}"
+                                        value = stringResource(Res.string.currency_amount, formatCurrency(allocation.amount))
                                     )
                                 }
                             }
@@ -472,12 +514,12 @@ private fun PaymentDetailWeb(
                                 Spacer(Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        text = statusConfig.first,
+                                        text = stringResource(statusConfig.first),
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = statusConfig.second
                                     )
                                     Text(
-                                        text = formatDate(payment.processedAt ?: payment.date),
+                                        text = formatPaymentDate(payment.processedAt ?: payment.date),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = AptoOutline
                                     )
@@ -493,18 +535,18 @@ private fun PaymentDetailWeb(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Comprobante de Pago",
+                                    text = stringResource(Res.string.payment_proof),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                                     color = AptoOnSurface
                                 )
                                 if (hasProof) {
                                     Text(
-                                        text = "Ver Completo",
+                                        text = stringResource(Res.string.view_full),
                                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                         color = AptoSecondary,
                                         modifier = Modifier
                                             .pointerHoverIcon(PointerIcon.Hand)
-                                            .clickable { openImage() }
+                                            .clickable(role = Role.Button) { openImage() }
                                     )
                                 }
                             }
@@ -519,6 +561,13 @@ private fun PaymentDetailWeb(
             }
         } else if (isLoading) {
             LoadingState()
+        } else if (loadFailed) {
+            // Error with retry instead of a blank page (A-07)
+            Box(Modifier.padding(paddingValues)) {
+                WebEmptyFrame {
+                    ErrorState(title = stringResource(Res.string.error_loading_payment), onRetry = onRetry)
+                }
+            }
         }
     }
 }

@@ -7,6 +7,10 @@ interface PaymentRepository {
     suspend fun getPayments(unitId: String? = null): List<Payment>
     suspend fun getPayment(id: String): Payment?
 
+    /** Like [getPayments]/[getPayment] but keeps the failure, so screens can show an error instead of "empty". */
+    suspend fun fetchPayments(unitId: String? = null): Result<List<Payment>>
+    suspend fun fetchPayment(id: String): Result<Payment>
+
     suspend fun createPayment(
         amount: Double, 
         date: Long, 

@@ -1,7 +1,7 @@
 package com.example.condominio.ui.screens.profile
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.condominio.ui.components.TopBarWithBack
@@ -77,7 +78,7 @@ fun NotificationSettingsScreen(
             Text(
                 text = stringResource(Res.string.notification_settings_desc),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
@@ -144,7 +145,7 @@ private fun WideNotificationSettings(
         Text(
             text = stringResource(Res.string.notification_settings_desc),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.formWidth().padding(bottom = 24.dp)
         )
         WebCard(modifier = Modifier.formWidth(), contentPadding = 0.dp) {
@@ -156,7 +157,7 @@ private fun WideNotificationSettings(
                     modifier = Modifier
                         .fillMaxWidth()
                         .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable { item.onCheckedChange(!item.checked) }
+                        .toggleable(value = item.checked, role = Role.Switch, onValueChange = item.onCheckedChange)
                         .padding(horizontal = 24.dp, vertical = 20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -169,15 +170,12 @@ private fun WideNotificationSettings(
                         Text(
                             text = item.description,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Spacer(modifier = Modifier.width(24.dp))
-                    Switch(
-                        checked = item.checked,
-                        onCheckedChange = item.onCheckedChange,
-                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
-                    )
+                    // The row is the one focus/semantics target (E-R2); the switch only draws the state.
+                    Switch(checked = item.checked, onCheckedChange = null)
                 }
             }
         }
@@ -202,6 +200,7 @@ private fun NotificationToggleCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -214,14 +213,11 @@ private fun NotificationToggleCard(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            )
+            Switch(checked = checked, onCheckedChange = null)
         }
     }
 }

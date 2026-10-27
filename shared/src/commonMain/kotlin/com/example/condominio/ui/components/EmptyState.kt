@@ -22,6 +22,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import condominio.shared.generated.resources.Res
+import condominio.shared.generated.resources.error_check_connection
+import condominio.shared.generated.resources.retry
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EmptyState(
@@ -80,4 +89,23 @@ fun EmptyState(
             }
         }
     }
+}
+
+/** Load failure (network/HTTP) with a retry action: never show these as an empty list or a blank screen. */
+@Composable
+fun ErrorState(
+    title: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = stringResource(Res.string.error_check_connection),
+) {
+    EmptyState(
+        title = title,
+        // Announced when it replaces the loading spinner.
+        modifier = modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        subtitle = subtitle,
+        icon = Icons.Default.CloudOff,
+        actionLabel = stringResource(Res.string.retry),
+        onAction = onRetry,
+    )
 }

@@ -124,3 +124,6 @@ enum class PaymentStatus {
 }
 
 class UserPendingException(message: String) : Exception(message)
+
+/** users/me answered 401: the saved token is no longer valid (unlike a network or server failure). */
+class SessionExpiredException : Exception("Session expired")

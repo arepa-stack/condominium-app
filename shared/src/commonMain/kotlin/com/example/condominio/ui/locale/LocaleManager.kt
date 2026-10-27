@@ -73,8 +73,10 @@ fun ProvideAppLocale(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAppLanguage provides language) {
         // key() forces the entire subtree to recompose when language changes,
         // which ensures stringResource() re-reads from the correct values-XX folder.
-        androidx.compose.runtime.key(language) {
-            content()
+        ProvidePlatformLocale(language.code) {
+            androidx.compose.runtime.key(language) {
+                content()
+            }
         }
     }
 }
@@ -85,3 +87,7 @@ fun ProvideAppLocale(content: @Composable () -> Unit) {
  */
 @Composable
 expect fun PlatformLocaleEffect(languageCode: String)
+
+/** Platform hook around the content: Android re-provides LocalConfiguration with the app locale. */
+@Composable
+expect fun ProvidePlatformLocale(languageCode: String, content: @Composable () -> Unit)

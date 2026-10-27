@@ -1,12 +1,22 @@
 package com.example.condominio.ui.navigation
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.navigation.compose.composable as navComposable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.savedstate.read
@@ -32,7 +42,9 @@ import com.example.condominio.ui.screens.register.RegisterScreen
 import com.example.condominio.ui.screens.splash.SplashScreen
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -61,6 +73,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.condominio.ui.components.AppBottomBar
 import com.example.condominio.ui.components.BottomTab
+import com.example.condominio.ui.utils.rememberReducedMotion
 
 // Every app page shares ONE container (same max width, same left edge) so the page title never
 // jumps when navigating. Narrow content (settings forms) is capped inside the page, left-aligned
@@ -72,6 +85,45 @@ private fun maxContentWidth(route: String?): Dp = when {
     route in routesWithoutBottomBar -> 560.dp
     else -> WebContainerWidth
 }
+
+/** Max width of one page. Desktop auth/onboarding pages sit in the 480dp column next to the brand panel. */
+@Composable
+private fun pageMaxWidth(route: String, inApp: Boolean): Dp {
+    val loginFormVisible = LocalLoginFormVisible.current.value
+    val split = LocalWidthClass.current == WidthClass.Expanded && route in routesWithoutBottomBar &&
+        route != "splash" && route != "unit_selection" && (route != "login" || loginFormVisible)
+    return when {
+        split -> 480.dp
+        // Login still checking the session: keep full width so the splash fades out unclipped.
+        route == "login" && !loginFormVisible -> Dp.Unspecified
+        // Opened from the dashboard: a regular app page (same container as the rest).
+        inApp -> WebContainerWidth
+        else -> maxContentWidth(route)
+    }
+}
+
+/** True while unit_selection was opened from inside the app (dashboard below it), not from login. */
+private val LocalInAppUnitSelection = compositionLocalOf { false }
+
+/**
+ * Shadows navigation's composable(): wraps every destination in its own width cap, so the cap
+ * travels with the page during transitions (instead of the NavHost resizing for the new route).
+ */
+private fun NavGraphBuilder.composable(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) = navComposable(route, arguments) { entry ->
+    val scope = this
+    // Captured once per entry: the page keeps its width while fading out, even after the route changes.
+    val inAppNow = route == "unit_selection" && LocalInAppUnitSelection.current
+    val inApp = remember(entry) { inAppNow }
+    Box(Modifier.fillMaxSize().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = pageMaxWidth(route, inApp)).fillMaxWidth()) {
+        scope.content(entry)
+    }
+}
+
+private const val NavFadeMillis = 200
 
 // Rutas del flujo de autenticación/onboarding donde no se muestra el bottom bar
 private val routesWithoutBottomBar = setOf(
@@ -94,6 +146,7 @@ fun CondominioNavGraph(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showNav = currentRoute != null && currentRoute !in routesWithoutBottomBar
+    val reducedMotion = rememberReducedMotion()
     val onTabSelected: (BottomTab) -> Unit = { tab ->
         if (tab == BottomTab.HOME) {
             // Home is the stack root: just pop back to it. Navigating with popUpTo(dashboard){saveState} +
@@ -116,6 +169,11 @@ fun CondominioNavGraph(
         else -> WidthClass.Expanded
     }
     val wide = widthClass != WidthClass.Compact
+    // Switching building from the dashboard: keep the sidebar/rail on wide layouts so the shell doesn't
+    // jump. From login (no dashboard below) it stays a standalone onboarding page. Phones unchanged.
+    val inAppUnitSelection = currentRoute == "unit_selection" &&
+        navController.previousBackStackEntry?.destination?.route == "dashboard"
+    val showSideNav = showNav || (wide && inAppUnitSelection)
     val isAuth = currentRoute in routesWithoutBottomBar && currentRoute != "splash"
     // Desktop auth/onboarding: brand panel left, the mobile form centered on the right.
     val loginFormVisible = remember { mutableStateOf(false) }
@@ -126,11 +184,12 @@ fun CondominioNavGraph(
         LocalWidthClass provides widthClass,
         LocalLoginFormVisible provides loginFormVisible,
         // Sidebar/rail replaces the back arrow on top-level sections.
-        LocalShowBack provides !(wide && currentRoute in tabRootRoutes)
+        LocalShowBack provides !(wide && currentRoute in tabRootRoutes),
+        LocalInAppUnitSelection provides inAppUnitSelection
     ) {
     Row(Modifier.fillMaxSize().background(if (wide) AptoWebCanvas else Color.Unspecified)) {
-    if (showNav && widthClass == WidthClass.Expanded) AppSidebar(currentRoute = currentRoute, onTabSelected = onTabSelected)
-    if (showNav && widthClass == WidthClass.Medium) AppNavRail(currentRoute = currentRoute, onTabSelected = onTabSelected)
+    if (showSideNav && widthClass == WidthClass.Expanded) AppSidebar(currentRoute = currentRoute, onTabSelected = onTabSelected)
+    if (showSideNav && widthClass == WidthClass.Medium) AppNavRail(currentRoute = currentRoute, onTabSelected = onTabSelected)
     Scaffold(
             modifier = Modifier.weight(1f),
             containerColor = if (wide) AptoWebCanvas else MaterialTheme.colorScheme.background,
@@ -142,16 +201,18 @@ fun CondominioNavGraph(
         NavHost(
                 navController = navController,
                 startDestination = "splash",
+                // Short fade (NavHost's default is 700ms); none when the OS asks to reduce motion.
+                // pop transitions default to these.
+                enterTransition = { if (reducedMotion) EnterTransition.None else fadeIn(tween(NavFadeMillis)) },
+                exitTransition = { if (reducedMotion) ExitTransition.None else fadeOut(tween(NavFadeMillis)) },
+                // No max width here: each page caps its own (see composable() below), so a page fading
+                // out keeps its width instead of being squeezed into the next route's (dashboard → unit_selection).
                 modifier = Modifier
                         .padding(innerPadding)
+                        // Screens have their own Scaffold/TopAppBar: mark the bars already padded here as consumed,
+                        // or edge-to-edge (targetSdk 36) adds the status bar height twice on Android.
+                        .consumeWindowInsets(innerPadding)
                         .fillMaxSize()
-                        .wrapContentWidth(Alignment.CenterHorizontally)
-                        .widthIn(max = when {
-                            split -> 480.dp
-                            // Login still checking the session: keep full width so the splash fades out unclipped.
-                            currentRoute == "login" && !loginFormVisible.value -> Dp.Unspecified
-                            else -> maxContentWidth(currentRoute)
-                        })
         ) {
         composable("splash") {
             SplashScreen(
@@ -160,7 +221,7 @@ fun CondominioNavGraph(
                         popUpTo("splash") { inclusive = true }
                     }
                     // Deep link from a building QR: land on registration, with login behind it.
-                    if (registerCode != null) navController.navigate("register_form/$registerCode")
+                    if (registerCode != null) navController.navigate(registerFormRoute(registerCode))
                 }
             )
         }
@@ -174,6 +235,8 @@ fun CondominioNavGraph(
                     onPasswordChange = viewModel::onPasswordChange,
                     onLoginClick = viewModel::onLoginClick,
                     onClearDatabaseClick = viewModel::onClearDatabaseClick,
+                    onRetrySessionCheck = viewModel::onRetrySessionCheck,
+                    onUseAnotherAccount = viewModel::onUseAnotherAccount,
                     onLoginSuccess = { hasMultiple ->
                         if (hasMultiple) {
                             navController.navigate("unit_selection") {
@@ -211,6 +274,9 @@ fun CondominioNavGraph(
                         navController.navigate("dashboard") {
                             popUpTo(0) { inclusive = true }
                         }
+                    },
+                    onLoggedOut = {
+                        navController.navigate("login") { popUpTo(0) { inclusive = true } }
                     }
             )
         }
@@ -229,6 +295,7 @@ fun CondominioNavGraph(
                     uiState = uiState,
                     onBuildingSelected = viewModel::onBuildingSelected,
                     onUnitSelected = viewModel::onUnitSelected,
+                    onRetry = viewModel::retry,
                     onNavigateToDashboard = {
                         navController.navigate("dashboard") {
                             popUpTo("unit_selection") { inclusive = true }
@@ -240,7 +307,7 @@ fun CondominioNavGraph(
             QrScannerScreen(
                 onBack = { navController.popBackStack() },
                 onScanned = { buildingId ->
-                    navController.navigate("register_form/$buildingId") {
+                    navController.navigate(registerFormRoute(buildingId)) {
                         popUpTo("register_scanner") { inclusive = true }
                     }
                 }
@@ -405,3 +472,4 @@ fun CondominioNavGraph(
     }
     }
 }
+

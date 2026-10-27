@@ -1,8 +1,10 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.RegistrationRequestBody
 import com.example.condominio.data.model.RegistrationRequestResponse
 import com.example.condominio.data.remote.ApiService
+import com.example.condominio.data.remote.toFailure
 
 interface OnboardingRepository {
     suspend fun submitRegistrationRequest(
@@ -43,15 +45,11 @@ class RemoteOnboardingRepository(
         if (r.isSuccessful && r.body() != null) {
             Result.success(r.body()!!)
         } else {
-            val msg = when (r.code) {
-                409 -> "Ya existe una solicitud pendiente con este correo o la unidad alcanzó su capacidad máxima."
-                404 -> "Edificio o unidad no encontrados. Verifica el código QR."
-                400 -> "Datos inválidos. Revisa los campos e intenta de nuevo."
-                else -> r.string().ifBlank { "Error del servidor (${r.code})" }
-            }
-            Result.failure(Exception(msg))
+            // Typed: the form maps 409/404/400 to its own (translated) texts.
+            Result.failure(r.toFailure())
         }
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
+        e.rethrowIfCancellation()
         Result.failure(e)
     }
 }
