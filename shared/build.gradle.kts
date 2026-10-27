@@ -53,6 +53,7 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             implementation(libs.mikepenz.markdown.m3)
+            implementation(libs.compose.ui.backhandler) // BackHandler: ask before leaving a form with unsaved changes (E-R4)
             implementation(libs.androidx.navigation.compose)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
@@ -79,6 +80,11 @@ kotlin {
 
         wasmJsMain.dependencies {
             implementation(libs.ktor.client.js)
+        }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 

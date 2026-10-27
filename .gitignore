@@ -65,3 +65,7 @@ google-services.json
 
 # Agent Teams Lite / SDD orchestrator (locally generated)
 .atl/
+
+# Claude Code: agent worktrees and local settings (never commit)
+.claude/worktrees/
+.claude/settings.local.json

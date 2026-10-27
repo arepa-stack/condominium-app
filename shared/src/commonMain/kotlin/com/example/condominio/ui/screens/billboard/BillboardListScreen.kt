@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -180,7 +181,9 @@ private fun BillboardFilterRow(
     onSelect: (AnnouncementCategory?) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.selectableGroup(),
+        // 6dp + the chips' 48dp touch target = the previous 12dp + 36dp pill: same row height.
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
@@ -211,6 +214,7 @@ private fun WideBillboardFilterRow(
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
+            .selectableGroup()
             // 8dp under the header; + the grid's / WebEmptyFrame's 8dp top = 16dp to the content.
             .padding(start = pagePadding(), end = pagePadding(), top = 8.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),

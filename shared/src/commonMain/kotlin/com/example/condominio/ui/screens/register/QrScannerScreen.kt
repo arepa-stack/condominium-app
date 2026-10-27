@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -37,11 +38,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import com.example.condominio.ui.utils.UiText
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.condominio.ui.components.isWide
 import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.AptoOnSurface
 import com.example.condominio.ui.theme.AptoOnSurfaceVariant
+import com.example.condominio.ui.utils.rememberReducedMotion
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -54,23 +61,26 @@ private val ViewfinderShape = RoundedCornerShape(24.dp)
 @Composable
 fun QrScannerScreen(
     onBack: () -> Unit,
-    onScanned: (String) -> Unit
+    onScanned: (String) -> Unit,
+    viewModel: QrScannerViewModel = koinViewModel()
 ) {
     var showManualDialog by remember { mutableStateOf(false) }
-    var alreadyScanned by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    val handleScan: (String) -> Unit = { rawValue ->
-        if (!alreadyScanned) {
-            val code = extractBuildingCode(rawValue)
-            if (code.isNotBlank()) {
-                alreadyScanned = true
-                onScanned(code)
-            }
-        }
+    // Navigate only once the building exists (A-25).
+    LaunchedEffect(uiState.validCode) {
+        uiState.validCode?.let(onScanned)
     }
 
+    val handleScan: (String) -> Unit = viewModel::onScanned
+
     if (isWide()) {
-        WideQrScannerContent(onBack = onBack, onCode = handleScan)
+        WideQrScannerContent(
+            onBack = onBack,
+            onCamera = viewModel::onScanned,
+            onManual = viewModel::onManualCode,
+            uiState = uiState
+        )
         return
     }
 
@@ -96,19 +106,24 @@ fun QrScannerScreen(
             ) {
                 IconButton(
                     onClick = onBack,
+                    // 48dp touch target (was 40dp); the glyph is an icon with a name, not a "✕" character.
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.1f))
                 ) {
-                    Text("✕", color = Color.White, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Light))
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(Res.string.close),
+                        tint = Color.White
+                    )
                 }
                 Text(
                     text = "Apto",
                     color = Color.White,
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                 )
-                Spacer(modifier = Modifier.size(40.dp))
+                Spacer(modifier = Modifier.size(48.dp))
             }
 
             // Viewfinder area
@@ -133,6 +148,7 @@ fun QrScannerScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
+                    QrError(uiState.error)
                 }
 
                 // Viewfinder box
@@ -159,11 +175,12 @@ fun QrScannerScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(Res.string.qr_scan_scanning),
+                            text = stringResource(Res.string.qr_scan_scanning).uppercase(),
                             color = Color.White.copy(alpha = 0.2f),
                             style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp)
                         )
                     }
+                    if (uiState.isValidating) ValidatingOverlay()
                 }
             }
 
@@ -199,7 +216,7 @@ fun QrScannerScreen(
                 }
 
                 Text(
-                    text = "Apto v1.0 • Sistema de Gestión Residencial",
+                    text = stringResource(Res.string.qr_footer),
                     color = Color.White.copy(alpha = 0.3f),
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Normal),
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -214,7 +231,7 @@ fun QrScannerScreen(
             onDismiss = { showManualDialog = false },
             onConfirm = { code ->
                 showManualDialog = false
-                if (code.isNotBlank()) handleScan(code.trim())
+                if (code.isNotBlank()) viewModel.onManualCode(code.trim())
             }
         )
     }
@@ -227,10 +244,12 @@ fun QrScannerScreen(
 @Composable
 private fun WideQrScannerContent(
     onBack: () -> Unit,
-    onCode: (String) -> Unit
+    onCamera: (String) -> Unit,
+    onManual: (String) -> Unit,
+    uiState: QrScannerUiState
 ) {
     var code by remember { mutableStateOf("") }
-    val submit = { if (code.isNotBlank()) onCode(code.trim()) }
+    val submit = { if (code.isNotBlank() && !uiState.isValidating) onManual(code.trim()) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -249,7 +268,7 @@ private fun WideQrScannerContent(
                     .offset(x = (-12).dp)
                     .pointerHoverIcon(PointerIcon.Hand)
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = AptoOnSurface)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back), tint = AptoOnSurface)
             }
             Spacer(Modifier.height(8.dp))
             Text(
@@ -275,10 +294,11 @@ private fun WideQrScannerContent(
             ) {
                 QrScannerView(
                     modifier = Modifier.fillMaxSize(),
-                    onQrScanned = onCode
+                    onQrScanned = onCamera
                 )
                 ScanLine(travel = WideViewfinderSize)
                 ScannerCorners()
+                if (uiState.isValidating) ValidatingOverlay()
             }
             Spacer(Modifier.height(32.dp))
 
@@ -312,12 +332,12 @@ private fun WideQrScannerContent(
                         },
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { submit() })
                 )
                 Button(
                     onClick = submit,
-                    enabled = code.isNotBlank(),
+                    enabled = code.isNotBlank() && !uiState.isValidating,
                     modifier = Modifier
                         .height(56.dp)
                         .pointerHoverIcon(PointerIcon.Hand),
@@ -327,22 +347,55 @@ private fun WideQrScannerContent(
                     Text(stringResource(Res.string.accept), color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
+            Spacer(Modifier.height(12.dp))
+            QrError(uiState.error)
         }
     }
 }
 
+/** Dims the viewfinder with a spinner while the code is checked. */
+@Composable
+private fun ValidatingOverlay() {
+    Box(
+        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+/** Why the code was not accepted; stays on the scanner. Announced when it appears. */
+@Composable
+private fun QrError(error: UiText?) {
+    if (error == null) return
+    Text(
+        text = error.asString(),
+        color = MaterialTheme.colorScheme.onError,
+        style = MaterialTheme.typography.bodyMedium,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.error)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite }
+    )
+}
+
 @Composable
 private fun ScanLine(travel: Dp = ViewfinderSize) {
-    val infiniteTransition = rememberInfiniteTransition(label = "scanLine")
-    val offsetFraction by infiniteTransition.animateFloat(
-        initialValue = 0.10f,
-        targetValue = 0.90f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scanLineOffset"
-    )
+    // Reduced motion: the line rests in the middle of the viewfinder.
+    val offsetFraction = if (rememberReducedMotion()) 0.5f else {
+        val infiniteTransition = rememberInfiniteTransition(label = "scanLine")
+        infiniteTransition.animateFloat(
+            initialValue = 0.10f,
+            targetValue = 0.90f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "scanLineOffset"
+        ).value
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -450,7 +503,8 @@ private fun ManualCodeDialog(
                 placeholder = { Text(stringResource(Res.string.qr_manual_dialog_hint)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false)
             )
         },
         confirmButton = {

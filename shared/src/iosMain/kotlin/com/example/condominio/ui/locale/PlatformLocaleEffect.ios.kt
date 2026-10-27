@@ -17,3 +17,6 @@ actual fun PlatformLocaleEffect(languageCode: String) {
         defaults.synchronize()
     }
 }
+
+@Composable
+actual fun ProvidePlatformLocale(languageCode: String, content: @Composable () -> Unit) = content()

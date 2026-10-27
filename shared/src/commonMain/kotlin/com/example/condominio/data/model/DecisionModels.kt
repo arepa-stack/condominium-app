@@ -58,7 +58,7 @@ data class QuoteDto(
     @SerialName("provider_name") val providerName: String,
     val amount: Double,
     val notes: String? = null,
-    @SerialName("file_url") val fileUrl: String,
+    @SerialName("file_url") val fileUrl: String? = null, // DEV returns null for quotes without a file
     @SerialName("deleted_at") val deletedAt: String? = null,
     @SerialName("deleted_by") val deletedBy: UserRefDto? = null,
     @SerialName("deletion_reason") val deletionReason: String? = null,

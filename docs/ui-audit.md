@@ -1,0 +1,227 @@
+# Auditoría de UI — Web Interface Guidelines (oct 2026)
+
+Revisión de `shared/src/commonMain/kotlin/com/example/condominio/ui/` contra las
+[Web Interface Guidelines de Vercel](https://github.com/vercel-labs/web-interface-guidelines),
+adaptadas a Compose Multiplatform (en web todo se dibuja en un `<canvas>`, así que las reglas de DOM/CSS
+se traducen a `contentDescription`, `semantics`, `KeyboardOptions`, `maxLines`, etc.).
+
+- **Método:** 9 revisiones por pantalla, leyendo el código completo. **Sin ejecución**: los hallazgos
+  de producto (bloque A) están confirmados en código (2026-10-21), pero conviene reproducirlos en la app
+  al corregirlos.
+- **Alcance:** Android, iOS y web comparten este código; salvo que se indique, cada hallazgo aplica a todas
+  las plataformas.
+- **Total aproximado:** ~480 hallazgos. Este documento lista los relevantes con ID; el resto queda como
+  barrido por pantalla (bloque F).
+
+## Estados
+
+| Estado | Significado |
+|---|---|
+| 🔍 Verificar | Detectado en código; falta reproducirlo en la app |
+| ⬜ Pendiente | Confirmado (o evidente en código), sin empezar |
+| 🔄 En curso | Alguien lo está corrigiendo (anotar rama/PR) |
+| ✅ Hecho | Corregido y verificado (anotar commit) |
+| ⏸️ Descartado | No se corrige (anotar motivo) |
+
+Al cambiar un estado, actualizar también la columna **Ref** (rama, PR o commit).
+
+## Resumen
+
+| Bloque | Ítems | 🔍 | ⬜ | 🔄 | ✅ | ⏸️ |
+|---|---|---|---|---|---|---|
+| A. Errores de producto | 28 | 1 | 0 | 0 | 24 | 3 |
+| B. Componentes compartidos | 10 | 0 | 0 | 0 | 10 | 0 |
+| C. Textos e i18n | 9 | 0 | 0 | 0 | 9 | 0 |
+| D. Contraste | 6 | 0 | 0 | 0 | 6 | 0 |
+| E. Por pantalla (prioritarios) | 39 | 0 | 0 | 0 | 38 | 1 |
+
+---
+
+## A. Errores de producto (lógica / datos) — prioridad alta
+
+| ID | Pantalla | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|---|
+| A-01 | Pagos | El monto con coma decimal ("150,50") da "Monto inválido": se parsea con `toDoubleOrNull()` | `CreatePaymentScreen.kt:774`, `CreatePaymentViewModel.kt:117` | ✅ Hecho | `6292019` — `parseAmount()` común (`KmpFormatters.kt`): coma o punto, con o sin miles |
+| A-02 | Pagos (iOS) | `formatCurrency` en iOS devuelve separador de miles; al volver a parsearlo, montos ≥ 1000 dan "Monto inválido" | `CreatePaymentViewModel.kt:110`, `KmpFormatters.ios.kt:15` | ✅ Hecho | `6292019` — el campo se rellena con `formatAmountInput()` (nunca con el formato de pantalla); iOS `formatCurrency` = "1500.25" como Android/web |
+| A-03 | Pagos | Marcar/desmarcar facturas sobrescribe sin aviso el monto que escribió el usuario | `CreatePaymentViewModel.kt:110` | ✅ Hecho | `6292019` — autollenado solo mientras el usuario no editó el monto (`amountEdited`); vaciarlo lo reactiva |
+| A-04 | Votaciones | Presupuesto "1.500" (miles en es) se envía como 1.5 sin avisar; "1500,50" se rechaza | `DecisionSheetsStubs.kt:121` | ✅ Hecho | `c06d39d` — el monto del presupuesto usa `parseAmount` (vía `parseQuoteAmount`): "1.500" = 1500 y "1500,50" se acepta; error inline "Monto inválido" y proveedor < 2 caracteres |
+| A-05 | Dashboard | Muestra "¡Estás al día!" cuando el saldo aún carga o falló (`totalDebt` por defecto 0.0) | `DashboardScreen.kt:219, 801`, `DashboardViewModel.kt:69-80` | ✅ Hecho | `72230f5` — `totalDebt: Double?` (null = desconocido); mientras carga, spinner; si falla, "No pudimos cargar tu saldo" + Reintentar (móvil y KPI web, que muestran "—"). "Al día" solo con saldo cargado ≤ 0 |
+| A-06 | Dashboard | Doble carga al abrir (`init` + `ON_RESUME`) y `refresh()` no cancela el job anterior → datos viejos / de otra unidad | `DashboardViewModel.kt:29, 93-96`, `DashboardScreen.kt:97` | ✅ Hecho | `72230f5` — `onResume()` ignora el primer ON_RESUME (ya cargó `init`); cada carga cancela la anterior (`loadJob`, con sus peticiones hijas); al cambiar de unidad se descartan saldo/pagos/caja chica de la anterior |
+| A-07 | Varias | Errores de red mostrados como vacío o pantalla en blanco, sin reintentar: historial de pagos, crear pago ("No tienes recibos pendientes"), detalle de pago, detalle de factura ("No se encontraron facturas"), dashboard, selector de propiedad | `PaymentHistoryViewModel.kt:53`, `CreatePaymentViewModel.kt:56`, `PaymentDetailScreen.kt:241`, `InvoiceDetailScreen.kt:163-184`, `DashboardScreen.kt:108`, `UnitSelectionViewModel.kt:49` | ✅ Hecho | `6292019` — pagos hecho (historial, crear pago, detalle) con el nuevo `ErrorState` (`EmptyState.kt`) y `fetchPayments`/`fetchPayment` (`Result`); `72230f5` — dashboard hecho (usuario/unidad: `ErrorState` a pantalla completa; transacciones: `ErrorState` en lugar de la lista; saldo: ver A-05); `3ee3188` — detalle de factura hecho (factura: `ErrorState` a pantalla completa / `WebEmptyFrame`; pagos de la factura: `ErrorState` en la sección, con reintento propio `loadPayments`; carga separada de factura y pagos, que antes podía mostrar "No se encontraron facturas" mientras la factura aún cargaba) y lista de facturas (`ErrorState` + Reintentar en lugar del mensaje crudo de la excepción); `79dc0d9` — selector de propiedad hecho: `UnitSelectionViewModel` guarda `error` (también si `fetchCurrentUser` lanza; la cancelación se propaga) y `retry()` (ignorado mientras carga); la pantalla muestra `ErrorState` + Reintentar (móvil y web) en lugar de spinner infinito o lista vacía |
+| A-08 | Facturas | El error de la lista nunca se limpia: tras un refresh exitoso sigue mostrándose | `InvoiceListViewModel.kt:29, 37` | ✅ Hecho | `3ee3188` — `loadInvoices()` limpia `error` al empezar; el fallo muestra `ErrorState` + Reintentar (A-07) |
+| A-09 | Perfil | Preferencias de notificación solo en memoria: no se guardan ni se envían a la API | `NotificationSettingsScreen.kt:31-33` | ⏸️ Descartado | Falta backend: `PATCH users/me` guarda un `settings` libre, pero no hay endpoint ni esquema de preferencias de notificación que el backend use para enviar avisos. La pantalla no cambia (paso 8) |
+| A-10 | Perfil | Editar perfil: la unidad es editable pero no se envía (solo `name`); además bloquea guardar si no hay unidad | `EditProfileScreen.kt:85-90`, `EditProfileViewModel.kt:53-75`, `RemoteAuthRepository.kt:204-210` | ✅ Hecho | `2bfb74c` — la unidad se muestra de solo lectura (`enabled = false` + texto de apoyo `apartment_unit_read_only`) y ya no bloquea guardar si falta; solo se envía `name`. Validado en `condominium-api` (`modules/users/presentation/routes.ts`): `PATCH users/me` acepta `name`, `phone` y `settings`, nunca la unidad. La app no tiene campo de teléfono, así que no se envía |
+| A-11 | Perfil | Cambiar contraseña pide la actual pero el backend no la verifica (solo envía `newPassword`) | `ChangePasswordScreen.kt:232`, `RemoteAuthRepository.kt:226-228` | ⏸️ Descartado | Falta backend: `PATCH users/me/password` solo recibe `new_password` y no verifica la actual; la validación queda del lado del cliente (campo obligatorio y distinta de la nueva). La UI no cambia (paso 8) |
+| A-12 | Pagos / Facturas | Botones que no hacen nada: "Descargar recibo" (solo `println`), "Descargar factura" (TODO), "Contactar soporte" (onClick vacío) | `PaymentDetailScreen.kt:71-75, 117, 354`, `CondominioNavGraph.kt:351` | ⏸️ Descartado | Falta backend: no hay endpoint de descarga de recibo/factura ni de soporte (verificado en `condominium-api`, 2026-10-21). Factura re-verificada en el paso 3 (2026-10-24): `billing/presentation/routes.ts` solo tiene `POST /invoices/preview-pdf` (importación admin), no descarga; UI sin tocar |
+| A-13 | Votaciones | Porcentajes sin formato ("33.333333333333336%"); empates reciben #1/#2 y "Liderando" pese al aviso "Empate técnico" | `DecisionDetailScreen.kt:1150, 170-175, 1082-1091` | ✅ Hecho | `c06d39d` — porcentajes enteros (`formatPercent`); empates comparten posición (`rankTallies`) y "Liderando" solo con líder único (`leaderQuoteId`); `DecisionTally.kt` |
+| A-14 | Primer login | Sin salida: no se puede cerrar sesión ni volver si el usuario no cambia la contraseña | `FirstLoginChangePasswordScreen.kt:48-86` | ✅ Hecho | `241865c` — botón «Cerrar sesión» (`onLogoutClick`): limpia la sesión temporal y vuelve al login |
+| A-15 | Votaciones | Detalle de votación muestra error de JSON si un presupuesto no tiene archivo (`file_url` null) | `DecisionModels.kt:61` | ✅ Hecho | `1893483` — `fileUrl: String?`; sin archivo se oculta "Ver archivo" |
+| A-16 | Pagos (web) | Calendario: encabezado y mes muestran un día/mes de menos (formato UTC en zona local) | `CreatePaymentScreen.kt:1021, 1210` | ✅ Hecho | `6292019` — Material3 1.9 wasm formatea con `Date` JS en zona local; en web se pasa un `DatePickerFormatter` en UTC (kotlinx-datetime + `month_*`); encabezado `dd/MM/yyyy` (con el mes largo no cabía el año), forma larga solo para accesibilidad |
+| A-17 | Login (arranque) | Sin red al abrir la app se muestra el login aunque el token sigue guardado: `fetchCurrentUser` falla y no se distingue "sin conexión" de "sesión inválida" (el token solo se borra con 401). Parece un deslogueo y no ofrece reintentar. Además, al arrancar se llama 3 veces a `users/me` | `LoginViewModel.kt:25-48`, `RemoteAuthRepository.kt:157` | ✅ Hecho | `241865c` — `fetchCurrentUser` distingue 401 (`SessionExpiredException`: borra el token → login) de fallo de red/servidor (conserva el token → pantalla con «Reintentar» e «Iniciar sesión con otra cuenta»); quitado el fetch del `init` de `RemoteAuthRepository` y el repositorio reutiliza el usuario 10 s tras un fetch correcto (`users/me` una vez al arrancar en vez de tres) |
+| A-18 | Varias (web) | Sin red, en wasm el fallo de `fetch` llega como `kotlin.Error: Fail to fetch` (no es `Exception`): los `catch (e: Exception)` de `safeRequest` y de los repositorios no lo atrapan, la corrutina muere (error no capturado en consola) y la pantalla queda en spinner infinito; ningún `ErrorState` aparece en web | `ApiServiceImpl.kt:35`, `RemotePaymentRepository.kt:225` y demás `catch` de `data/repository/` | ✅ Hecho | `3ee3188` — hallado por el tester en web (2026-10-24). `catch (e: Throwable)` + `e.rethrowIfCancellation()` (nuevo `data/remote/NetworkErrors.kt`; relanza `CancellationException`) en `safeRequest` y en los 36 `catch` de red de los repositorios. Los `catch` que solo parsean JSON/enums quedan como estaban |
+| A-19 | Pagos (Android) | El historial de pagos carga dos veces al abrirlo (2× `users/me` + 2× `payments?unit_id=…` a la vez): `init` del ViewModel y el primer `ON_RESUME` de la pantalla; además las cargas no se cancelan entre sí | `PaymentHistoryViewModel.kt:24`, `PaymentHistoryScreen.kt:75` | ✅ Hecho | `3ee3188` — hallado por el tester (2026-10-25). Un solo `loadJob` cancelable (como A-06). Sin ventanas de tiempo: `OnScreenReturn` (`ui/utils/ScreenReturn.kt`) avisa (a) al (re)entrar en composición —volver del detalle, fiable en web; pero también la rotación en Android recrea la composición, así que el ViewModel solo recarga si antes la pantalla avisó `onOpenChild()` al navegar hacia adelante (rotación/apertura ⇒ 0 recargas)— y (b) en ON_START solo si el mismo observer vio antes un ON_STOP (`BackgroundReturnDetector`; `onBackgroundReturn()`, recarga siempre; la rotación crea un observer nuevo, no cuenta; un ON_RESUME/ON_START tardío de wasm sin ON_STOP se ignora). Si ya hay una carga en curso, la señal se ignora (esa carga es igual de reciente); `loadPayments()`/`refresh()` explícitos siempre cargan. Se eliminó `ReloadGate`. Mismo mecanismo en el Dashboard. Tests: `ui/ScreenReturnTest.kt`. Manual: ciclo de vida real de NavHost/wasm |
+| A-20 | Varias (web) | `safeRequest` hacía `printStackTrace()` en cada fallo: sin red la consola web se llena de trazas `kotlin.Error: Fail to fetch` | `ApiServiceImpl.kt:37` | ✅ Hecho | `3ee3188` — hallado por el tester (2026-10-25). Quitado (no hay logger de debug en el proyecto); el error sigue llegando a la pantalla vía `Response.error` |
+| A-21 | Facturas (Android) | Detalle de factura: los botones inferiores "Ver todos los pagos" / "Descargar factura" se parten en dos líneas en Compact | `InvoiceDetailScreen.kt:87-139` | ✅ Hecho | `3ee3188` — hallado por el tester (2026-10-25). Lado a lado si ambas etiquetas caben en una línea (medidas con `rememberTextMeasurer`); si no, apilados a ancho completo. Etiquetas `maxLines = 1` + elipsis como red de seguridad. Botones Material (touch target ≥ 48dp) |
+| A-22 | Cartelera (seguridad, APP-M3) | Los enlaces del anuncio (adjuntos y enlaces dentro del Markdown) se abrían con `uriHandler.openUri` sin filtrar esquema (`javascript:`, `file:`, `intent:`…) | `BillboardDetailScreen.kt` | ✅ Hecho | `cd3a223` — `safeUriHandler` (`BillboardUtils.kt`) solo deja pasar `http`/`https`; se provee como `LocalUriHandler` de toda la pantalla, así también filtra los enlaces del Markdown |
+| A-23 | Cartelera | Si fallaba "Confirmar lectura" (o recargar) con el anuncio ya en pantalla, el error no se mostraba en ningún lado: el botón volvía a su estado sin explicación | `BillboardDetailScreen.kt`, `BillboardDetailViewModel.kt` | ✅ Hecho | `cd3a223` — snackbar con el error (`error_toggling_reaction`) y `clearError()` |
+| A-24 | Login | Un login fallido muestra el mensaje crudo del repositorio en inglés (`Login error: …`, `Login failed (401): Error from server: 401 Unauthorized`) en vez de un texto traducido de credenciales inválidas / sin conexión; lo mismo con «Failed to send reset email (500)» y «Failed to change password (…)» | `RemoteAuthRepository.kt` (`login`, `resetPassword`, `changePasswordFirstLogin`), `LoginViewModel.kt` | ✅ Hecho | `241865c` — pedido por el usuario en la prueba manual. Los repositorios devuelven `ApiFailureException(code)` / `NetworkFailureException` (`KtorResponse.kt`; `safeRequest` separa fallo de red de HTTP 500) y `authErrorText(error, AuthAction)` (`ui/utils/AuthErrors.kt`) elige un recurso por formulario: credenciales inválidas (400/401/403), sin conexión (`error_check_connection`), cuenta pendiente, conflicto/datos inválidos de registro, política de contraseña, sesión vencida, resto `error_unknown`. Nunca texto del servidor (el backend responde en inglés y la app no conserva su cuerpo) |
+| A-25 | Registro (QR) | Un código inválido (escaneado o escrito a mano) navegaba igual al formulario de registro y recién allí fallaba | `QrScannerScreen.kt`, `QrScannerViewModel.kt` | ✅ Hecho | `241865c` — pedido por el usuario. El escáner valida con `getBuildingByCode` antes de navegar: cargando, bloqueo de doble envío, `qr_invalid_code` o sin conexión en la propia pantalla; la cámara no repite un código ya rechazado. El formulario vuelve a pedir el edificio (una segunda llamada, aceptada); el deep link `?code=` sigue yendo directo al formulario |
+| A-26 | Perfil | Guardar el perfil, cambiar la contraseña y eliminar la cuenta mostraban el mensaje crudo del repositorio en inglés («Failed to update user», «Failed to delete account»); el diálogo de eliminar mostraba texto técnico | `RemoteAuthRepository.kt` (`updateUser`, `deleteAccount`), `EditProfileViewModel.kt`, `ChangePasswordViewModel.kt`, `ProfileViewModel.kt` | ✅ Hecho | `2bfb74c` — los repositorios devuelven `ApiFailureException`/`NetworkFailureException` y los tres formularios usan `authErrorText` (nuevas `AuthAction.UpdateProfile` y `DeleteAccount`: 401 → sesión vencida, resto genérico)
+| A-27 | Perfil | Tras guardar el nombre, Perfil seguía mostrando el anterior hasta recargar (`updateUser` no actualizaba `currentUser`) | `RemoteAuthRepository.kt` (`updateUser`) | ✅ Hecho | `2bfb74c` — al guardar se actualiza el nombre en `currentUser` sin otra petición
+| A-28 | Selector de propiedad | Con red, el selector muestra «No pudimos cargar tus propiedades» (web y Android). Causa probable: `UserUnitDto.buildingId` es obligatorio pero el backend lo omite cuando el join `units` viene nulo (`mapUnitsFromPersistence`: `u.units?.building_id`; el esquema de respuesta lo marca `Optional`) → `safeRequest` convierte el fallo de decodificación en `Response.error(500)` → «Failed to fetch user». Además `UnitSelectionViewModel` descarta la causa | `ApiResponses.kt:90-96`, `ApiServiceImpl.kt:32-36`, `RemoteAuthRepository.kt:177`, `UnitSelectionViewModel.kt` | 🔍 Verificar | Sin corregir (fuera del paso 8). Reproducir con `adb logcat`/pestaña Red y comprobar si la respuesta de `users/me` trae una unidad sin `building_id`
+
+## B. Componentes compartidos — un arreglo corrige todas las pantallas
+
+| ID | Componente | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|---|
+| B-01 | `TopBarWithBack` | Botón atrás sin nombre accesible (`Res.string.back` ya existe); título con `maxLines = 1` pero sin `overflow = Ellipsis` ni `heading()` | `TopBarWithBack.kt:49, 79, 55-72` | ✅ Hecho | `1893483` |
+| B-02 | `LabeledOutlinedField` | La etiqueta es un `Text` aparte, no asociado al campo; no expone `contentType` (autofill). `isError` y `supportingText` ya existen, pero las pantallas no los usan (ver E-L4, E-P1) | `LabeledOutlinedField.kt:47-71` | ✅ Hecho | `1893483` — `contentType` disponible; aplicarlo en las pantallas es E-L1 |
+| B-03 | `AppSidebar` | Ítems sin `selectable(role = Role.Tab)` ni `selectableGroup()`: no se anuncia la sección activa | `AppShell.kt:61, 89` | ✅ Hecho | `1893483` |
+| B-04 | `AppBottomBar` / `AppNavRail` | Sin `Role.Tab`/selected; `contentDescription = label` duplica el texto; área táctil ~38dp; `fontSize` 10/11sp fijo | `AppBottomBar.kt:135-154, 188-189` | ✅ Hecho | `1893483` |
+| B-05 | `StatusBadge` / `AdminWebStyle` | Texto del color de estado sobre el mismo color al 10–20%: contraste 2–3.8:1. Falta un token `on*Container` por estado | `StatusBadge.kt:35`, `AdminWebStyle.kt:30-31` | ✅ Hecho | `1893483` — `onStatusContainer()` + `AptoOnWarningContainer` (`Color.kt`) |
+| B-06 | `LoadingState` / `CondoButtons` | Spinners sin semántica: no se anuncia la carga y el botón queda sin nombre | `LoadingState.kt:29`, `CondoButtons.kt:41-42` | ✅ Hecho | `1893483` |
+| B-07 | `Type.kt` | Ningún estilo con `fontFeatureSettings = "tnum"`: montos y tablas desalineados | `Type.kt:21-136` | ✅ Hecho | `1893483` |
+| B-08 | `FilterPillChip` | Sin `Role.Tab`/selected, ~36dp de alto, selección solo por color | `AnnouncementComponents.kt:266-278` | ✅ Hecho | `1893483` |
+| B-09 | `NavGraph` | Transición fade de 700 ms (la de por defecto de `NavHost`: no hay `enterTransition`/`exitTransition` propios), no respeta "reducir movimiento" | `CondominioNavGraph.kt:192-203` | ✅ Hecho | `1893483` — fade 200 ms; sin transición con reducir movimiento (`ui/utils/ReducedMotion.kt`) |
+| B-10 | `ShimmerEffect` / animaciones infinitas | No respetan reduced motion (shimmer, escáner QR, barra del splash) | `ShimmerEffect.kt:19-27`, `QrScannerScreen.kt:151`, `SplashScreen.kt:117` | ✅ Hecho | `1893483` |
+
+## C. Textos e i18n
+
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| C-01 | ~60 textos visibles hardcodeados en Kotlin (muchos ya existen en `strings.xml`): sobre todo Pagos (~30), Cartelera, splash/marca ("Tu condominio, en orden.", "VIVIENDA ELEVADA", "Apto by Nibs") | `PaymentHistoryScreen.kt`, `PaymentDetailScreen.kt`, `CreatePaymentScreen.kt`, `BillboardDetailScreen.kt`, `AnnouncementComponents.kt:41-47, 176`, `AppShell.kt:74-133`, `SplashScreen.kt` | ✅ Hecho | `6292019` — Pagos hecho (crear, historial, detalle; también el nombre del método, antes `PaymentMethod.label` solo en español); `72230f5` — dashboard hecho ("Cartelera", E-D1); falta el resto; `cd3a223` — Cartelera hecha: etiquetas de categoría (`announcementCategoryLabelRes`), "NUEVO", "LEÍDO"/"CONFIRMAR LECTURA", aviso de expiración, "PDF Documento", "Descargar" y errores del detalle por recurso es/en; `241865c` — splash, barra lateral y panel de marca (`brand_tagline`, `brand_headline`, `brand_footer`), pie del escáner QR (`qr_footer`) y placeholder de email (`email_placeholder`) por recurso es/en; el nombre «Apto» queda literal (marca) |
+| C-02 | Claves faltantes en `values-en`: `download_invoice`, `no_invoices_for_filter`, `billboard_detail_title`, `decisions_see_detail`, `decisions_urgent`, `decisions_finalized_on` (y `settings`, `share`, sin uso). A la inversa, `values-en` tiene 36 claves que no existen en `values` (caja chica: `cat_*`, `category_*`, `register_expense`…), todas sin uso: borrar | `values-en/strings.xml` | ✅ Hecho | `1893483` — 36 claves en-only borradas (sin uso verificado); 8 traducciones añadidas |
+| C-03 | Title Case en español ("Deuda Total", "Iniciar Sesión", "Cerrar Sesión", "Historial de Pagos"…): pasar a sentence case | `values/strings.xml` | ✅ Hecho | `1893483` |
+| C-04 | Mayúsculas dentro del texto ("GANADOR", "CORREO ELECTRÓNICO", estados): aplicar con estilo, no en el recurso | `values/strings.xml`, `RegisterScreen.kt` | ✅ Hecho | `1893483` |
+| C-05 | Tono mezclado tú / usted / vos ("Seleccione", "acérquese", "Debés") | `values/strings.xml:144`, `CreatePaymentScreen.kt:500` | ✅ Hecho | `6292019` — Pagos ("Adjunta el comprobante", "acércate", "Nombre del banco"); `ad55153` — resto de `strings.xml`: `select_building_first` y `select_unit_placeholder` pasan a tú (barrido sin más formas de usted) |
+| C-06 | "..." en vez de "…" (`loading`, `qr_scan_scanning`) y falta de ortografía "Registrate" | `values*/strings.xml:24, 79` | ✅ Hecho | `1893483` |
+| C-07 | Plurales armados a mano ("1 presupuestos", "entendido(s)", "recibo(s) seleccionado(s)"): usar `<plurals>` | `values*/strings.xml`, `CreatePaymentScreen.kt:357, 986` | ✅ Hecho | `1893483` — `<plurals>` de `strings.xml` hechos; `6292019` — `CreatePaymentScreen.kt` usa `invoices_selected_count` (`<plurals>`). `cd3a223` — Cartelera: sin plurales a mano (`billboard_reads_count`/`billboard_understood_count` son `<plurals>` y ahora también describen las métricas); `units_count_label` ya es `<plurals>` (es/en) y se usa con `pluralStringResource` (`79dc0d9`): "1 unidad" / "2 unidades" |
+| C-08 | Fechas: formatos distintos entre pantallas, ISO crudo en cartelera, meses en español también en inglés | `InvoiceListScreen.kt:482`, `InvoiceDetailScreen.kt:749`, `BillboardDetailScreen.kt:313`, `PaymentHistoryScreen.kt:258`, `DecisionComponents.kt:87` | ✅ Hecho | `6292019` — Pagos hecho: `dd/MM/yyyy` en historial, detalle y crear pago (como el detalle de factura); meses de facturas por recurso `month_*`; `72230f5` — dashboard `dd/MM/yyyy` (`formatPaymentDate`) en móvil y tabla web; `3ee3188` — Facturación hecha: vencimiento de la tabla web y fechas del detalle con `formatPaymentDate`; periodo "2025-03" → "Marzo 2025"/"March 2025" con `invoiceMonthLabel` (ahora `internal`, de crear pago; ya no antepone "Enero" a periodos que no son `YYYY-MM`) en lista y detalle; falta cartelera y votaciones; `cd3a223` — Cartelera hecha: fecha de creación (móvil y web) y vencimiento con `formatDecisionDate` (`dd/MM/yyyy`, zona local; ahora acepta `timeZone` como `formatDecisionDeadline`). Verificado: no queda ninguna fecha ISO cruda ni formato distinto en `ui/` (pagos, dashboard, facturación, votaciones y cartelera usan `dd/MM/yyyy`); C-08 completo |
+; `c06d39d` — votaciones hecho: plazos `dd/MM/yyyy HH:mm` (`formatDecisionDeadline` ahora con año); falta cartelera |
+| C-09 | `$` hardcodeado en lugar de `currency_amount` (puede contradecir la moneda mostrada) | `DashboardScreen.kt:597`, `InvoiceDetailScreen.kt:353`, `DecisionDetailScreen.kt:848, 1345`, `DecisionSheetsStubs.kt:373`, `CreatePaymentScreen.kt:306, 351, 418` | ✅ Hecho | `6292019` — Pagos hecho (crear, historial, detalle); `72230f5` — dashboard hecho; `3ee3188` — factura hecha (montos del resumen y de la tabla web de pagos; "Aplicado"/"Monto total" de los pagos, que salían sin símbolo, ahora con `currency_amount`); falta votaciones |
+; `c06d39d` — votaciones hecho (presupuestos, ganador y hoja de voto con `currency_amount`); ya no quedan `$` hardcodeados |
+
+## D. Contraste (WCAG AA: 4.5:1 texto normal, 3:1 texto grande / íconos)
+
+| ID | Par | Contraste | Dónde | Estado | Ref |
+|---|---|---|---|---|---|
+| D-01 | Badges de estado (web: todos; móvil: aviso y pendiente) | 1.99–3.82:1 | `StatusBadge.kt`, `AdminWebStyle.kt` (ver B-05) | ✅ Hecho | `1893483` — ver B-05; móvil ≥ 4.9:1, web ≥ 4.8:1 |
+| D-02 | Pestaña inactiva barra inferior/rail (#9CA3AF) | 2.39–2.54:1 | `AppBottomBar.kt:113, 174` | ✅ Hecho | `1893483` — `AptoNavInactive` #6B7280: 4.83:1 (blanco), 4.55:1 (rail web) |
+| D-03 | Pestaña activa móvil (#FF6B00 sobre blanco) | 2.86:1 | `AppBottomBar.kt:112` | ✅ Hecho | `1893483` — activa = `colorScheme.primary`: #C45006 4.67:1 (móvil), #B45309 4.73:1 (rail web) |
+| D-04 | Texto blanco del panel de marca del login sobre el degradado | 1.79–3.19:1 | `AppShell.kt:124-135` | ✅ Hecho | `241865c` — degradado `AptoSecondaryContainer`→`AptoSecondary` (`BrandPanelGradient`) y texto blanco sólido, sin alfa: ≥ 4.5:1 en todo el panel |
+| D-05 | Blanco sobre el primary móvil (#DB5A07) | 3.83:1 | `Color.kt:28` | ✅ Hecho | `1893483` — #DB5A07 → #C45006: 4.67:1 |
+| D-06 | Textos con `onSurface` al 50–60% de alfa (perfil, notificaciones, primer login) | α 0.5: 3.3:1; α 0.6: ~4.5:1 (en el límite) | `EditProfileScreen.kt:72`, `NotificationSettingsScreen.kt:80`, `FirstLoginChangePasswordScreen.kt:160` | ✅ Hecho | `241865c` (primer login) + `2bfb74c` (`EditProfileScreen`, `NotificationSettingsScreen`, `ChangePasswordScreen`: `onSurfaceVariant`) |
+
+Pares que pasan: `onSurfaceVariant` sobre blanco/fondo (5.05–9.38:1), blanco sobre primary web (5.02:1).
+
+## E. Por pantalla — prioritarios
+
+### Login y autenticación
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-L1 | Ningún campo con autofill (`contentType` Email/Password/NewPassword/nombres) ni `autoCorrectEnabled = false` en email/códigos | `LoginScreen.kt:242-287`, `RegisterScreen.kt:263-305`, `ChangePasswordScreen.kt:298` | ✅ Hecho | `241865c` — `contentType` (Email, Password, NewPassword, nombres) y `autoCorrectEnabled = false` en email/código/documento, también en Recuperar contraseña y en `PasswordField` de Cambiar contraseña |
+| E-L2 | Enter repetido dispara el login dos veces (`onDone` no mira `isLoading`); email sin `trim()` | `LoginScreen.kt:283-286`, `LoginViewModel.kt:67` | ✅ Hecho | `241865c` — el VM ignora `onLoginClick` mientras `isLoading` (se marca antes del `launch`) y el teclado tampoco dispara; email con `trim()` |
+| E-L3 | FirstLogin y Register no se pueden enviar desde el teclado en móvil (en web Enter ya envía; en móvil no hay ImeAction) | `FirstLoginChangePasswordScreen.kt:138-143`, `RegisterScreen.kt:300-305` | ✅ Hecho | `241865c` — `ImeAction.Next`/`Done` en móvil y web; Done envía (si no está cargando) |
+| E-L4 | Errores sin `liveRegion` ni `isError` por campo; fallos silenciosos si `exception.message` es null | `ForgotPasswordViewModel.kt:38`, `FirstLoginChangePasswordViewModel.kt:57`, `RegisterViewModel.kt:95`, `LoginViewModel.kt:90` | ✅ Hecho | `241865c` — errores con `liveRegion`; `isError` en Login (ambos campos), Recuperar (email), Primer login (`newPasswordError`/`confirmPasswordError`) y Registro (`missingFields`, se limpia al editar); sin mensaje → `error_unknown` / credenciales inválidas |
+| E-L5 | Escáner QR: cerrar es `Text("✕")` sin descripción y de 40dp; código pasado sin codificar a la ruta | `QrScannerScreen.kt:97-105, 60-69` | ✅ Hecho | `241865c` — cerrar es `Icon(Close)` con descripción «Cerrar» y 48dp; el código va codificado a la ruta (`registerFormRoute`, `ui/navigation/Routes.kt`); flecha atrás web con descripción |
+| E-L6 | Términos aceptados al registrarse sin enlace a los documentos | `RegisterScreen.kt:335` | ⏸️ Descartado | Falta backend: no hay URLs de Términos de Servicio / Política de Privacidad que enlazar (UI sin cambios) |
+| E-L7 | Splash con `delay(2400)` fijo en cada arranque (también web) | `SplashScreen.kt:32` | ✅ Hecho | `241865c` — `splashDelayMillis`: 0 en web y con movimiento reducido, 800 ms en teléfono (antes 2400 fijos) |
+
+### Dashboard
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-D1 | "Cartelera" hardcodeado en móvil | `DashboardScreen.kt:423` | ✅ Hecho | `72230f5` — `billboard_title` |
+| E-D2 | Avatar se anuncia solo con la inicial; acciones rápidas se leen dos veces | `DashboardScreen.kt:362, 774, 522` | ✅ Hecho | `72230f5` — avatar `Role.Button` + "Perfil" (`clearAndSetSemantics`, sin la inicial); ícono de acción rápida sin `contentDescription` y la acción con `Role.Button` |
+| E-D3 | Dos "Ver todo" con destinos distintos, ~16dp de alto, sin rol | `DashboardScreen.kt:171-176, 243-251, 980` | ✅ Hecho | `72230f5` — el de facturas ahora dice "Ver facturas" (`see_invoices`); el de transacciones sigue "Ver todo" con `onClickLabel` "Historial"; ambos `Role.Button` y `minimumInteractiveComponentSize()` (48dp), también en web (`WebLink`) |
+| E-D4 | Sin estado vacío de transacciones en móvil; badges de 9sp ilegibles | `DashboardScreen.kt:181, 587, 635` | ✅ Hecho | `72230f5` — vacío móvil con `web_dashboard_no_transactions` (o `ErrorState` si falló); badge y "Procesado por" con `labelSmall` (sin 9sp fijo); `key = { it.id }` |
+| E-D5 | Nombre/unidad/descripciones sin `maxLines` ni `weight` | `DashboardScreen.kt:280-293, 333-345, 755` | ✅ Hecho | `72230f5` — `maxLines = 1` + `Ellipsis` y `weight` en nombre, unidad y descripción de factura; píldora de unidad web con ancho máx. 360dp. Web: tabla de transacciones con fecha/monto/estado al ancho de su celda más ancha (medido, sin saltos) y la descripción absorbe el resto; KPI apiladas si no caben (< 640dp) y etiqueta en máx. 2 líneas |
+
+### Seleccionar propiedad
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-U1 | Sin estado vacío (usuario sin edificios) | `UnitSelectionScreen.kt:98-121, 357-396` | ✅ Hecho | `79dc0d9` — `UnitSelectionUiState.isEmpty` → `EmptyState` (`units_empty_title/subtitle`), móvil y web (`WebEmptyFrame`); distinto del error |
+| E-U2 | El ícono "colapsar" no colapsa (`expandedBuildingId` nunca vuelve a null) | `UnitSelectionScreen.kt:240`, `UnitSelectionViewModel.kt:60` | ✅ Hecho | `79dc0d9` — `onBuildingSelected` sobre el edificio ya expandido lo colapsa (null) |
+| E-U3 | Expandido/seleccionado no expuesto a accesibilidad | `UnitSelectionScreen.kt:166-169, 238-247, 477-498` | ✅ Hecho | `79dc0d9` — tarjeta móvil: `Role.Button` + `stateDescription` expandido/contraído; tile web: `selected` + `stateDescription` (`state_expanded/collapsed/selected`) |
+
+### Facturación
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-F1 | Botón "Pagar" anidado dentro de una card clicable | `InvoiceListScreen.kt:207, 295` | ✅ Hecho | `3ee3188` — tarjeta móvil: solo el área de datos es clicable (`Role.Button`, `onClickLabel` "Detalle de factura") y "Pagar" es hermano, no hijo (mismo aspecto que `ListItemCard`); fila de la tabla web igual: celdas clicables + botón aparte |
+| E-F2 | Tabla web no lazy (`Column + forEach`) | `InvoiceListScreen.kt:390-407` | ✅ Hecho | `3ee3188` — `LazyColumn` con `key = id` dentro de la `WebCard` (cabecera fija, la card crece hasta el fondo y las filas hacen scroll dentro); grid móvil con `key = id` |
+| E-F3 | Montos: columna "Pagado" centrada, sin `maxLines` (se parten) | `InvoiceListScreen.kt:248, 487-505` | ✅ Hecho | `3ee3188` — móvil: columnas al ancho de su contenido (`SpaceBetween`), "Pagado" alineado a la izquierda, montos y etiquetas `maxLines = 1`/`softWrap = false`; web: columnas fijas medidas con `rememberTextMeasurer` como el Dashboard (vencimiento, total, restante, estado, acción), celdas sin salto de línea, concepto/periodo con elipsis |
+| E-F4 | Filtro con `remember` (se pierde al volver del detalle) | `InvoiceListScreen.kt:64` | ✅ Hecho | `3ee3188` — `selectedTab` en `InvoiceListUiState` (`onTabSelected`); el ViewModel sigue vivo en el back stack |
+
+### Pagos
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-P1 | Validación con un único error al pie, sin inline ni foco; el error no se limpia al editar | `CreatePaymentScreen.kt:523-529`, `CreatePaymentViewModel.kt:63-93` | ✅ Hecho | `6292019` — error por campo (`isError` + `supportingText`), foco al primer campo inválido, se limpia al editar; errores de formulario con `liveRegion` |
+| E-P2 | Checkbox de facturas sin semántica (toggleable / Role.Checkbox) | `CreatePaymentScreen.kt:259-284` | ✅ Hecho | `6292019` — `Surface(checked, onCheckedChange)` + `Role.Checkbox` |
+| E-P3 | Android no acepta PDF (`PickVisualMedia.ImageOnly`) aunque el texto lo promete; tamaño no validado | `CreatePaymentScreen.kt:672-677`, `ImagePicker.android.kt:15` | ✅ Hecho | `6292019` — `rememberDocumentPickerLauncher` (imagen o PDF, también en web) con el mismo límite de 5 MB que votaciones; el multipart envía el MIME real; el detalle abre los PDF con el visor externo |
+| E-P4 | DatePicker permite fechas futuras | `CreatePaymentScreen.kt:842-859` | ✅ Hecho | `6292019` — `SelectableDates` hasta hoy |
+| E-P5 | "CANCELAR OPERACIÓN" solo vuelve al paso 1 | `CreatePaymentScreen.kt:565` | ✅ Hecho | `6292019` — sale del flujo (volver al paso 1 sigue en la flecha atrás) |
+| E-P6 | "Ver completo" y el recuadro del comprobante clicables sin comprobante | `PaymentDetailScreen.kt:217-224, 294` | ✅ Hecho | `6292019` — solo clicables (y "Ver completo" visible) con comprobante |
+
+### Cartelera
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-C1 | URL sin extensión se trata como imagen; sin estado de error de imagen; nombre de archivo crudo (`%20`) | `BillboardDetailScreen.kt:78, 522, 645-658` | ✅ Hecho | `cd3a223` — solo `jpg/jpeg/png/gif/webp/bmp` son imagen (sin extensión = archivo con botón de abrir); la imagen que falla muestra "No se pudo cargar la imagen" y deja de abrir el visor; nombre de archivo decodificado (`attachmentFileName`, `BillboardUtils.kt`) |
+| E-C2 | En móvil no se muestra el conteo de "entendido" (`reactionsCount` sin usar) | `BillboardDetailScreen.kt:127-132, 669` | ✅ Hecho | `cd3a223` — el conteo "N entendidos" (en vivo, sigue al botón) aparece también en móvil, junto a lecturas |
+| E-C3 | Detalle sin "Reintentar" en error; doble espacio final por `Spacer(80.dp)` | `BillboardDetailScreen.kt:207, 222-239` | ✅ Hecho | `cd3a223` — error de carga con `ErrorState` + Reintentar (mensaje por recurso `error_loading_announcement`, ya no el texto crudo); quitado el `Spacer(80.dp)` (la barra de reacción ya reserva su espacio vía `Scaffold`) |
+| E-C4 | Botón de reacción toggle sin estado accesible; métricas que son solo números | `BillboardDetailScreen.kt:707-771`, `AnnouncementComponents.kt:104-128` | ✅ Hecho | `cd3a223` — el botón de reacción expone `toggleableState` (activado/desactivado); `AnnouncementMetricItem` recibe `description` ("5 lecturas", "3 entendidos") en la lista; "Ver completo" con rol de botón |
+
+### Votaciones
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-V1 | Voto irreversible confirmado con "Confirmar" genérico; opciones no seleccionables al tocar la fila | `DecisionSheetsStubs.kt:335-365, 412` | ✅ Hecho | `c06d39d` — fila completa seleccionable (`selectable`, rol RadioButton); botón "Confirmar voto por <proveedor>" |
+| E-V2 | Sheet se puede cerrar mientras envía; sin errores inline | `DecisionSheetsStubs.kt:122-140, 171-191` | ✅ Hecho | `c06d39d` — no se cierra (X, Cancelar, atrás, fuera, gesto) mientras envía; el VM ignora cierre y doble envío; errores inline por campo; "No hay unidad activa" como recurso |
+| E-V3 | "Urgente" en una votación ya vencida; "Borradores" vs "Recepción" para el mismo estado | `DecisionsListScreen.kt:345-360`, `values/strings.xml:290, 296` | ✅ Hecho | `c06d39d` — votación vencida muestra "Plazo vencido" en vez de "Urgente"; filtro es "Borradores" → "Recepción" (igual que el estado) |
+| E-V4 | Lectura síncrona del archivo completo (5 MB) en el callback de UI | `DecisionSheetsStubs.kt:102` | ✅ Hecho | `c06d39d` — el archivo se lee en `Dispatchers.Default` (no en el callback de UI) y el envío espera a que termine la lectura |
+
+### Perfil
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-R1 | Cerrar sesión sin confirmación ni loading (doble envío); más peso visual que "Eliminar cuenta" | `ProfileScreen.kt:286-298, 411-420` | ✅ Hecho | `2bfb74c` — confirmación antes de cerrar sesión (`LogoutConfirmDialog`), botón deshabilitado con spinner mientras corre y `ProfileViewModel.onLogoutClick` ignora el doble toque (`isLoggingOut`); el botón pasa a contorno neutro (no rojo relleno): «Eliminar cuenta» queda como la acción de más peso |
+| E-R2 | Switches sin etiqueta (no toggleable); en web doble foco por ítem | `NotificationSettingsScreen.kt:155-224` | ✅ Hecho | `2bfb74c` — la fila entera es `toggleable(role = Switch)` y el `Switch` solo dibuja el estado (`onCheckedChange = null`): el lector de pantalla lee título + descripción + estado y en web hay un solo foco por ítem |
+| E-R3 | Selector de idioma sin `selectable`/RadioButton; ripple fuera de las esquinas | `ProfileScreen.kt:766-777` | ✅ Hecho | `2bfb74c` — filas con `selectable(role = RadioButton)` dentro de `selectableGroup`; `clip` antes del fondo para que ripple y foco sigan las esquinas |
+| E-R4 | Sin aviso de cambios sin guardar ni confirmación al guardar | `EditProfileScreen.kt:37-47`, `ChangePasswordScreen.kt:52-62` | ✅ Hecho | `2bfb74c` — `DiscardChangesDialog` al salir (barra superior y atrás del sistema, `BackHandler`) con cambios sin guardar; al guardar, aviso (`Snackbar`) y la pantalla se queda (Editar perfil: botón deshabilitado sin cambios; Cambiar contraseña: campos vaciados). Nueva dependencia `ui-backhandler` |
+
+### Web (index.html / PWA)
+| ID | Problema | Dónde | Estado | Ref |
+|---|---|---|---|---|
+| E-W1 | Falta `<meta name="color-scheme" content="light">`, `translate="no"` y `<noscript>`; `lang` fijo en `es` | `wasmJsMain/resources/index.html` | ✅ Hecho | `ad55153` — `color-scheme` light, `translate="no"` + `notranslate`, `<noscript>` es/en, `description`; `lang` y el texto de carga/no compatible siguen `navigator.language` (es/en). Sin CSP (ver nota) |
+| E-W2 | Ícono `"any maskable"` combinado; manifest sin `lang`, `id`, `description` | `manifest.webmanifest` | ✅ Hecho | `ad55153` — íconos `any` y `maskable` separados; añadidos `id`, `lang`, `dir`, `description`. Nota: `icon-512.png` trae fondo gris/blanco horneado y poco margen; un ícono maskable propio (fondo naranja a sangre) requiere el arte de diseño |
+
+## F. Barrido general (sin ID, aplicar al tocar cada pantalla)
+
+- `semantics { heading() }` en títulos de página y de sección (falta en todas las pantallas).
+- `Role.Button` / `onClickLabel` en filas y tarjetas clicables con `Modifier.clickable`.
+- `maxLines` + `TextOverflow.Ellipsis` en nombres, descripciones y celdas de tabla.
+- `key = { it.id }` en `items(...)` de listas.
+- `Color(0x…)` / `Color.White` fuera de `theme/` → tokens.
+- `fontSize` fijo en sp → `MaterialTheme.typography`.
+- Área táctil mínima de 48dp en íconos y textos clicables.
+- `pointerHoverIcon(Hand)` y estado de foco visible en web (no solo hover).
+
+## Historial
+
+| Fecha | Cambio |
+|---|---|
+| 2026-10-16 | Auditoría inicial (9 revisiones por pantalla, rama `poc/web-admin-theme`) |
+| 2026-10-21 | Revisión contra el código actual (sin cambios desde la auditoría): bloque A confirmado en código → ⬜ Pendiente; corregidas las descripciones de A-10, B-01, B-02, B-09, C-02, C-07, C-09, D-06 y E-L3 |
+| 2026-10-21 | Paso 0 (`1893483`): B-01…B-10, C-02, C-03, C-04, C-06, D-01, D-02, D-03 y D-05 → ✅; C-07 → 🔄 (falta `CreatePaymentScreen.kt`). A-15 (nuevo, hallado probando web contra DEV) → ✅. Primary móvil #DB5A07 → #C45006; nuevos `AptoNavInactive`, `AptoOnWarningContainer`, `onStatusContainer()` y `rememberReducedMotion()` |
+| 2026-10-21 | Paso 1, Pagos (`6292019`): A-01, A-02, A-03 y E-P1…E-P6 → ✅; A-07 → 🔄 (pagos hecho); C-01, C-05, C-08 y C-09 → 🔄 (pagos hecho); C-07 sigue 🔄 (falta `units_count_label`); A-12 → ⏸️ (falta backend). Nuevos `parseAmount()`/`formatAmountInput()` (`KmpFormatters.kt`), `ErrorState` (`EmptyState.kt`) y `PaymentRepository.fetchPayments`/`fetchPayment`. Resumen con columna ⏸️. A-16 (nuevo, hallado probando web contra DEV en UTC−4) → ✅ |
+| 2026-10-21 | Paso 2, Dashboard (`72230f5`): A-05, A-06 y E-D1…E-D5 → ✅; A-07 sigue 🔄 (dashboard hecho; faltan detalle de factura y selector de propiedad); C-01, C-08 y C-09 siguen 🔄 (dashboard hecho). Nuevas claves `error_loading_dashboard`, `error_loading_balance`, `see_invoices` |
+| 2026-10-22 | A-17 (nuevo, hallado probando en Android): sin red el arranque muestra el login aunque el token sigue guardado → ⬜, para el paso 6 |
+| 2026-10-24 | Paso 3, Facturación (`3ee3188`): A-08 y E-F1…E-F4 → ✅; A-07 sigue 🔄 (detalle y lista de factura hechos; falta selector de propiedad); C-08 y C-09 siguen 🔄 (Facturación hecha); A-12 sigue ⏸️ (re-verificado: no hay endpoint de PDF de factura). `invoiceMonthLabel` pasa a `internal`. Nuevas claves `error_loading_invoice_list`, `error_loading_invoice`, `error_loading_invoice_payments` |
+| 2026-10-24 | A-18 (nuevo, hallado por el tester en web sin red: `kotlin.Error: Fail to fetch` no era atrapado) → ✅ (`3ee3188`). Nuevo `Throwable.rethrowIfCancellation()` (`data/remote/NetworkErrors.kt`) |
+| 2026-10-25 | A-19 (doble carga del historial de pagos en Android), A-20 (`printStackTrace` en `safeRequest`) y A-21 (botones del detalle de factura partidos en Android), hallados por el tester → ✅ (`3ee3188`) |
+| 2026-10-25 | A-19 corregido de nuevo (regresión en web: no recargaba al volver del detalle): `OnScreenReturn` + `BackgroundReturnDetector` (`ui/utils/ScreenReturn.kt`, sin ventanas de tiempo), también en el Dashboard (reemplaza «saltar el primer resume» de A-06) |
+| 2026-10-25 | A-19 ajuste: girar el teléfono ya no recarga Historial ni Inicio; la pantalla avisa `onOpenChild()` al navegar hacia adelante y solo entonces la re-entrada recarga (`OnScreenReturn(onReenter, onBackgroundReturn)`; volver de segundo plano igual) |
+| 2026-10-25 | Paso 4, Votaciones (`c06d39d`): A-04, A-13, C-09 y E-V1…E-V4 → ✅; C-08 sigue 🔄 (votaciones hecho; falta cartelera). Nuevas claves `decisions_vote_confirm_for`, `decisions_upload_provider_invalid`, `decisions_upload_amount_invalid`; `decisions_filter_reception` = "Recepción" |
+| 2026-10-26 | Paso 5, Cartelera (`cd3a223`): C-08 (completo), E-C1…E-C4 → ✅; C-01 y C-07 siguen 🔄 (cartelera hecha). Nuevos A-22 (APP-M3: solo `http`/`https` en enlaces de anuncios) y A-23 (error de reacción mudo) → ✅. `announcementCategoryLabel` ahora es `@Composable` (+ `announcementCategoryLabelRes`); `AnnouncementMetricItem` pide `description`; `formatDecisionDate` acepta `timeZone`. Nuevas claves `billboard_category_*`, `billboard_new`, `billboard_confirm_read`, `billboard_expiry_title`, `billboard_expires_on`, `billboard_pdf_document`, `billboard_download`, `billboard_image_error`, `error_loading_announcement`, `error_toggling_reaction` |
+| 2026-10-26 | Paso 6, Login/registro/primer login/QR/splash (`241865c`): A-14, A-17, C-01 (completo), D-04, E-L1…E-L5 y E-L7 → ✅; D-06 sigue 🔄 (primer login hecho); E-L6 → ⏸️ (falta backend). Nuevo A-24 (mensajes crudos en inglés en login/reset). Nuevas claves `brand_tagline`, `brand_headline`, `brand_footer`, `qr_footer`, `email_placeholder`, `session_check_failed`, `use_another_account`. `RemoteAuthRepository` ya no pide `users/me` en el `init` y reutiliza el usuario 10 s (`TimeSource` inyectable) |
+| 2026-10-26 | Paso 6, ajuste tras prueba manual: A-24 → ✅ (errores de auth tipados y traducidos, sin texto del servidor) y nuevo A-25 → ✅ (el escáner QR valida el código antes de navegar). Nuevas claves `error_account_pending`, `error_session_expired`, `error_registration_conflict`, `error_registration_invalid`; nuevo `QrScannerViewModel` |
+| 2026-10-26 | Paso 7, Selector de propiedad (`79dc0d9`): A-07 (completo), C-07 (`units_count_label` → `<plurals>`; C-07 pasa a ✅) y E-U1…E-U3 → ✅. Nuevas claves `error_loading_units`, `units_empty_title`, `units_empty_subtitle`, `state_expanded`, `state_collapsed`, `state_selected`; `UnitSelectionScreen` pide `onRetry` |
+| 2026-10-26 | Paso 8, Perfil (`2bfb74c`): A-10, D-06 (completo) y E-R1…E-R4 → ✅; A-09 y A-11 → ⏸️ (falta backend). Nuevos A-26 (errores crudos en perfil) y A-27 (nombre desactualizado tras guardar) → ✅, y A-28 (selector de propiedad: «No pudimos cargar tus propiedades» con red, causa probable anotada) → 🔍. Nuevas claves `unsaved_changes_title/message`, `discard`, `keep_editing`, `profile_saved`, `password_changed`, `apartment_unit_read_only`, `logout_confirm_title/message`, `logging_out`; nueva dependencia `org.jetbrains.compose.ui:ui-backhandler` |
+
+| 2026-10-26 | Paso 9, Web (`ad55153`): E-W1, E-W2 y C-05 (completo) → ✅. `index.html`: `color-scheme`, `translate="no"`, `<noscript>`, `lang`/texto de carga según `navigator.language`; `manifest.webmanifest`: `id`, `lang`, `dir`, `description`, íconos `any`/`maskable` separados; `select_building_first` y `select_unit_placeholder` en tú. Sin CSP (riesgo con wasm/inline script sin poder probarlo) |

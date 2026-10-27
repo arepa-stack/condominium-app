@@ -18,3 +18,6 @@ actual fun PlatformLocaleEffect(languageCode: String) {
     // SideEffect (not LaunchedEffect) so it applies before the keyed subtree reads strings.
     SideEffect { overrideBrowserLanguage(languageCode) }
 }
+
+@Composable
+actual fun ProvidePlatformLocale(languageCode: String, content: @Composable () -> Unit) = content()

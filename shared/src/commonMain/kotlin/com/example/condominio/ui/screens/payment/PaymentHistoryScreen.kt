@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -35,12 +34,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.EmptyState
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.StatusBadge
@@ -51,13 +49,14 @@ import com.example.condominio.ui.components.isWide
 import com.example.condominio.ui.components.pagePadding
 import com.example.condominio.ui.components.screenBackground
 import com.example.condominio.ui.theme.*
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.formatDate
 import condominio.shared.generated.resources.*
-import kotlin.time.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.example.condominio.ui.utils.OnScreenReturn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,24 +66,14 @@ fun PaymentHistoryScreen(
     viewModel: PaymentHistoryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.loadPayments()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+    // Reload when coming back from a payment detail or from background; opening and rotation don't (A-19)
+    OnScreenReturn(viewModel::onScreenReturn, viewModel::onBackgroundReturn)
+    val openPayment: (String) -> Unit = { id -> viewModel.onOpenChild(); onPaymentClick(id) }
 
     Scaffold(
         topBar = {
             TopBarWithBack(
-                title = "Historial de Pagos",
+                title = stringResource(Res.string.payment_history),
                 onBackClick = onBackClick
             )
         },
@@ -99,9 +88,16 @@ fun PaymentHistoryScreen(
                 uiState.isLoading && uiState.payments.isEmpty() -> {
                     LoadingState()
                 }
+                // A failed load is not "no payments" (A-07)
+                uiState.loadFailed && uiState.payments.isEmpty() -> WebEmptyFrame {
+                    ErrorState(
+                        title = stringResource(Res.string.error_loading_payments),
+                        onRetry = viewModel::loadPayments,
+                    )
+                }
                 uiState.payments.isEmpty() -> WebEmptyFrame {
                     EmptyState(
-                        title = "No hay pagos registrados.",
+                        title = stringResource(Res.string.payment_history_empty),
                         icon = Icons.Default.ReceiptLong,
                     )
                 }
@@ -109,7 +105,7 @@ fun PaymentHistoryScreen(
                     PaymentHistoryTable(
                         unit = uiState.unit,
                         payments = uiState.payments,
-                        onPaymentClick = onPaymentClick
+                        onPaymentClick = openPayment
                     )
                 }
                 else -> {
@@ -131,16 +127,17 @@ fun PaymentHistoryScreen(
                             Column(modifier = Modifier.padding(bottom = 24.dp)) {
                                 if (uiState.unit.isNotEmpty()) {
                                     Text(
-                                        text = "UNIDAD ${uiState.unit}".uppercase(),
+                                        text = stringResource(Res.string.unit, uiState.unit).uppercase(),
                                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = AptoOnSurfaceVariant,
                                         modifier = Modifier.padding(bottom = 4.dp)
                                     )
                                 }
                                 Text(
-                                    text = "Transacciones Recientes",
+                                    text = stringResource(Res.string.recent_transactions),
                                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = AptoPrimary
+                                    color = AptoPrimary,
+                                    modifier = Modifier.semantics { heading() }
                                 )
                             }
                         }
@@ -148,7 +145,7 @@ fun PaymentHistoryScreen(
                         items(uiState.payments) { payment ->
                             PaymentHistoryCard(
                                 payment = payment,
-                                onClick = { onPaymentClick(payment.id) }
+                                onClick = { openPayment(payment.id) }
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
@@ -209,11 +206,12 @@ fun PaymentHistoryCard(
             ) {
                 Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
-                        text = payment.description.ifBlank { "Pago de Recibo" },
+                        text = payment.description.ifBlank { stringResource(Res.string.payment_default_desc) },
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                         color = AptoPrimary,
                         modifier = Modifier.padding(bottom = 4.dp),
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = formattedDate,
@@ -223,9 +221,10 @@ fun PaymentHistoryCard(
                     )
                 }
                 Text(
-                    text = "$${formatCurrency(payment.amount)}",
+                    text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = AptoPrimary
+                    color = AptoPrimary,
+                    maxLines = 1
                 )
             }
 
@@ -234,38 +233,44 @@ fun PaymentHistoryCard(
                 horizontalArrangement = Arrangement.Start
             ) {
                 StatusBadge(
-                    text = statusData.first,
+                    text = stringResource(statusData.first),
                     statusColor = statusData.second
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val extraText = when {
-                    !payment.processorName.isNullOrBlank() -> "• Por: ${payment.processorName}"
-                    else -> "• ${payment.method.label}"
+                    !payment.processorName.isNullOrBlank() ->
+                        stringResource(Res.string.processed_by_short, payment.processorName).trimStart()
+                    else -> "· ${paymentMethodLabel(payment.method)}"
                 }
                 Text(
                     text = extraText,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                    color = AptoOutline
+                    color = AptoOutline,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
     }
 }
 
-private fun formatPaymentDate(epochMillis: Long): String = try {
-    val instant = Instant.fromEpochMilliseconds(epochMillis)
-    val date = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val months = listOf("", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
-    val monthStr = if (date.monthNumber in 1..12) months[date.monthNumber] else date.monthNumber.toString()
-    "${date.dayOfMonth} $monthStr, ${date.year}"
-} catch (e: Exception) {
-    "Fecha Inválida"
-}
+/** Same numeric date in every payment screen and language (C-08), as in the invoice detail. */
+internal fun formatPaymentDate(epochMillis: Long): String = formatDate(epochMillis, "dd/MM/yyyy")
+
+/** Localized method name (the enum label is Spanish only). */
+@Composable
+internal fun paymentMethodLabel(method: PaymentMethod): String = stringResource(
+    when (method) {
+        PaymentMethod.PAGO_MOVIL -> Res.string.method_pago_movil
+        PaymentMethod.TRANSFER -> Res.string.method_transfer
+        PaymentMethod.CASH -> Res.string.method_cash
+    }
+)
 
 private fun paymentStatusData(status: PaymentStatus) = when (status) {
-    PaymentStatus.APPROVED -> Pair("Aprobado", AptoStatusSuccess)
-    PaymentStatus.REJECTED -> Pair("Rechazado", AptoStatusError)
-    PaymentStatus.PENDING -> Pair("Pendiente", AptoStatusWarning)
+    PaymentStatus.APPROVED -> Pair(Res.string.status_approved, AptoStatusSuccess)
+    PaymentStatus.REJECTED -> Pair(Res.string.status_rejected, AptoStatusError)
+    PaymentStatus.PENDING -> Pair(Res.string.status_pending, AptoStatusWarning)
 }
 
 // Column weights shared by the header and the rows of the web table.
@@ -293,16 +298,17 @@ private fun PaymentHistoryTable(
             Column {
                 if (unit.isNotEmpty()) {
                     Text(
-                        text = "UNIDAD $unit".uppercase(),
+                        text = stringResource(Res.string.unit, unit).uppercase(),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = AptoOnSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
                 Text(
-                    text = "Transacciones Recientes",
+                    text = stringResource(Res.string.recent_transactions),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = AptoOnSurface
+                    color = AptoOnSurface,
+                    modifier = Modifier.semantics { heading() }
                 )
             }
         }
@@ -324,7 +330,7 @@ private fun PaymentTableHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AptoSurfaceContainerLow)
+            .background(TableHeaderBg)
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -394,7 +400,7 @@ private fun PaymentTableRow(
                 color = AptoOnSurface
             )
             Text(
-                text = payment.description.ifBlank { "Pago de Recibo" },
+                text = payment.description.ifBlank { stringResource(Res.string.payment_default_desc) },
                 style = MaterialTheme.typography.bodySmall,
                 color = AptoOnSurfaceVariant,
                 maxLines = 1,
@@ -420,7 +426,7 @@ private fun PaymentTableRow(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = payment.method.label,
+                text = paymentMethodLabel(payment.method),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AptoOnSurface,
                 maxLines = 1,
@@ -436,7 +442,7 @@ private fun PaymentTableRow(
             modifier = Modifier.weight(COL_REFERENCE).padding(end = 16.dp)
         )
         Text(
-            text = "$${formatCurrency(payment.amount)}",
+            text = stringResource(Res.string.currency_amount, formatCurrency(payment.amount)),
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
             color = AptoPrimary,
             textAlign = TextAlign.End,
@@ -444,7 +450,7 @@ private fun PaymentTableRow(
             modifier = Modifier.weight(COL_AMOUNT).padding(end = 24.dp)
         )
         Box(modifier = Modifier.weight(COL_STATUS)) {
-            StatusBadge(text = statusData.first, statusColor = statusData.second)
+            StatusBadge(text = stringResource(statusData.first), statusColor = statusData.second)
         }
     }
 }

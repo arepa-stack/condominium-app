@@ -22,6 +22,12 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
+import com.example.condominio.ui.components.ErrorState
+import com.example.condominio.ui.components.formatDecisionDate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,28 +62,12 @@ import com.example.condominio.ui.theme.AptoSuccess
 import com.example.condominio.ui.theme.AptoSuccessContainer
 import org.koin.compose.viewmodel.koinViewModel
 import condominio.shared.generated.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 // ---------------------------------------------------------------------------
 // Helpers: attachment type detection
 // ---------------------------------------------------------------------------
-
-private val IMAGE_EXTENSIONS = setOf("jpg", "jpeg", "png", "gif", "webp", "bmp")
-private val PDF_EXTENSIONS = setOf("pdf")
-
-private fun attachmentExtension(url: String): String {
-    val path = url.substringBefore('?')
-    val filename = path.substringAfterLast('/')
-    if (!filename.contains('.')) return ""
-    return filename.substringAfterLast('.').lowercase()
-}
-
-private fun isImage(url: String): Boolean {
-    val ext = attachmentExtension(url)
-    // Asumimos que si no hay extensión explícita (ej. UUID en storage), es probable que sea una imagen (cámara/galería)
-    return ext.isEmpty() || ext in IMAGE_EXTENSIONS
-}
-private fun isPdf(url: String) = attachmentExtension(url) in PDF_EXTENSIONS
 
 /** Hand cursor on wide (web) layouts only; no-op on phone. */
 @Composable
@@ -96,12 +86,24 @@ fun BillboardDetailScreen(
     viewModel: BillboardDetailViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val uriHandler = LocalUriHandler.current
+    // APP-M3: announcement links (attachment and Markdown) only open as http/https.
+    val baseUriHandler = LocalUriHandler.current
+    val uriHandler = remember(baseUriHandler) { safeUriHandler(baseUriHandler) }
     var showFullImage by remember { mutableStateOf(false) }
     val wide = isWide()
 
     LaunchedEffect(announcementId) {
         viewModel.loadAnnouncement(announcementId)
+    }
+
+    // A failed reaction (or reload) with the announcement already on screen is reported in a snackbar (A-22).
+    val snackbarHostState = remember { SnackbarHostState() }
+    val inlineError = if (uiState.announcement != null) uiState.error?.asString() else null
+    LaunchedEffect(inlineError) {
+        if (inlineError != null) {
+            snackbarHostState.showSnackbar(inlineError)
+            viewModel.clearError()
+        }
     }
 
     Scaffold(
@@ -132,8 +134,10 @@ fun BillboardDetailScreen(
                 )
             }
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = screenBackground(MaterialTheme.colorScheme.background),
     ) { paddingValues ->
+        CompositionLocalProvider(LocalUriHandler provides uriHandler) {
         when {
             uiState.isLoading && uiState.announcement == null -> {
                 LoadingState(modifier = Modifier.padding(paddingValues))
@@ -170,7 +174,7 @@ fun BillboardDetailScreen(
                         Spacer(Modifier.height(8.dp))
 
                         // ---- Date + metrics ----
-                        AnnouncementDateMetricsRow(announcement)
+                        AnnouncementDateMetricsRow(announcement, uiState.reactionsCount)
 
                         Spacer(Modifier.height(24.dp))
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -202,9 +206,6 @@ fun BillboardDetailScreen(
                             Spacer(Modifier.height(24.dp))
                             ExpiryWarningCard(announcement.expiresAt)
                         }
-
-                        // Bottom spacing for reaction bar
-                        Spacer(Modifier.height(80.dp))
                     }
                 }
 
@@ -220,16 +221,10 @@ fun BillboardDetailScreen(
 
             else -> {
                 val errorContent: @Composable () -> Unit = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = uiState.error?.asString() ?: "No se pudo cargar el anuncio.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                    ErrorState(
+                        title = uiState.error?.asString() ?: stringResource(Res.string.error_loading_announcement),
+                        onRetry = { viewModel.loadAnnouncement(announcementId) },
+                    )
                 }
                 if (wide) {
                     // Wide: compact card under the header, on the container's left edge.
@@ -238,6 +233,7 @@ fun BillboardDetailScreen(
                     errorContent()
                 }
             }
+        }
         }
     }
 }
@@ -310,15 +306,15 @@ private fun WideAnnouncementDetail(
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             SideMetaRow(
                                 icon = Icons.Default.CalendarToday,
-                                text = announcement.createdAt.take(10),
+                                text = formatDecisionDate(announcement.createdAt),
                             )
                             SideMetaRow(
                                 icon = Icons.Default.Visibility,
-                                text = stringResource(Res.string.billboard_reads_count, announcement.metrics.readsCount),
+                                text = pluralStringResource(Res.plurals.billboard_reads_count, announcement.metrics.readsCount, announcement.metrics.readsCount),
                             )
                             SideMetaRow(
                                 icon = Icons.Default.ThumbUp,
-                                text = stringResource(Res.string.billboard_understood_count, reactionsCount),
+                                text = pluralStringResource(Res.plurals.billboard_understood_count, reactionsCount, reactionsCount),
                             )
                             if (announcement.isPinned) {
                                 SideMetaRow(
@@ -415,7 +411,7 @@ private fun AnnouncementTitle(title: String) {
 }
 
 @Composable
-private fun AnnouncementDateMetricsRow(announcement: AnnouncementDto) {
+private fun AnnouncementDateMetricsRow(announcement: AnnouncementDto, reactionsCount: Int) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -431,7 +427,7 @@ private fun AnnouncementDateMetricsRow(announcement: AnnouncementDto) {
                 modifier = Modifier.size(16.dp),
             )
             Text(
-                text = announcement.createdAt.take(10),
+                text = formatDecisionDate(announcement.createdAt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -447,7 +443,24 @@ private fun AnnouncementDateMetricsRow(announcement: AnnouncementDto) {
                 modifier = Modifier.size(16.dp),
             )
             Text(
-                text = stringResource(Res.string.billboard_reads_count, announcement.metrics.readsCount),
+                text = pluralStringResource(Res.plurals.billboard_reads_count, announcement.metrics.readsCount, announcement.metrics.readsCount),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        // E-C2: the live "understood" count (it follows the reaction button), also on phone.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Default.ThumbUp,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = pluralStringResource(Res.plurals.billboard_understood_count, reactionsCount, reactionsCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -503,7 +516,7 @@ private fun ImageAttachmentSection(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .handCursorIfWide()
-                .clickable { onViewFull() },
+                .clickable(role = Role.Button) { onViewFull() },
         )
     }
     InlineImageAttachment(
@@ -519,7 +532,7 @@ private fun FileAttachmentCard(
 ) {
     val isPdfFile = isPdf(url)
     val attachmentIcon = if (isPdfFile) Icons.Default.PictureAsPdf else Icons.Default.AttachFile
-    val fileName = url.substringBefore('?').substringAfterLast('/').ifBlank {
+    val fileName = attachmentFileName(url).ifBlank {
         if (isPdfFile) stringResource(Res.string.billboard_attachment_pdf)
         else stringResource(Res.string.billboard_attachment)
     }
@@ -557,7 +570,7 @@ private fun FileAttachmentCard(
                 )
                 if (isPdfFile) {
                     Text(
-                        text = "PDF Documento",
+                        text = stringResource(Res.string.billboard_pdf_document),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -565,7 +578,7 @@ private fun FileAttachmentCard(
             }
             Icon(
                 imageVector = Icons.Default.Download,
-                contentDescription = "Descargar",
+                contentDescription = stringResource(Res.string.billboard_download),
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
@@ -603,12 +616,12 @@ private fun ExpiryWarningCard(expiresAt: String) {
         }
         Column {
             Text(
-                text = "Aviso de Expiración",
+                text = stringResource(Res.string.billboard_expiry_title),
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onErrorContainer,
             )
             Text(
-                text = "Vence: ${expiresAt.take(10)}",
+                text = stringResource(Res.string.billboard_expires_on, formatDecisionDate(expiresAt)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -627,6 +640,8 @@ private fun InlineImageAttachment(
     onClick: () -> Unit = {},
 ) {
     val context = LocalPlatformContext.current
+    // E-C1: a failed load shows an explicit state (and nothing to open full screen).
+    var failed by remember(url) { mutableStateOf(false) }
 
     // Aspect ratio 16:9 para coincidir con el diseño de Stitch
     Box(
@@ -638,8 +653,7 @@ private fun InlineImageAttachment(
                 RoundedCornerShape(16.dp),
             )
             .clip(RoundedCornerShape(16.dp))
-            .handCursorIfWide()
-            .clickable(onClick = onClick),
+            .then(if (failed) Modifier else Modifier.handCursorIfWide().clickable(role = Role.Button, onClick = onClick)),
         contentAlignment = Alignment.Center,
     ) {
         coil3.compose.SubcomposeAsyncImage(
@@ -654,7 +668,26 @@ private fun InlineImageAttachment(
                 .clip(RoundedCornerShape(16.dp)),
             loading = {
                 Box(modifier = Modifier.fillMaxSize().shimmerEffect())
-            }
+            },
+            error = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(16.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.BrokenImage,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = stringResource(Res.string.billboard_image_error),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            onError = { failed = true },
         )
     }
 }
@@ -724,11 +757,12 @@ private fun ReactionButton(
             )
         },
         shape = RoundedCornerShape(100.dp),
-        modifier = if (compact) {
+        // E-C4: the toggle state is announced ("on"/"off"), not only shown by color.
+        modifier = (if (compact) {
             Modifier.wrapContentWidth().pointerHoverIcon(PointerIcon.Hand)
         } else {
             Modifier.wrapContentWidth()
-        },
+        }).semantics { toggleableState = if (reacted) ToggleableState.On else ToggleableState.Off },
         contentPadding = if (compact) {
             PaddingValues(horizontal = 24.dp, vertical = 12.dp)
         } else {
@@ -762,7 +796,7 @@ private fun ReactionButton(
                     )
                 }
                 Text(
-                    text = if (reacted) "LEÍDO" else "CONFIRMAR LECTURA",
+                    text = stringResource(if (reacted) Res.string.billboard_read else Res.string.billboard_confirm_read).uppercase(),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
                     modifier = Modifier.alpha(if (reacted) 0.6f else 1f)
                 )

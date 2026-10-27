@@ -1,5 +1,6 @@
 package com.example.condominio.data.repository
 
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.*
 import com.example.condominio.data.remote.ApiService
 import com.example.condominio.ui.utils.formatDate
@@ -47,17 +48,21 @@ class RemotePaymentRepository(
     private val fileReader: PlatformFileReader
 ) : PaymentRepository {
 
-    override suspend fun getPayments(unitId: String?): List<Payment> {
+    override suspend fun getPayments(unitId: String?): List<Payment> =
+        fetchPayments(unitId).getOrElse { emptyList() }
+
+    override suspend fun fetchPayments(unitId: String?): Result<List<Payment>> {
         return try {
             val response = apiService.getPayments(unitId = unitId)
             if (response.isSuccessful && response.body() != null) {
-                response.body()!!.map { it.toDomain() }
+                Result.success(response.body()!!.map { it.toDomain() })
             } else {
-                emptyList()
+                Result.failure(Exception("HTTP ${response.code}"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             println("Error fetching payments: ${e.message}")
-            emptyList()
+            Result.failure(e)
         }
     }
 
@@ -69,23 +74,28 @@ class RemotePaymentRepository(
             } else {
                 emit(emptyList())
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             println("Error fetching payments stream: ${e.message}")
             emit(emptyList())
         }
     }
 
-    override suspend fun getPayment(id: String): Payment? {
+    override suspend fun getPayment(id: String): Payment? = fetchPayment(id).getOrNull()
+
+    override suspend fun fetchPayment(id: String): Result<Payment> {
         return try {
             val response = apiService.getPayment(id)
-            if (response.isSuccessful) {
-                response.body()?.toDomain()
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                Result.success(body.toDomain())
             } else {
-                null
+                Result.failure(Exception("HTTP ${response.code}"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             println("Error fetching payment $id: ${e.message}")
-            null
+            Result.failure(e)
         }
     }
 
@@ -158,7 +168,8 @@ class RemotePaymentRepository(
                 val errorMsg = translatePaymentError(response.errorBody().string())
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -202,7 +213,8 @@ class RemotePaymentRepository(
                 val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -216,7 +228,8 @@ class RemotePaymentRepository(
                 val errorMsg = response.errorBody().string()
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -229,7 +242,8 @@ class RemotePaymentRepository(
             } else {
                 Result.failure(Exception("Failed to fetch invoice details"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
@@ -263,7 +277,8 @@ class RemotePaymentRepository(
             } else {
                 Result.failure(Exception("Failed to fetch invoice payments"))
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
             Result.failure(e)
         }
     }
