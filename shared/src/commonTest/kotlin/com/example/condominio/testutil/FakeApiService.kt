@@ -53,6 +53,7 @@ class FakeApiService : ApiService {
     override suspend fun getInvoicePayments(id: String): Response<List<PaymentDto>> = TODO()
     override suspend fun getCredits(unitId: String): Response<JsonElement> = TODO()
     override suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto> = TODO()
+    override suspend fun getExchangeRates(): Response<RateSetDto> = TODO()
     override suspend fun listDecisions(buildingId: String?, status: String?, search: String?, page: Int?, limit: Int?): Response<DecisionsPageDto> = TODO()
     override suspend fun getDecisionDetail(id: String): Response<DecisionDetailDto> = TODO()
     override suspend fun uploadDecisionQuote(decisionId: String, unitId: String, providerName: String, amount: String, notes: String?, fileBytes: ByteArray, fileName: String, mimeType: String): Response<QuoteDto> = TODO()

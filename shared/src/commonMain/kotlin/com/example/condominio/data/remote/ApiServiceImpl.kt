@@ -220,6 +220,10 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         client.get("api/v1/app/petty-cash/funds/$buildingId")
     }
 
+    override suspend fun getExchangeRates(): Response<RateSetDto> = safeRequest {
+        client.get("api/v1/app/exchange-rates")
+    }
+
     override suspend fun listDecisions(
         buildingId: String?,
         status: String?,

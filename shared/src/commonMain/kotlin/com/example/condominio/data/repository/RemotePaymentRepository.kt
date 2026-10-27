@@ -3,6 +3,7 @@ package com.example.condominio.data.repository
 import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.*
 import com.example.condominio.data.remote.ApiService
+import com.example.condominio.data.remote.toFailure
 import com.example.condominio.ui.utils.formatDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -276,6 +277,21 @@ class RemotePaymentRepository(
                 Result.success(payments)
             } else {
                 Result.failure(Exception("Failed to fetch invoice payments"))
+            }
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getBcvRate(): Result<ExchangeRateDto> {
+        return try {
+            val response = apiService.getExchangeRates()
+            val rate = response.body()?.rates?.dolarOficial
+            when {
+                !response.isSuccessful -> Result.failure(response.toFailure())
+                rate == null -> Result.failure(IllegalStateException("No BCV rate published"))
+                else -> Result.success(rate)
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()

@@ -32,6 +32,9 @@ interface PaymentRepository {
     suspend fun getInvoice(id: String): Result<com.example.condominio.data.model.Invoice>
     
     suspend fun getInvoicePayments(invoiceId: String): Result<List<Payment>>
+
+    /** Today's BCV dollar rate (Bs per USD): condominium fees are paid in Bs at this rate. */
+    suspend fun getBcvRate(): Result<com.example.condominio.data.model.ExchangeRateDto>
 }
 
 

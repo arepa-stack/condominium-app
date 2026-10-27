@@ -50,6 +50,8 @@ interface ApiService {
     
     suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto>
 
+    suspend fun getExchangeRates(): Response<RateSetDto>
+
     suspend fun listDecisions(
         buildingId: String? = null,
         status: String? = null,
