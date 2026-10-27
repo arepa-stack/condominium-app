@@ -252,7 +252,7 @@ internal fun PayToAccountContent(
         }
 
         // "Copy all": one "Label: value" line per row of the selected method, ready to paste in the bank app.
-        val amountLine = totalBsPlain?.let { "${stringResource(Res.string.amount_in_bs)}: $it" }
+        val amountLine = totalBsPlain?.takeIf { totalUsd > 0 }?.let { "${stringResource(Res.string.amount_in_bs)}: $it" }
         val allText = (rows.map { (label, value) -> "${stringResource(label)}: $value" } + listOfNotNull(amountLine))
             .joinToString("\n")
         var copied by remember(method) { mutableStateOf(false) }
