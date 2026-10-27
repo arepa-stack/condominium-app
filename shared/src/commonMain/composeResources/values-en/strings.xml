@@ -519,4 +519,19 @@
     <string name="logout_confirm_title">Log out?</string>
     <string name="logout_confirm_message">You will need to sign in again to get back in.</string>
     <string name="logging_out">Logging out…</string>
+    <string name="pay_to_title">Pay to</string>
+    <string name="pay_to_hint">Pay to this account, then swipe to register your payment.</string>
+    <string name="pay_to_tab_account">1. Pay to</string>
+    <string name="pay_to_tab_register">2. Register payment</string>
+    <string name="pay_to_bank">Bank</string>
+    <string name="pay_to_holder">Account holder</string>
+    <string name="pay_to_rif">RIF</string>
+    <string name="pay_to_account">Account</string>
+    <string name="pay_to_phone">Phone</string>
+    <string name="pay_to_email">Email</string>
+    <string name="pay_to_qr_desc">Payment QR code</string>
+    <string name="pay_to_copy">Copy %1$s</string>
+    <string name="pay_to_done">I already paid, register payment</string>
+    <string name="pay_to_copy_all">Copy all details</string>
+    <string name="pay_to_copied_all">Details copied</string>
 </resources>
