@@ -116,6 +116,7 @@ data class BalanceInvoiceDto(
         val paid: Double = 0.0,
         val remaining: Double = 0.0,
         val period: String,
+        val description: String? = null,
         val status: String
 )
 
