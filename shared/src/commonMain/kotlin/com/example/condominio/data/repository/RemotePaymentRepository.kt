@@ -194,6 +194,7 @@ class RemotePaymentRepository(
                                             amount = detail.amount,
                                             paid = detail.paid,
                                             remaining = detail.remaining,
+                                            description = detail.description,
                                             status = try {
                                                 when (detail.status.uppercase()) {
                                                     "PENDING" -> com.example.condominio.data.model.InvoiceStatus.PENDING
