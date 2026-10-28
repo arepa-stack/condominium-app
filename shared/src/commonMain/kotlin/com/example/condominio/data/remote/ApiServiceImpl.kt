@@ -151,6 +151,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         bank: String?,
         allocations: String?,
         proofImage: ByteArray?,
+        currency: String,
         fileName: String?
     ): Response<PaymentDto> = safeRequest {
         val basicParts = formData {
@@ -158,6 +159,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
             append("unit_id", unitId)
             append("method", method)
             append("date", date)
+            append("currency", currency)
             if (buildingId != null) append("building_id", buildingId)
             if (notes != null) append("notes", notes)
             if (reference != null) append("reference", reference)
@@ -220,8 +222,8 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         client.get("api/v1/app/petty-cash/funds/$buildingId")
     }
 
-    override suspend fun getExchangeRates(): Response<RateSetDto> = safeRequest {
-        client.get("api/v1/app/exchange-rates")
+    override suspend fun getExchangeRates(date: String?): Response<RateSetDto> = safeRequest {
+        client.get("api/v1/app/exchange-rates") { if (date != null) parameter("date", date) }
     }
 
     override suspend fun getBuildingPaymentInfo(buildingId: String): Response<BuildingPaymentInfoDto> = safeRequest {

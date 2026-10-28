@@ -30,7 +30,7 @@ import org.koin.dsl.module
 
 /**
  * Platform-agnostic graph. Each platform adds a module providing:
- * [HttpClientEngine], [TokenManager], PlatformFileReader and PdfService.
+ * [HttpClientEngine], [TokenManager] and PlatformFileReader.
  */
 val sharedModule = module {
     single {

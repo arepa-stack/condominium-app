@@ -34,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.Invoice
 import com.example.condominio.data.model.InvoiceStatus
 import com.example.condominio.data.model.InvoiceType
+import com.example.condominio.data.model.withPayments
+import com.example.condominio.data.utils.rememberHtmlPrinter
+import com.example.condominio.ui.utils.invoiceTitle
+import com.example.condominio.ui.screens.payment.invoiceReceiptHtml
 import com.example.condominio.data.model.Payment
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.ui.components.AdaptiveColumns
@@ -58,13 +62,17 @@ import org.koin.compose.viewmodel.koinViewModel
 fun InvoiceDetailScreen(
     onBackClick: () -> Unit,
     onSeeAllPaymentsClick: () -> Unit,
-    onDownloadClick: () -> Unit,
     onPayRemainderClick: (String) -> Unit,
     onPaymentClick: (String) -> Unit,
     viewModel: InvoiceDetailViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val invoice = uiState.invoice
+    val invoice = uiState.invoice?.withPayments(uiState.payments)
+    // "Download invoice" prints the receipt; "Save as PDF" in the print dialog is the download
+    val printHtml = rememberHtmlPrinter()
+    val receipt = invoice?.let { invoiceReceiptHtml(it, uiState.payments) }
+    val receiptTitle = invoice?.let { invoiceTitle(it.description) ?: it.period }.orEmpty()
+    val onDownloadClick: () -> Unit = { receipt?.let { printHtml(receiptTitle, it) } }
     val hasPendingBalance = invoice != null &&
             invoice.remaining > 0 &&
             invoice.status != InvoiceStatus.CANCELLED &&

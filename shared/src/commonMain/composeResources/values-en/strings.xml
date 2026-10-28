@@ -543,4 +543,11 @@
     <string name="bs_amount">Bs. %1$s</string>
     <string name="pay_to_copy_all">Copy all details</string>
     <string name="pay_to_copied_all">Details copied</string>
+    <string name="exchange_rate_label">Applied rate</string>
+    <string name="exchange_rate_value">Bs. %1$s per $1 (%2$s)</string>
+    <string name="status_in_review">In review</string>
+    <string name="status_payment_rejected">Payment rejected</string>
+    <string name="receipt_generated_on">Generated on %1$s from Apto</string>
+    <string name="payment_receipt_title">Payment receipt</string>
+    <string name="receipt_amount">Amount</string>
 </resources>

@@ -194,7 +194,11 @@ data class PaymentDto(
         @SerialName("allocated_amount") val allocatedAmount: Double? = null,
         @SerialName("allocation_id") val allocationId: String? = null,
         @SerialName("allocated_at") val allocatedAt: String? = null,
-        val user: PaymentUserDto? = null
+        val user: PaymentUserDto? = null,
+        @SerialName("original_currency") val originalCurrency: String? = null,
+        @SerialName("original_amount") val originalAmount: Double? = null,
+        @SerialName("exchange_rate") val exchangeRate: Double? = null,
+        @SerialName("rate_date") val rateDate: String? = null
 )
 
 @Serializable
@@ -265,6 +269,11 @@ fun PaymentDto.toDomain(): Payment {
             proofUrl = proofUrl,
             allocations = allocations?.map { it.toDomain() } ?: emptyList(),
             userName = user?.name,
+            amountBs = originalAmount.takeIf { originalCurrency == "VES" },
+            exchangeRate = exchangeRate.takeIf { originalCurrency == "VES" },
+            rateDate = rateDate.takeIf { originalCurrency == "VES" },
+            // /billing/invoices/{id}/payments has no created_at: the allocation's timestamp orders them instead
+            createdAt = (createdAt ?: allocatedAt)?.let { runCatching { kotlin.time.Instant.parse(it).toEpochMilliseconds() }.getOrNull() },
             processedAt = processedAt?.let {
                 try {
                     kotlin.time.Instant.parse(it).toEpochMilliseconds()
@@ -294,7 +303,8 @@ data class CreatePaymentRequest(
         val allocations: List<AllocationDto>? = null,
         val notes: String? = null,
         val bank: String? = null,
-        @SerialName("amount_currency") val amountCurrency: String = "USD",
+        /** "VES" when [amount] is in Bs: the backend converts it and keeps the Bs amount and rate. */
+        val currency: String = "USD",
         @SerialName("proof_url") val proofUrl: String? = null
 )
 
