@@ -65,15 +65,52 @@
         })).observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['inputmode'] });
     }, 200);
 
+    // A failed boot used to leave a blank/black screen with no clue (seen on a Huawei Y7p): show the reason on top
+    // so the resident can send a photo of it. Once the app drew its first frame, errors stay in the console only.
+    let booted = false;
+    const showError = detail => {
+        if (booted || document.getElementById('boot-error')) return;
+        const box = document.createElement('div');
+        box.id = 'boot-error';
+        box.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;' +
+            'justify-content:center;gap:12px;padding:24px;text-align:center;color:#555;background:#F3F1ED;font-family:system-ui,sans-serif';
+        const title = document.createElement('span');
+        title.textContent = isEn
+            ? 'The app could not start on this browser. Try Chrome or Firefox up to date.'
+            : 'La app no pudo iniciar en este navegador. Prueba con Chrome o Firefox actualizados.';
+        const info = document.createElement('code');
+        info.style.cssText = 'font-size:12px;color:#8a7f72;word-break:break-word;max-width:520px';
+        info.textContent = String(detail).slice(0, 300) + ' · ' + navigator.userAgent;
+        box.append(title, info);
+        document.body.appendChild(box);
+    };
+    window.addEventListener('error', e => showError(e.message || e.error || 'error'));
+    window.addEventListener('unhandledrejection', e => showError((e.reason && (e.reason.message || e.reason)) || 'rejection'));
+    // ponytail: "booted" = 5 s after main.kt removes the loading screen (startup errors land in that window); a real
+    // first-frame signal from main.kt if this ever hides a late startup error or flags a harmless one.
+    new MutationObserver((_, obs) => {
+        if (!document.getElementById('loading')) { setTimeout(() => { booted = true; }, 5000); obs.disconnect(); }
+    }).observe(document.body, { childList: true });
+
+    // Compose draws on a WebGL canvas: without WebGL it boots into a black screen.
+    const probe = document.createElement('canvas');
+    const gl = probe.getContext('webgl2') || probe.getContext('webgl');
+    const hasWebGl = !!gl;
+    const lose = gl && gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext(); // give the probe's context back, browsers cap them
+
     // Smallest module using a WasmGC type: Kotlin/Wasm needs WasmGC (Chrome 119+, Firefox 120+, Safari 18.2+).
     const wasmGc = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]);
-    if (WebAssembly.validate(wasmGc)) {
+    if (WebAssembly.validate(wasmGc) && !hasWebGl) {
+        showError('WebGL unavailable');
+    } else if (WebAssembly.validate(wasmGc)) {
         // Compose keeps its own resource cache (strings/images) with no versioning: after a deploy it
         // would read new string offsets from the old strings file → blank texts. Drop it before booting.
         // ponytail: re-downloads resources (~hundreds of KB) every load; key it by build id if that matters.
         const boot = () => {
             const s = document.createElement('script');
             s.src = 'shared.js';
+            s.onerror = () => showError('shared.js failed to load');
             document.body.appendChild(s);
         };
         ('caches' in window ? caches.delete('compose_web_resources_cache').catch(() => {}) : Promise.resolve()).then(boot);

@@ -270,6 +270,8 @@ Gradle/build para wasm:
 - Sin escáner QR en web: se ingresa el código manualmente, o el QR codifica `https://<web>/?code=COND-XXXX` y la cámara
   nativa abre el registro directo.
 - "Descargar recibo/factura" y "Contactar soporte" no hacen nada en web.
+- Navegadores sin WasmGC (p. ej. el de Huawei) ven "navegador no compatible"; sin WebGL, o si el arranque falla, la
+  página muestra el error y el user agent en vez de quedar en negro.
 - Sin cache offline de datos (solo el *shell*); sin web push (la API no tiene endpoints).
 - Primera carga pesada (~5 MB comprimidos); accesibilidad limitada (render en canvas).
 - La pestaña oculta pausa la app (ver §3).
