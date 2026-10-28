@@ -60,3 +60,10 @@ fun String.emojiSafe(): String = if (platformRendersEmoji) this else buildString
 
 /** True on the web target: used to try web-only visual variants (e.g. the admin palette POC). */
 expect val isWebPlatform: Boolean
+
+/**
+ * Short invoice title for cards: drops what the admin appends after the concept, the aliquot breakdown
+ * (" - Base: $3100.00 (Alícuota: ...)") and notes (" | ..."). Null when nothing is left.
+ */
+fun invoiceTitle(description: String?): String? =
+    description?.substringBefore(" | ")?.substringBefore(" - Base:")?.trim()?.ifBlank { null }

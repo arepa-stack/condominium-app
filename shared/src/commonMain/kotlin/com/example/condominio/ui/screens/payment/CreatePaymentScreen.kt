@@ -72,6 +72,8 @@ import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
 import com.example.condominio.ui.utils.UiText
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
+import com.example.condominio.ui.utils.invoiceTitle
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.condominio.ui.utils.isWebPlatform
 import com.example.condominio.ui.utils.parseAmount
 import condominio.shared.generated.resources.*
@@ -415,9 +417,11 @@ private fun InvoiceCard(
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
                 Text(
-                    text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                    text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -1223,9 +1227,11 @@ private fun WideSummaryCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                        text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Text(

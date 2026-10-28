@@ -50,6 +50,7 @@ import com.example.condominio.ui.screens.payment.formatPaymentDate
 import com.example.condominio.ui.screens.payment.invoiceMonthLabel
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.invoiceTitle
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -237,7 +238,7 @@ fun InvoiceItem(
                 ) {
                     Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text(
-                            text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                            text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = AptoOnSurface,
@@ -580,7 +581,7 @@ private fun InvoiceTableRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                    text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = AptoOnSurface,
