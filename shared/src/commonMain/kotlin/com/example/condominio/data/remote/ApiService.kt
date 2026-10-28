@@ -51,6 +51,7 @@ interface ApiService {
     suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto>
 
     suspend fun getExchangeRates(): Response<RateSetDto>
+    suspend fun getBuildingPaymentInfo(buildingId: String): Response<BuildingPaymentInfoDto>
 
     suspend fun listDecisions(
         buildingId: String? = null,

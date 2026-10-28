@@ -2,6 +2,7 @@ package com.example.condominio.ui.screens.payment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.condominio.data.model.BuildingPaymentInfoDto
 import com.example.condominio.data.model.PaymentMethod
 import com.example.condominio.data.repository.PaymentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,11 +44,38 @@ class CreatePaymentViewModel (
         }
     }
 
+    // Building whose payment details are shown; known once the user is loaded.
+    private var buildingId: String? = null
+
+    /** Retry from the pay-to page: without a building the user itself failed to load, so reload it too. */
+    fun retryPaymentInfo() {
+        if (buildingId == null) loadPendingInvoices() else fetchPaymentInfo()
+    }
+
+    /** Bank account, Pago Móvil and QR the board set for this building in the admin panel. */
+    private fun fetchPaymentInfo() {
+        val id = buildingId ?: run {
+            _uiState.update { it.copy(isLoadingPaymentInfo = false, paymentInfoFailed = true) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingPaymentInfo = true, paymentInfoFailed = false) }
+            val result = paymentRepository.getPaymentInfo(id)
+            _uiState.update {
+                it.copy(isLoadingPaymentInfo = false, paymentInfo = result.getOrNull(), paymentInfoFailed = result.isFailure)
+            }
+        }
+    }
+
     fun loadPendingInvoices() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingInvoices = true, invoicesError = null) }
             val user = authRepository.fetchCurrentUser().getOrNull()
             val unitId = user?.currentUnit?.unitId ?: user?.units?.firstOrNull()?.unitId
+            if (_uiState.value.paymentInfo == null) {
+                buildingId = (user?.currentUnit?.buildingId ?: user?.units?.firstOrNull()?.buildingId)?.takeIf { it.isNotBlank() }
+                fetchPaymentInfo()
+            }
 
             if (unitId == null) {
                 _uiState.update {
@@ -271,7 +299,11 @@ data class CreatePaymentUiState(
     /** BCV dollar rate (Bs per USD) and its date ("2026-10-27"); null when it could not be loaded. */
     val bcvRate: Double? = null,
     val bcvRateDate: String? = null,
-    val isLoadingRate: Boolean = false
+    val isLoadingRate: Boolean = false,
+    /** Where to pay (from the building's admin settings); null until loaded or when loading failed. */
+    val paymentInfo: BuildingPaymentInfoDto? = null,
+    val isLoadingPaymentInfo: Boolean = true,
+    val paymentInfoFailed: Boolean = false
 ) {
     val hasFieldErrors: Boolean
         get() = amountError != null || bankError != null || referenceError != null || proofError != null
