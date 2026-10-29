@@ -4,6 +4,7 @@ import com.example.condominio.ApiConfig
 import com.example.condominio.data.local.TokenManager
 import com.example.condominio.data.remote.ApiService
 import com.example.condominio.data.remote.ApiServiceImpl
+import com.example.condominio.data.remote.SessionExpiry
 import com.example.condominio.data.repository.*
 import com.example.condominio.domain.usecase.billboard.GetUnreadAnnouncementsCountUseCase
 import com.example.condominio.ui.screens.UnitSelectionViewModel
@@ -30,7 +31,7 @@ import org.koin.dsl.module
 
 /**
  * Platform-agnostic graph. Each platform adds a module providing:
- * [HttpClientEngine], [TokenManager], PlatformFileReader and PdfService.
+ * [HttpClientEngine], [TokenManager] and PlatformFileReader.
  */
 val sharedModule = module {
     single {
@@ -53,6 +54,7 @@ val sharedModule = module {
             }
         }
     }
+    single { SessionExpiry(get()) }
     singleOf(::ApiServiceImpl) { bind<ApiService>() }
 
     // Repositories

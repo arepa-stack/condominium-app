@@ -371,5 +371,5 @@ private fun PayToRow(label: StringResource, value: String, divider: Boolean = tr
 }
 
 /** "2026-10-27" -> "27/10/2026"; anything else as is. */
-private fun bcvDateLabel(date: String?): String =
+internal fun bcvDateLabel(date: String?): String =
     date?.take(10)?.split("-")?.takeIf { it.size == 3 }?.reversed()?.joinToString("/") ?: date.orEmpty()

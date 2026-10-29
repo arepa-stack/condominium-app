@@ -36,6 +36,7 @@ interface ApiService {
         bank: String?,
         allocations: String?,
         proofImage: ByteArray? = null,
+        currency: String = "USD",
         fileName: String? = null
     ): Response<PaymentDto>
     
@@ -50,7 +51,8 @@ interface ApiService {
     
     suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto>
 
-    suspend fun getExchangeRates(): Response<RateSetDto>
+    /** Rates for [date] ("yyyy-MM-dd"); today when null. */
+    suspend fun getExchangeRates(date: String? = null): Response<RateSetDto>
     suspend fun getBuildingPaymentInfo(buildingId: String): Response<BuildingPaymentInfoDto>
 
     suspend fun listDecisions(

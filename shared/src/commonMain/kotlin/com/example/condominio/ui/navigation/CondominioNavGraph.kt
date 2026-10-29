@@ -12,6 +12,14 @@ import androidx.navigation.NavGraphBuilder
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
+import com.example.condominio.data.remote.SessionExpiry
+import com.example.condominio.data.repository.AuthRepository
+import org.koin.compose.koinInject
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -147,17 +155,40 @@ fun CondominioNavGraph(
     val currentRoute = backStackEntry?.destination?.route
     val showNav = currentRoute != null && currentRoute !in routesWithoutBottomBar
     val reducedMotion = rememberReducedMotion()
+    // A 401 on any authenticated request (SessionExpiry already dropped the token): reset the in-memory session
+    // and go to login from wherever the user is, clearing the back stack. splash/login handle it on their own.
+    val sessionExpiry: SessionExpiry = koinInject()
+    val authRepository: AuthRepository = koinInject()
+    // Expiry redirect: login replaces the screen at once, without the fade (reset once the user leaves login).
+    var expiredRedirect by remember { mutableStateOf(false) }
+    LaunchedEffect(currentRoute) { if (currentRoute != "login") expiredRedirect = false }
+    LaunchedEffect(navController) {
+        sessionExpiry.events.collect {
+            authRepository.logout()
+            val route = navController.currentBackStackEntry?.destination?.route
+            if (route != "splash" && route != "login") {
+                expiredRedirect = true
+                navController.navigate("login") { popUpTo(0) { inclusive = true } }
+            }
+        }
+    }
+    val scope = rememberCoroutineScope()
     val onTabSelected: (BottomTab) -> Unit = { tab ->
-        if (tab == BottomTab.HOME) {
-            // Home is the stack root: just pop back to it. Navigating with popUpTo(dashboard){saveState} +
-            // restoreState would save whatever sits above it (e.g. Perfil opened from the avatar) as Home's
-            // state and restore it immediately, leaving the user stuck.
-            if (!navController.popBackStack("dashboard", inclusive = false)) navController.navigate("dashboard")
-        } else {
-            navController.navigate(tab.route) {
-                popUpTo("dashboard") { saveState = true }
-                launchSingleTop = true
-                restoreState = true
+        // Token checked before opening the tab: if it is missing or expired, the collector above goes to login and
+        // the tab is never drawn. Undispatched: on web the check doesn't suspend, so the tap navigates in the same frame.
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            if (sessionExpiry.usableToken() == null) return@launch
+            if (tab == BottomTab.HOME) {
+                // Home is the stack root: just pop back to it. Navigating with popUpTo(dashboard){saveState} +
+                // restoreState would save whatever sits above it (e.g. Perfil opened from the avatar) as Home's
+                // state and restore it immediately, leaving the user stuck.
+                if (!navController.popBackStack("dashboard", inclusive = false)) navController.navigate("dashboard")
+            } else {
+                navController.navigate(tab.route) {
+                    popUpTo("dashboard") { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             }
         }
     }
@@ -203,8 +234,14 @@ fun CondominioNavGraph(
                 startDestination = "splash",
                 // Short fade (NavHost's default is 700ms); none when the OS asks to reduce motion.
                 // pop transitions default to these.
-                enterTransition = { if (reducedMotion) EnterTransition.None else fadeIn(tween(NavFadeMillis)) },
-                exitTransition = { if (reducedMotion) ExitTransition.None else fadeOut(tween(NavFadeMillis)) },
+                enterTransition = {
+                    if (reducedMotion || (expiredRedirect && targetState.destination.route == "login")) EnterTransition.None
+                    else fadeIn(tween(NavFadeMillis))
+                },
+                exitTransition = {
+                    if (reducedMotion || (expiredRedirect && targetState.destination.route == "login")) ExitTransition.None
+                    else fadeOut(tween(NavFadeMillis))
+                },
                 // No max width here: each page caps its own (see composable() below), so a page fading
                 // out keeps its width instead of being squeezed into the next route's (dashboard → unit_selection).
                 modifier = Modifier
@@ -367,7 +404,6 @@ fun CondominioNavGraph(
             InvoiceDetailScreen(
                     onBackClick = { navController.popBackStack() },
                     onSeeAllPaymentsClick = { navController.navigate("payment_history") },
-                    onDownloadClick = { /* TODO: implementar descarga de factura */ },
                     onPayRemainderClick = { invoiceId ->
                         navController.navigate("create_payment?invoiceId=$invoiceId")
                     },
