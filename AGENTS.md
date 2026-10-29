@@ -40,7 +40,18 @@ principal: cada agente trabaja en su propio worktree, con TDD, y no hace commit.
 | [`fixer`](.claude/agents/fixer.md) | Resuelve un bug o issue: reproduce con un test, causa raíz, fix mínimo, barrido del patrón | Bugs reportados, issues de GitHub, ítems de `docs/pendientes.md` |
 | [`security-reviewer`](.claude/agents/security-reviewer.md) | Revisión de seguridad de solo lectura (app y, si se pide, backend) | Antes de un PR a `main`, o al tocar sesión, red, archivos o permisos |
 
+Cada agente existe en dos formatos, uno por herramienta:
+- `.claude/agents/<nombre>.md` — Claude Code. **Fuente única de las instrucciones.**
+- `.agents/agents/<nombre>.md` — Antigravity (`agy`). Wrapper: frontmatter propio y solo lo que funciona distinto ahí
+  (sin aislamiento de worktree automático, iteración en la misma conversación); remite a la fuente.
+
+**Al crear, renombrar, borrar o cambiar el nombre/descripción de un agente, actualiza ambos archivos en el mismo cambio.**
+Las instrucciones se editan solo en `.claude/agents/`; el wrapper de `.agents/agents/` se toca únicamente si cambia algo
+propio de Antigravity. El wrapper debe declarar `tools:` (sin esa lista agy solo da herramientas de lectura).
+Comprueba que agy los carga con `agy agents`.
+
 Cómo usarlos:
+- En Antigravity: `agy --agent implementer -i "<tarea, rama base y worktree>"`, o pídele «usa el fixer para…».
 - Pídelo por nombre en Claude Code: «usa el implementer para…», «usa el fixer para el issue #N», «corre el
   security-reviewer sobre esta rama». Indica la rama base (por defecto, la rama actual).
 - Ciclo: el agente entrega tests en verde, build de Android y web, y una **guía de prueba manual** por plataforma

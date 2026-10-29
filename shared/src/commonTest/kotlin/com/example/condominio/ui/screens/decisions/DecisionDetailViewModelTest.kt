@@ -18,9 +18,11 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import condominio.shared.generated.resources.error_loading_decision
 
 class DecisionDetailViewModelTest {
     private val repo = FakeDecisionsRepository()
@@ -116,5 +118,37 @@ class DecisionDetailViewModelTest {
         vm.submitVote("q1"); advanceUntilIdle()
         val err = vm.uiState.value.submissionError
         assertTrue(err is UiText.StringResource && err.res == Res.string.decisions_no_active_unit)
+    }
+
+    @Test fun `detail failure exposes a translatable error key`() = runTest {
+        val vm = vm()
+        repo.detailResult = Result.failure(Exception("Fail to fetch"))
+        vm.loadDetail("d1")
+        advanceUntilIdle()
+        assertEquals(Res.string.error_loading_decision, assertIs<UiText.StringResource>(vm.uiState.value.error).res)
+        assertNull(vm.uiState.value.detail)
+    }
+
+    @Test fun `a detail failure without message is never silent`() = runTest {
+        val vm = vm()
+        repo.detailResult = Result.failure(Exception())
+        vm.loadDetail("d1")
+        advanceUntilIdle()
+        assertNotNull(vm.uiState.value.error)
+    }
+
+    @Test fun `retrying after a failure loads the detail and clears the error`() = runTest {
+        val vm = vm()
+        repo.detailResult = Result.failure(Exception("Fail to fetch"))
+        vm.loadDetail("d1")
+        advanceUntilIdle()
+        assertNotNull(vm.uiState.value.error)
+
+        repo.detailResult = Result.success(testDecisionDetail())
+        vm.refresh()
+        advanceUntilIdle()
+        assertNotNull(vm.uiState.value.detail)
+        assertNull(vm.uiState.value.error)
+        assertEquals(2, repo.detailCount)
     }
 }

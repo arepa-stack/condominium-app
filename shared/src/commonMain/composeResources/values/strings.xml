@@ -412,7 +412,6 @@
     <string name="billboard_attachment_pdf">Ver PDF</string>
     <string name="billboard_attachment_image">Imagen adjunta</string>
     <string name="billboard_attachment_open">Abrir</string>
-    <string name="billboard_retry">Reintentar</string>
     <string name="billboard_category_urgent">Urgente</string>
     <string name="billboard_category_financial">Financiero</string>
     <string name="billboard_category_maintenance">Mantenimiento</string>
@@ -498,6 +497,11 @@
     <string name="error_loading_invoice_list">No pudimos cargar tus facturas</string>
     <string name="error_loading_invoice">No pudimos cargar la factura</string>
     <string name="error_loading_invoice_payments">No pudimos cargar los pagos de la factura</string>
+    <string name="error_loading_announcements">No pudimos cargar los comunicados</string>
+    <string name="error_loading_decisions">No pudimos cargar las votaciones</string>
+    <string name="error_loading_decision">No pudimos cargar la votación</string>
+    <string name="error_loading_profile">No pudimos cargar tu perfil</string>
+    <string name="error_loading_building">No pudimos cargar los datos del edificio</string>
     <string name="brand_tagline">Vivienda elevada</string>
     <string name="brand_headline">Tu condominio, en orden.</string>
     <string name="brand_footer">Apto by Nibs</string>

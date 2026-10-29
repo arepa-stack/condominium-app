@@ -39,7 +39,8 @@ class FakeApiService : ApiService {
     override suspend fun getBuildings(): Response<List<Building>> = TODO()
     override suspend fun getBuilding(id: String): Response<Building> = TODO()
     override suspend fun getBuildingByCode(code: String): Response<Building> = buildingByCodeResponse
-    override suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>> = TODO()
+    var buildingUnitsByCodeResponse: Response<List<UnitDto>> = Response.success(emptyList())
+    override suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>> = buildingUnitsByCodeResponse
     override suspend fun getBuildingUnits(id: String): Response<List<UnitDto>> = TODO()
     override suspend fun getUnitDetails(id: String): Response<UnitDto> = TODO()
     override suspend fun submitRegistrationRequest(body: RegistrationRequestBody): Response<RegistrationRequestResponse> = registrationResponse

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.model.UnitDto
 import com.example.condominio.data.repository.BuildingRepository
 import com.example.condominio.data.repository.OnboardingRepository
+import com.example.condominio.data.remote.ApiFailureException
+import com.example.condominio.data.remote.NetworkFailureException
 import com.example.condominio.ui.utils.AuthAction
 import com.example.condominio.ui.utils.UiText
 import com.example.condominio.ui.utils.authErrorText
@@ -24,37 +26,42 @@ class RegisterViewModel(
 
     fun onBuildingScanned(buildingCode: String) {
         if (_uiState.value.buildingCode == buildingCode && _uiState.value.buildingName.isNotBlank()) return
-        _uiState.update { it.copy(buildingCode = buildingCode, isLoadingBuilding = true, error = null) }
+        _uiState.update { it.copy(buildingCode = buildingCode, isLoadingBuilding = true, error = null, loadFailed = false) }
         viewModelScope.launch {
             buildingRepository.getBuildingByCode(buildingCode)
                 .onSuccess { building ->
                     _uiState.update { it.copy(buildingName = building.name, isLoadingBuilding = false) }
                     loadUnitsByCode(buildingCode)
                 }
-                .onFailure {
+                .onFailure { e ->
                     _uiState.update {
-                        it.copy(
-                            isLoadingBuilding = false,
-                            error = UiText.StringResource(Res.string.qr_invalid_code)
-                        )
+                        if (e is ApiFailureException && (e.code == 404 || e.code == 400)) {
+                            it.copy(isLoadingBuilding = false, error = UiText.StringResource(Res.string.qr_invalid_code))
+                        } else {
+                            it.copy(isLoadingBuilding = false, loadFailed = true)
+                        }
                     }
                 }
         }
     }
 
     private fun loadUnitsByCode(code: String) {
+        _uiState.update { it.copy(isLoadingUnits = true, units = emptyList(), loadFailed = false) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingUnits = true, units = emptyList()) }
             buildingRepository.getBuildingUnitsByCode(code)
                 .onSuccess { units ->
                     _uiState.update { it.copy(units = units, isLoadingUnits = false) }
                 }
-                .onFailure {
+                .onFailure { e ->
                     _uiState.update {
-                        it.copy(
-                            isLoadingUnits = false,
-                            error = UiText.StringResource(Res.string.error_failed_load_units)
-                        )
+                        if (e is NetworkFailureException) {
+                            it.copy(isLoadingUnits = false, loadFailed = true)
+                        } else {
+                            it.copy(
+                                isLoadingUnits = false,
+                                error = UiText.StringResource(Res.string.error_failed_load_units)
+                            )
+                        }
                     }
                 }
         }
@@ -107,6 +114,13 @@ class RegisterViewModel(
             }
         }
     }
+
+    /** Retry from the load error screen: the building lookup if it failed, otherwise its units. Ignored while loading. */
+    fun retryLoad() {
+        val s = _uiState.value
+        if (s.isLoadingBuilding || s.isLoadingUnits || s.buildingCode.isBlank()) return
+        if (s.buildingName.isBlank()) onBuildingScanned(s.buildingCode) else loadUnitsByCode(s.buildingCode)
+    }
 }
 
 data class RegisterUiState(
@@ -124,7 +138,9 @@ data class RegisterUiState(
     val isLoading: Boolean = false,
     val error: UiText? = null,
     val isSuccess: Boolean = false,
-    val missingFields: Set<RegisterField> = emptySet()
+    val missingFields: Set<RegisterField> = emptySet(),
+    /** The building or its units could not be loaded: the screen shows ErrorState with Retry instead of the form. */
+    val loadFailed: Boolean = false
 )
 
 enum class RegisterField { FirstName, LastName, Email, DocumentId, Unit }

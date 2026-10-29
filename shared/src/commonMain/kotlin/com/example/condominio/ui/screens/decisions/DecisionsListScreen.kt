@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.DecisionDto
 import com.example.condominio.data.model.DecisionStatus
 import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.FilterPillChip
 import com.example.condominio.ui.components.ListItemCard
 import com.example.condominio.ui.components.LoadingState
@@ -112,29 +113,7 @@ fun DecisionsListScreen(
                 }
 
                 uiState.error != null && uiState.decisions.isEmpty() -> WebEmptyFrame {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = uiState.error!!.asString(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = AptoStatusError,
-                                textAlign = TextAlign.Center
-                            )
-                            OutlinedButton(
-                                onClick = { viewModel.refresh() },
-                                border = BorderStroke(1.dp, AptoSecondary),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoSecondary)
-                            ) {
-                                Text(stringResource(Res.string.billboard_retry))
-                            }
-                        }
-                    }
+                    ErrorState(title = uiState.error!!.asString(), onRetry = viewModel::refresh)
                 }
 
                 uiState.decisions.isEmpty() -> WebEmptyFrame {

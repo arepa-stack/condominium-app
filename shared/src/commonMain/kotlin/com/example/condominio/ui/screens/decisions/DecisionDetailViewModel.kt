@@ -8,6 +8,7 @@ import com.example.condominio.data.repository.DecisionsRepository
 import com.example.condominio.ui.utils.UiText
 import condominio.shared.generated.resources.Res
 import condominio.shared.generated.resources.decisions_no_active_unit
+import condominio.shared.generated.resources.error_loading_decision
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -59,7 +60,7 @@ class DecisionDetailViewModel(
                 state.copy(
                     isLoading = false,
                     detail = result.getOrNull() ?: state.detail,
-                    error = result.exceptionOrNull()?.message?.let { UiText.DynamicString(it) }
+                    error = result.exceptionOrNull()?.let { UiText.StringResource(Res.string.error_loading_decision) }
                 )
             }
         }

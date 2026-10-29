@@ -83,4 +83,73 @@ class ProfileViewModelTest {
         advanceUntilIdle()
         assertEquals(Res.string.error_check_connection, assertIs<UiText.StringResource>(vm.uiState.value.deleteError).res)
     }
+
+    @Test fun `with no user and a failed fetch it shows the load error`() = scope.runTest {
+        auth.currentUserFlow.value = null
+        auth.fetchResult = Result.failure(Exception("Failed to fetch user"))
+        val vm = ProfileViewModel(auth)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loadFailed)
+        assertNull(vm.uiState.value.user)
+        assertFalse(vm.uiState.value.isLoading)
+    }
+
+    @Test fun `a failed fetch with a cached user keeps showing it`() = scope.runTest {
+        auth.fetchResult = Result.failure(Exception("Failed to fetch user"))
+        val vm = ProfileViewModel(auth)
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+        assertEquals("Ana", vm.uiState.value.user?.name)
+    }
+
+    @Test fun `retry after the load error loads the user`() = scope.runTest {
+        auth.currentUserFlow.value = null
+        auth.fetchResult = Result.failure(Exception("Failed to fetch user"))
+        val vm = ProfileViewModel(auth)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loadFailed)
+
+        auth.fetchResult = null
+        auth.publishOnFetch = true
+        vm.retry()
+        advanceUntilIdle()
+        assertEquals(2, auth.fetchCount)
+        assertEquals("Ana", vm.uiState.value.user?.name)
+        assertFalse(vm.uiState.value.loadFailed)
+        assertFalse(vm.uiState.value.isLoading)
+    }
+
+    @Test fun `a fetch that throws ends in the load error, not an endless spinner`() = scope.runTest {
+        auth.currentUserFlow.value = null
+        auth.fetchThrows = RuntimeException("Fail to fetch")
+        val vm = ProfileViewModel(auth)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loadFailed)
+        assertFalse(vm.uiState.value.isLoading)
+    }
+
+    @Test fun `logging out after a failed fetch does not mark loadFailed`() = scope.runTest {
+        auth.fetchResult = Result.failure(Exception("Failed to fetch user"))
+        val vm = ProfileViewModel(auth)
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+
+        vm.onLogoutClick()
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.isLoggedOut)
+        assertFalse(vm.uiState.value.loadFailed)
+    }
+
+    @Test fun `deleting account after a failed fetch does not mark loadFailed`() = scope.runTest {
+        auth.fetchResult = Result.failure(Exception("Failed to fetch user"))
+        val vm = ProfileViewModel(auth)
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+
+        vm.onDeleteAccountConfirm("")
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.isLoggedOut)
+        assertFalse(vm.uiState.value.loadFailed)
+    }
 }
+

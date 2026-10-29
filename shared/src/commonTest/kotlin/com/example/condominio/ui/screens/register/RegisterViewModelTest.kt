@@ -7,6 +7,10 @@ import condominio.shared.generated.resources.error_fill_all_fields
 import condominio.shared.generated.resources.error_unknown
 import condominio.shared.generated.resources.error_check_connection
 import condominio.shared.generated.resources.error_registration_conflict
+import condominio.shared.generated.resources.error_failed_load_units
+import condominio.shared.generated.resources.qr_invalid_code
+import com.example.condominio.data.model.Building
+import com.example.condominio.data.model.UnitDto
 import com.example.condominio.data.remote.ApiFailureException
 import com.example.condominio.data.remote.NetworkFailureException
 import kotlinx.coroutines.test.TestScope
@@ -16,12 +20,13 @@ import kotlin.test.*
 
 class RegisterViewModelTest {
     private val scope = TestScope()
+    private val buildings = FakeBuildingRepository()
     private val onboarding = FakeOnboardingRepository()
 
     @BeforeTest fun setUp() = installMain(scope)
     @AfterTest fun tearDown() = resetTestMain()
 
-    private fun vm() = RegisterViewModel(FakeBuildingRepository(), onboarding)
+    private fun vm() = RegisterViewModel(buildings, onboarding)
 
     private fun RegisterViewModel.fillAll() {
         onFirstNameChange("Ana")
@@ -85,5 +90,103 @@ class RegisterViewModelTest {
         assertEquals(1, onboarding.submitCount)
         val error = assertIs<UiText.StringResource>(vm.uiState.value.error)
         assertEquals(Res.string.error_unknown, error.res)
+    }
+
+    @Test fun `no network on the building lookup shows the load error, not an invalid code`() = scope.runTest {
+        buildings.byCodeResult = Result.failure(NetworkFailureException("Fail to fetch"))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loadFailed)
+        assertNull(vm.uiState.value.error)
+        assertFalse(vm.uiState.value.isLoadingBuilding)
+    }
+
+    @Test fun `an unknown code (404) on building lookup shows the invalid code text`() = scope.runTest {
+        buildings.byCodeResult = Result.failure(ApiFailureException(404))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+        val error = assertIs<UiText.StringResource>(vm.uiState.value.error)
+        assertEquals(Res.string.qr_invalid_code, error.res)
+    }
+
+    @Test fun `a 400 error on building lookup shows the invalid code text`() = scope.runTest {
+        buildings.byCodeResult = Result.failure(ApiFailureException(400))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+        val error = assertIs<UiText.StringResource>(vm.uiState.value.error)
+        assertEquals(Res.string.qr_invalid_code, error.res)
+    }
+
+    @Test fun `a 500 error on building lookup shows the load error, not an invalid code`() = scope.runTest {
+        buildings.byCodeResult = Result.failure(ApiFailureException(500))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loadFailed)
+        assertNull(vm.uiState.value.error)
+        assertFalse(vm.uiState.value.isLoadingBuilding)
+    }
+
+    @Test fun `retrying after a network failure loads the building and its units`() = scope.runTest {
+        buildings.byCodeResult = Result.failure(NetworkFailureException("Fail to fetch"))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loadFailed)
+
+        buildings.byCodeResult = Result.success(Building(id = "b1", name = "Torre"))
+        buildings.unitsByCodeResult = Result.success(listOf(UnitDto(id = "u1", buildingId = "b1", name = "1A", floor = null, aliquot = null)))
+        vm.retryLoad()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+        assertEquals("Torre", vm.uiState.value.buildingName)
+        assertEquals(1, vm.uiState.value.units.size)
+        assertEquals(listOf("COND-1", "COND-1"), buildings.byCodeCalls)
+    }
+
+    @Test fun `no network on units lookup shows the load error and retry reloads only units`() = scope.runTest {
+        buildings.byCodeResult = Result.success(Building(id = "b1", name = "Torre"))
+        buildings.unitsByCodeResult = Result.failure(NetworkFailureException("down"))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loadFailed)
+        assertEquals("Torre", vm.uiState.value.buildingName)
+
+        buildings.unitsByCodeResult = Result.success(listOf(UnitDto(id = "u1", buildingId = "b1", name = "1A", floor = null, aliquot = null)))
+        vm.retryLoad()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+        assertEquals(1, vm.uiState.value.units.size)
+        assertEquals(1, buildings.byCodeCalls.size)
+        assertEquals(2, buildings.unitsByCodeCalls.size)
+    }
+
+    @Test fun `a 500 error on units lookup shows inline error not load error`() = scope.runTest {
+        buildings.byCodeResult = Result.success(Building(id = "b1", name = "Torre"))
+        buildings.unitsByCodeResult = Result.failure(ApiFailureException(500))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+        assertEquals("Torre", vm.uiState.value.buildingName)
+        val error = assertIs<UiText.StringResource>(vm.uiState.value.error)
+        assertEquals(Res.string.error_failed_load_units, error.res)
+    }
+
+    @Test fun `a 404 error on units lookup shows inline error not load error`() = scope.runTest {
+        buildings.byCodeResult = Result.success(Building(id = "b1", name = "Torre"))
+        buildings.unitsByCodeResult = Result.failure(ApiFailureException(404))
+        val vm = vm()
+        vm.onBuildingScanned("COND-1")
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loadFailed)
+        val error = assertIs<UiText.StringResource>(vm.uiState.value.error)
+        assertEquals(Res.string.error_failed_load_units, error.res)
     }
 }
