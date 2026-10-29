@@ -41,10 +41,23 @@ class FakeAuthRepository(var user: User = testUser) : AuthRepository {
     var logoutGate: CompletableDeferred<Unit>? = null
     var resetResult: Result<Unit> = Result.success(Unit)
     var firstLoginResult: Result<Unit> = Result.success(Unit)
-    override val currentUser: Flow<User?> = MutableStateFlow(user)
+    /** Backing flow of [currentUser]; set it to null to simulate "no user loaded yet" (e.g. after process death). */
+    val currentUserFlow = MutableStateFlow<User?>(user)
+    override val currentUser: Flow<User?> = currentUserFlow
     /** When set, [fetchCurrentUser] throws it (an unexpected failure outside Result). */
     var fetchThrows: Throwable? = null
-    override suspend fun fetchCurrentUser(): Result<User> { fetchCount++; fetchThrows?.let { throw it }; return fetchResult ?: Result.success(user) }
+    /** When set, [fetchCurrentUser] suspends until it completes (to test the in-flight state). */
+    var fetchGate: CompletableDeferred<Unit>? = null
+    /** When true, a successful [fetchCurrentUser] publishes the user on [currentUser], like RemoteAuthRepository. */
+    var publishOnFetch = false
+    override suspend fun fetchCurrentUser(): Result<User> {
+        fetchCount++
+        fetchThrows?.let { throw it }
+        fetchGate?.await()
+        val result = fetchResult ?: Result.success(user)
+        if (publishOnFetch) result.getOrNull()?.let { currentUserFlow.value = it }
+        return result
+    }
     override suspend fun login(email: String, password: String): Result<User> {
         logins += email to password
         loginGate?.await()
@@ -54,7 +67,11 @@ class FakeAuthRepository(var user: User = testUser) : AuthRepository {
     override suspend fun resetPassword(email: String) = resetResult
     override suspend fun getUnits(buildingId: String) = TODO()
     override suspend fun getUnit(unitId: String) = TODO()
-    override suspend fun logout() { logoutCount++; logoutGate?.await() }
+    override suspend fun logout() {
+        logoutCount++
+        logoutGate?.await()
+        currentUserFlow.value = null
+    }
     var updateResult: Result<Unit> = Result.success(Unit)
     val updates = mutableListOf<User>()
     /** When set, [updateUser] suspends until it completes (to test the in-flight state). */
@@ -75,7 +92,12 @@ class FakeAuthRepository(var user: User = testUser) : AuthRepository {
     }
     override suspend fun changePasswordFirstLogin(newPassword: String) = firstLoginResult
     var deleteResult: Result<Unit> = Result.success(Unit)
-    override suspend fun deleteAccount(reason: String?): Result<Unit> = deleteResult
+    override suspend fun deleteAccount(reason: String?): Result<Unit> {
+        if (deleteResult.isSuccess) {
+            currentUserFlow.value = null
+        }
+        return deleteResult
+    }
     override fun setCurrentUnit(unit: UserUnit) {}
     override suspend fun hasValidSession() = hasSession
 }
@@ -134,7 +156,12 @@ class FakeBuildingRepository : BuildingRepository {
         byCodeGate?.await()
         return byCodeResult
     }
-    override suspend fun getBuildingUnitsByCode(code: String) = TODO()
+    var unitsByCodeResult: Result<List<UnitDto>> = Result.success(emptyList())
+    val unitsByCodeCalls = mutableListOf<String>()
+    override suspend fun getBuildingUnitsByCode(code: String): Result<List<UnitDto>> {
+        unitsByCodeCalls += code
+        return unitsByCodeResult
+    }
 }
 
 class FakePettyCashRepository : PettyCashRepository {
@@ -162,7 +189,14 @@ class FakeDecisionsRepository : DecisionsRepository {
         gate?.await()
         return uploadResult
     }
-    override suspend fun list(buildingId: String, status: DecisionStatus?, search: String?, page: Int, limit: Int) = TODO()
+    var listGate: CompletableDeferred<Unit>? = null
+    var listResult: Result<DecisionsPageDto> = Result.failure(Exception("unset"))
+    val listCalls = mutableListOf<String>()
+    override suspend fun list(buildingId: String, status: DecisionStatus?, search: String?, page: Int, limit: Int): Result<DecisionsPageDto> {
+        listCalls += buildingId
+        listGate?.await()
+        return listResult
+    }
     override suspend fun deleteQuote(decisionId: String, quoteId: String) = TODO()
     override suspend fun results(decisionId: String, round: Int?) = TODO()
 }
@@ -199,8 +233,21 @@ class FakeAnnouncementsRepository : AnnouncementsRepository {
     var detailCount = 0
     val markedRead = mutableListOf<String>()
 
-    override suspend fun list(buildingId: String, category: AnnouncementCategory?, search: String?, isPinned: Boolean?, readStatus: String?, page: Int, limit: Int) = TODO()
+    var listGate: CompletableDeferred<Unit>? = null
+    var listResult: Result<AnnouncementsPageDto> = Result.failure(Exception("unset"))
+    val listCalls = mutableListOf<String>()
+    override suspend fun list(buildingId: String, category: AnnouncementCategory?, search: String?, isPinned: Boolean?, readStatus: String?, page: Int, limit: Int): Result<AnnouncementsPageDto> {
+        listCalls += buildingId
+        listGate?.await()
+        return listResult
+    }
     override suspend fun detail(id: String): Result<AnnouncementDto> { detailCount++; return detailResult }
     override suspend fun markRead(id: String): Result<Unit> { markedRead += id; return Result.success(Unit) }
     override suspend fun toggleReaction(id: String): Result<ToggleReactionResponseDto> = toggleResult
 }
+
+/** A user whose current unit belongs to building "b1" (testUser has no building). */
+val testUserWithBuilding = User(id = "1", name = "Ana", email = "a@b.c", units = listOf(UserUnit(unitId = "u1", buildingId = "b1", unitName = "1A", buildingName = "Torre")))
+fun testPageMetadata(total: Int) = PaginationMetadata(total = total, page = 1, limit = 20, totalPages = 1)
+fun testAnnouncementsPage(vararg items: AnnouncementDto) = AnnouncementsPageDto(data = items.toList(), metadata = testPageMetadata(items.size))
+fun testDecisionsPage(vararg items: DecisionDto) = DecisionsPageDto(data = items.toList(), metadata = testPageMetadata(items.size))

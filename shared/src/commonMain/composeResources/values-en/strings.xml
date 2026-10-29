@@ -412,7 +412,6 @@
     <string name="billboard_attachment_pdf">View PDF</string>
     <string name="billboard_attachment_image">Attached image</string>
     <string name="billboard_attachment_open">Open</string>
-    <string name="billboard_retry">Retry</string>
     <string name="billboard_category_urgent">Urgent</string>
     <string name="billboard_category_financial">Financial</string>
     <string name="billboard_category_maintenance">Maintenance</string>
@@ -498,6 +497,11 @@
     <string name="error_loading_invoice_list">We couldn\'t load your invoices</string>
     <string name="error_loading_invoice">We couldn\'t load the invoice</string>
     <string name="error_loading_invoice_payments">We couldn\'t load this invoice\'s payments</string>
+    <string name="error_loading_announcements">We couldn\'t load the announcements</string>
+    <string name="error_loading_decisions">We couldn\'t load the votes</string>
+    <string name="error_loading_decision">We couldn\'t load the vote</string>
+    <string name="error_loading_profile">We couldn\'t load your profile</string>
+    <string name="error_loading_building">We couldn\'t load the building details</string>
     <string name="brand_tagline">Elevated living</string>
     <string name="brand_headline">Your building, in order.</string>
     <string name="brand_footer">Apto by Nibs</string>

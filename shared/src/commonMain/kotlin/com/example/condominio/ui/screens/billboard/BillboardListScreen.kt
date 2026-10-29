@@ -15,16 +15,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.AnnouncementCategory
 import com.example.condominio.ui.components.AnnouncementCard
 import com.example.condominio.ui.components.EmptyState
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.FilterPillChip
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
@@ -112,29 +111,7 @@ fun BillboardListScreen(
                 }
 
                 uiState.error != null && uiState.announcements.isEmpty() -> WebEmptyFrame {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = uiState.error!!.asString(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = AptoStatusError,
-                                textAlign = TextAlign.Center
-                            )
-                            OutlinedButton(
-                                onClick = { viewModel.refresh() },
-                                border = BorderStroke(1.dp, AptoSecondary),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = AptoSecondary)
-                            ) {
-                                Text(stringResource(Res.string.billboard_retry))
-                            }
-                        }
-                    }
+                    ErrorState(title = uiState.error!!.asString(), onRetry = viewModel::refresh)
                 }
 
                 sortedAnnouncements.isEmpty() -> {
