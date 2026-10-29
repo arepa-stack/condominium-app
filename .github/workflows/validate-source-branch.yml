@@ -1,0 +1,24 @@
+name: Validar Rama de Origen
+
+on:
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    check-branch:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Verificar nombre de la rama de origen
+              run: |
+                  SOURCE_BRANCH="${{ github.head_ref }}"
+                  echo "Rama detectada: $SOURCE_BRANCH"
+
+                  # Define aquí tu rama concreta (ej. develop, staging) y el patrón fix
+                  if [[ "$SOURCE_BRANCH" == "dev" || "$SOURCE_BRANCH" == "fix" || "$SOURCE_BRANCH" =~ ^fix/.* ]]; then
+                    echo "✅ Rama permitida para hacer merge a main."
+                    exit 0
+                  else
+                    echo "❌ Error: Solo se permiten PRs hacia 'main' desde 'develop' o ramas 'fix/*'."
+                    exit 1
+                  fi

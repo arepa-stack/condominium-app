@@ -32,6 +32,13 @@ fun formatAmountInput(amount: Double): String {
     return "${cents / 100}.${(cents % 100).toString().padStart(2, '0')}"
 }
 
+/** Venezuelan bolívar format, same on every platform: 9901.084 -> "9.901,08" (dot grouping, comma decimals). */
+fun formatBs(amount: Double): String {
+    val cents = kotlin.math.round(amount * 100).toLong()
+    val grouped = (cents / 100).toString().reversed().chunked(3).joinToString(".").reversed()
+    return "$grouped,${(cents % 100).toString().padStart(2, '0')}"
+}
+
 expect fun formatDate(timestamp: Long, formatString: String = "MMM dd, yyyy"): String
 
 expect fun formatMonthYear(timestamp: Long): String
@@ -53,3 +60,10 @@ fun String.emojiSafe(): String = if (platformRendersEmoji) this else buildString
 
 /** True on the web target: used to try web-only visual variants (e.g. the admin palette POC). */
 expect val isWebPlatform: Boolean
+
+/**
+ * Short invoice title for cards: drops what the admin appends after the concept, the aliquot breakdown
+ * (" - Base: $3100.00 (Alícuota: ...)") and notes (" | ..."). Null when nothing is left.
+ */
+fun invoiceTitle(description: String?): String? =
+    description?.substringBefore(" | ")?.substringBefore(" - Base:")?.trim()?.ifBlank { null }

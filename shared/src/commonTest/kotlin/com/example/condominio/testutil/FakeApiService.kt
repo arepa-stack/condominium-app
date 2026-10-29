@@ -39,13 +39,14 @@ class FakeApiService : ApiService {
     override suspend fun getBuildings(): Response<List<Building>> = TODO()
     override suspend fun getBuilding(id: String): Response<Building> = TODO()
     override suspend fun getBuildingByCode(code: String): Response<Building> = buildingByCodeResponse
-    override suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>> = TODO()
+    var buildingUnitsByCodeResponse: Response<List<UnitDto>> = Response.success(emptyList())
+    override suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>> = buildingUnitsByCodeResponse
     override suspend fun getBuildingUnits(id: String): Response<List<UnitDto>> = TODO()
     override suspend fun getUnitDetails(id: String): Response<UnitDto> = TODO()
     override suspend fun submitRegistrationRequest(body: RegistrationRequestBody): Response<RegistrationRequestResponse> = registrationResponse
     override suspend fun getPayments(unitId: String?, year: Int?): Response<List<PaymentDto>> = TODO()
     override suspend fun getPayment(id: String): Response<PaymentDto> = TODO()
-    override suspend fun createPaymentMultipart(amount: String, unitId: String, buildingId: String?, method: String, date: String, notes: String?, reference: String?, bank: String?, allocations: String?, proofImage: ByteArray?, fileName: String?): Response<PaymentDto> = TODO()
+    override suspend fun createPaymentMultipart(amount: String, unitId: String, buildingId: String?, method: String, date: String, notes: String?, reference: String?, bank: String?, allocations: String?, proofImage: ByteArray?, currency: String, fileName: String?): Response<PaymentDto> = TODO()
     override suspend fun createPayment(request: CreatePaymentRequest): Response<PaymentDto> = TODO()
     override suspend fun getBalance(unitId: String): Response<BalanceDto> = TODO()
     override suspend fun getInvoices(unitId: String, status: String?): Response<List<InvoiceDto>> = TODO()
@@ -53,6 +54,8 @@ class FakeApiService : ApiService {
     override suspend fun getInvoicePayments(id: String): Response<List<PaymentDto>> = TODO()
     override suspend fun getCredits(unitId: String): Response<JsonElement> = TODO()
     override suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto> = TODO()
+    override suspend fun getExchangeRates(date: String?): Response<RateSetDto> = TODO()
+    override suspend fun getBuildingPaymentInfo(buildingId: String): Response<BuildingPaymentInfoDto> = TODO()
     override suspend fun listDecisions(buildingId: String?, status: String?, search: String?, page: Int?, limit: Int?): Response<DecisionsPageDto> = TODO()
     override suspend fun getDecisionDetail(id: String): Response<DecisionDetailDto> = TODO()
     override suspend fun uploadDecisionQuote(decisionId: String, unitId: String, providerName: String, amount: String, notes: String?, fileBytes: ByteArray, fileName: String, mimeType: String): Response<QuoteDto> = TODO()

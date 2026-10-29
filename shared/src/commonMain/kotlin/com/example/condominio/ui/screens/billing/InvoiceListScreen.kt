@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.example.condominio.data.model.Invoice
 import androidx.compose.foundation.layout.PaddingValues
 import com.example.condominio.data.model.InvoiceStatus
+import com.example.condominio.data.model.PaymentStatus
 import com.example.condominio.ui.components.EmptyState
 import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LoadingState
@@ -50,6 +51,8 @@ import com.example.condominio.ui.screens.payment.formatPaymentDate
 import com.example.condominio.ui.screens.payment.invoiceMonthLabel
 import com.example.condominio.ui.theme.*
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.invoiceTitle
+import com.example.condominio.ui.utils.OnScreenReturn
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -63,6 +66,8 @@ fun InvoiceListScreen(
     viewModel: InvoiceListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // A payment paid, approved or rejected elsewhere must show when coming back to this tab
+    OnScreenReturn(viewModel::onScreenReturn, viewModel::refresh)
     // In the ViewModel so it survives going to the detail and back (E-F4)
     val selectedTab = uiState.selectedTab
     val tabs = listOf(
@@ -237,7 +242,7 @@ fun InvoiceItem(
                 ) {
                     Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text(
-                            text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                            text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = AptoOnSurface,
@@ -250,7 +255,7 @@ fun InvoiceItem(
                             color = AptoOnSurfaceVariant
                         )
                     }
-                    InvoiceStatusBadge(status = invoice.status)
+                    InvoiceStatusBadge(status = invoice.status, lastPaymentStatus = invoice.lastPaymentStatus)
                 }
 
                 HorizontalDivider(color = AptoOutlineVariant)
@@ -456,8 +461,10 @@ private fun InvoiceTable(
     val payNow = stringResource(Res.string.pay_now)
     val dueDates = invoices.map { invoiceDueText(it) }
     val totals = invoices.map { stringResource(Res.string.currency_amount, formatCurrency(it.amount)) }
+    val statusLabels = InvoiceStatus.entries.map { invoiceStatusLabel(it) } +
+        stringResource(Res.string.status_in_review).uppercase() +
+        stringResource(Res.string.status_payment_rejected).uppercase()
     val remainings = invoices.map { stringResource(Res.string.currency_amount, formatCurrency(it.remaining)) }
-    val statusLabels = InvoiceStatus.entries.map { invoiceStatusLabel(it) }
 
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -580,7 +587,7 @@ private fun InvoiceTableRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                    text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = AptoOnSurface,
@@ -623,7 +630,7 @@ private fun InvoiceTableRow(
                 softWrap = false
             )
             Box(modifier = Modifier.width(widths.status)) {
-                InvoiceStatusBadge(status = invoice.status)
+                InvoiceStatusBadge(status = invoice.status, lastPaymentStatus = invoice.lastPaymentStatus)
             }
         }
         Box(modifier = Modifier.width(widths.action), contentAlignment = Alignment.CenterEnd) {
@@ -663,7 +670,7 @@ private fun InvoiceAmountLabel(text: String) {
 }
 
 @Composable
-private fun invoiceStatusLabel(status: InvoiceStatus): String = when (status) {
+internal fun invoiceStatusLabel(status: InvoiceStatus): String = when (status) {
     InvoiceStatus.PAID -> stringResource(Res.string.status_paid)
     InvoiceStatus.OVERDUE -> stringResource(Res.string.status_overdue)
     InvoiceStatus.CANCELLED -> stringResource(Res.string.status_cancelled)
@@ -671,15 +678,29 @@ private fun invoiceStatusLabel(status: InvoiceStatus): String = when (status) {
     InvoiceStatus.PARTIAL -> stringResource(Res.string.status_partial)
 }.uppercase()
 
+/**
+ * Invoice status, except while still unpaid with a reported payment: "in review" while the admin hasn't
+ * processed it, "payment rejected" when the latest one was rejected.
+ */
 @Composable
-fun InvoiceStatusBadge(status: InvoiceStatus) {
-    val text = invoiceStatusLabel(status)
-    val (containerColor, contentColor) = when (status) {
-        InvoiceStatus.PAID -> AptoStatusSuccess.copy(alpha = 0.1f) to AptoStatusSuccess
-        InvoiceStatus.OVERDUE -> AptoStatusError.copy(alpha = 0.1f) to AptoStatusError
-        InvoiceStatus.CANCELLED -> AptoStatusError.copy(alpha = 0.1f) to AptoStatusError
-        InvoiceStatus.PENDING -> AptoSecondaryFixed to AptoSecondary
-        InvoiceStatus.PARTIAL -> AptoSecondaryFixed to AptoSecondary
+fun InvoiceStatusBadge(status: InvoiceStatus, lastPaymentStatus: PaymentStatus? = null) {
+    val unpaid = status != InvoiceStatus.PAID && status != InvoiceStatus.CANCELLED
+    val paymentState = lastPaymentStatus.takeIf { unpaid && it != PaymentStatus.APPROVED }
+    val text = when (paymentState) {
+        PaymentStatus.PENDING -> stringResource(Res.string.status_in_review).uppercase()
+        PaymentStatus.REJECTED -> stringResource(Res.string.status_payment_rejected).uppercase()
+        else -> invoiceStatusLabel(status)
+    }
+    val (containerColor, contentColor) = when {
+        paymentState == PaymentStatus.PENDING -> AptoStatusWarning.copy(alpha = 0.1f) to AptoStatusWarning
+        paymentState == PaymentStatus.REJECTED -> AptoStatusError.copy(alpha = 0.1f) to AptoStatusError
+        else -> when (status) {
+            InvoiceStatus.PAID -> AptoStatusSuccess.copy(alpha = 0.1f) to AptoStatusSuccess
+            InvoiceStatus.OVERDUE -> AptoStatusError.copy(alpha = 0.1f) to AptoStatusError
+            InvoiceStatus.CANCELLED -> AptoStatusError.copy(alpha = 0.1f) to AptoStatusError
+            InvoiceStatus.PENDING -> AptoSecondaryFixed to AptoSecondary
+            InvoiceStatus.PARTIAL -> AptoSecondaryFixed to AptoSecondary
+        }
     }
 
     Surface(

@@ -2,7 +2,9 @@ package com.example.condominio.ui.screens.payment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.condominio.data.model.BuildingPaymentInfoDto
 import com.example.condominio.data.model.PaymentMethod
+import com.example.condominio.data.repository.applyInvoicePayments
 import com.example.condominio.data.repository.PaymentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +33,55 @@ class CreatePaymentViewModel (
 
     init {
         loadPendingInvoices()
+        loadBcvRate()
+    }
+
+    private var rateJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * BCV rate of the payment date: the Bs amount on the pay-to page, and the rate the payment is registered
+     * with (the backend converts with that same day's rate). A failure only hides the conversion.
+     */
+    fun loadBcvRate() {
+        rateJob?.cancel()
+        rateJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingRate = true) }
+            val rate = paymentRepository.getBcvRate(_uiState.value.date).getOrNull()
+            _uiState.update { it.copy(isLoadingRate = false, bcvRate = rate?.bsPerUnit, bcvRateDate = rate?.rateDate) }
+        }
+    }
+
+    /**
+     * Bs sent for Pago Móvil / transfer, so the payment keeps what was paid in Bs and the rate. Cash, or no
+     * rate for the chosen day (failed or still loading), goes as plain USD like before.
+     */
+    private fun amountInBs(amount: Double, state: CreatePaymentUiState): Double? {
+        if (state.method == PaymentMethod.CASH || state.isLoadingRate) return null
+        val rate = state.bcvRate ?: return null
+        return kotlin.math.round(amount * rate * 100) / 100
+    }
+
+    // Building whose payment details are shown; known once the user is loaded.
+    private var buildingId: String? = null
+
+    /** Retry from the pay-to page: without a building the user itself failed to load, so reload it too. */
+    fun retryPaymentInfo() {
+        if (buildingId == null) loadPendingInvoices() else fetchPaymentInfo()
+    }
+
+    /** Bank account, Pago Móvil and QR the board set for this building in the admin panel. */
+    private fun fetchPaymentInfo() {
+        val id = buildingId ?: run {
+            _uiState.update { it.copy(isLoadingPaymentInfo = false, paymentInfoFailed = true) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingPaymentInfo = true, paymentInfoFailed = false) }
+            val result = paymentRepository.getPaymentInfo(id)
+            _uiState.update {
+                it.copy(isLoadingPaymentInfo = false, paymentInfo = result.getOrNull(), paymentInfoFailed = result.isFailure)
+            }
+        }
     }
 
     fun loadPendingInvoices() {
@@ -38,6 +89,10 @@ class CreatePaymentViewModel (
             _uiState.update { it.copy(isLoadingInvoices = true, invoicesError = null) }
             val user = authRepository.fetchCurrentUser().getOrNull()
             val unitId = user?.currentUnit?.unitId ?: user?.units?.firstOrNull()?.unitId
+            if (_uiState.value.paymentInfo == null) {
+                buildingId = (user?.currentUnit?.buildingId ?: user?.units?.firstOrNull()?.buildingId)?.takeIf { it.isNotBlank() }
+                fetchPaymentInfo()
+            }
 
             if (unitId == null) {
                 _uiState.update {
@@ -45,10 +100,13 @@ class CreatePaymentViewModel (
                 }
             } else {
                 paymentRepository.getBalance(unitId).onSuccess { balance ->
-                    availableInvoices = balance.pendingInvoices
+                    // Invoices fully covered by a payment awaiting approval can't be paid again
+                    val payable = paymentRepository.applyInvoicePayments(balance.pendingInvoices)
+                        .filter { it.remaining > 0 }
+                    availableInvoices = payable
                     _uiState.update {
                         it.copy(
-                            pendingInvoices = balance.pendingInvoices,
+                            pendingInvoices = payable,
                             isLoadingInvoices = false
                         )
                     }
@@ -74,7 +132,9 @@ class CreatePaymentViewModel (
     }
 
     fun onDateChange(date: Long) {
+        if (date == _uiState.value.date) return
         _uiState.update { it.copy(date = date) }
+        loadBcvRate()
     }
 
     fun onDescriptionChange(description: String) {
@@ -216,7 +276,8 @@ class CreatePaymentViewModel (
                 bank = state.bank.ifBlank { null },
                 phone = state.phone.ifBlank { null },
                 proofUrl = state.proofUrl,
-                buildingId = user?.currentUnit?.buildingId
+                buildingId = user?.currentUnit?.buildingId,
+                amountBs = amountInBs(amount, state)
             )
             _uiState.update { it.copy(isLoading = false) }
 
@@ -257,7 +318,15 @@ data class CreatePaymentUiState(
     val proofError: UiText? = null,
     /** Form-level error: invoice selection, invoices not loaded, submit failure. */
     val error: UiText? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    /** BCV dollar rate (Bs per USD) and its date ("2026-10-27"); null when it could not be loaded. */
+    val bcvRate: Double? = null,
+    val bcvRateDate: String? = null,
+    val isLoadingRate: Boolean = false,
+    /** Where to pay (from the building's admin settings); null until loaded or when loading failed. */
+    val paymentInfo: BuildingPaymentInfoDto? = null,
+    val isLoadingPaymentInfo: Boolean = true,
+    val paymentInfoFailed: Boolean = false
 ) {
     val hasFieldErrors: Boolean
         get() = amountError != null || bankError != null || referenceError != null || proofError != null

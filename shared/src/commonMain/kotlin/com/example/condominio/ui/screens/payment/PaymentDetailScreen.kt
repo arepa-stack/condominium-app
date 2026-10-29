@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,9 +53,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
+import com.example.condominio.data.utils.rememberHtmlPrinter
 import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.WebEmptyFrame
 import com.example.condominio.ui.utils.formatCurrency
+import com.example.condominio.ui.utils.formatBs
 import condominio.shared.generated.resources.*
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -77,12 +78,11 @@ fun PaymentDetailScreen(
         payment?.proofUrl?.let { url -> if (isPdfUrl(url)) externalViewer(url) else showFullImage = true }
     }
 
-    LaunchedEffect(uiState.pdfFile) {
-        uiState.pdfFile?.let { file ->
-            println("PDF ready to be opened: $file")
-            viewModel.onPdfShown()
-        }
-    }
+    // "Download receipt" prints it; "Save as PDF" in the print dialog is the download
+    val printHtml = rememberHtmlPrinter()
+    val receipt = payment?.let { paymentReceiptHtml(it) }
+    val receiptTitle = stringResource(Res.string.payment_receipt_title)
+    val onDownloadReceipt: () -> Unit = { receipt?.let { printHtml(receiptTitle, it) } }
 
     if (isExpanded()) {
         PaymentDetailWeb(
@@ -91,7 +91,7 @@ fun PaymentDetailScreen(
             loadFailed = uiState.loadFailed,
             onRetry = viewModel::loadPayment,
             onBackClick = onBackClick,
-            onDownloadClick = { viewModel.onDownloadReceiptClick() },
+            onDownloadClick = onDownloadReceipt,
             onShowFullImage = openProof
         )
         if (showFullImage && payment?.proofUrl != null) {
@@ -119,7 +119,7 @@ fun PaymentDetailScreen(
             ) {
                 PrimaryButton(
                     text = stringResource(Res.string.download_receipt),
-                    onClick = { viewModel.onDownloadReceiptClick() },
+                    onClick = onDownloadReceipt,
                     isLoading = uiState.isLoading,
                     icon = Icons.Default.Download
                 )
@@ -266,6 +266,13 @@ private fun TransactionDetailRows(payment: Payment) {
     DetailRow(stringResource(Res.string.transaction_id), "#TXN-${payment.id.take(8)}")
     DetailRow(stringResource(Res.string.date_label), formatPaymentDate(payment.date))
     DetailRow(stringResource(Res.string.method_label), paymentMethodLabel(payment.method))
+    payment.amountBs?.let { DetailRow(stringResource(Res.string.amount_in_bs), stringResource(Res.string.bs_amount, formatBs(it))) }
+    payment.exchangeRate?.let { rate ->
+        DetailRow(
+            stringResource(Res.string.exchange_rate_label),
+            stringResource(Res.string.exchange_rate_value, formatBs(rate), bcvDateLabel(payment.rateDate))
+        )
+    }
     payment.userName?.let { DetailRow(stringResource(Res.string.paid_by_label), it) }
     DetailRow(stringResource(Res.string.bank_label), payment.bank ?: "—")
     DetailRow(stringResource(Res.string.reference_label), payment.reference ?: "—")

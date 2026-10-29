@@ -15,6 +15,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -69,6 +72,8 @@ import com.example.condominio.ui.theme.AptoSurfaceContainerHigh
 import com.example.condominio.ui.utils.UiText
 import com.example.condominio.ui.utils.formatCurrency
 import com.example.condominio.ui.utils.formatDate
+import com.example.condominio.ui.utils.invoiceTitle
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.condominio.ui.utils.isWebPlatform
 import com.example.condominio.ui.utils.parseAmount
 import condominio.shared.generated.resources.*
@@ -77,6 +82,7 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import kotlinx.coroutines.launch
 
 /** Same limit as the decisions quote upload and the "máx. 5 MB" hint. */
 private const val MAX_PROOF_BYTES = 5 * 1024 * 1024
@@ -115,6 +121,9 @@ fun CreatePaymentScreen(
 
     val wide = isWide()
     val fieldFocus = remember { PaymentFieldFocus() }
+    // Page 0: account to pay to; page 1: the payment form. Both stay composed so focus requests reach the form.
+    val pagerState = rememberPagerState { 2 }
+    val scope = rememberCoroutineScope()
     val onSubmit: () -> Unit = {
         viewModel.onSubmitClick()
         // Validation is synchronous: move focus to the first invalid field, in on-screen order (E-P1).
@@ -126,7 +135,13 @@ fun CreatePaymentScreen(
             state.amountError != null && wide -> fieldFocus.amount
             else -> null
         }
-        target?.let { runCatching { it.requestFocus() } }
+        if (target != null || state.amountError != null || state.proofError != null) {
+            // Errors live on the form page: show it first, then focus once the pager has settled.
+            scope.launch {
+                pagerState.animateScrollToPage(1)
+                target?.let { runCatching { it.requestFocus() } }
+            }
+        }
     }
 
     LaunchedEffect(uiState.isSuccess) {
@@ -148,6 +163,7 @@ fun CreatePaymentScreen(
                 isImageSelected = isImageSelected,
                 viewModel = viewModel,
                 fieldFocus = fieldFocus,
+                pagerState = pagerState,
                 onSubmit = onSubmit,
                 onUploadClick = { imagePickerLauncher() },
                 modifier = Modifier.fillMaxSize().padding(paddingValues)
@@ -161,7 +177,9 @@ fun CreatePaymentScreen(
             TopBarWithBack(
                 title = stringResource(if (currentStep == 1) Res.string.pay_now else Res.string.payment_details_title),
                 onBackClick = {
-                    if (currentStep == 2) {
+                    if (currentStep == 2 && pagerState.currentPage == 1) {
+                        scope.launch { pagerState.animateScrollToPage(0) }
+                    } else if (currentStep == 2) {
                         currentStep = 1
                     } else {
                         onBackClick()
@@ -176,6 +194,19 @@ fun CreatePaymentScreen(
                     selectedCount = uiState.selectedInvoiceIds.size,
                     onContinue = { currentStep = 2 }
                 )
+            } else if (pagerState.currentPage == 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                ) {
+                    PrimaryButton(
+                        text = stringResource(Res.string.pay_to_done),
+                        onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
+                        trailingIcon = Icons.AutoMirrored.Filled.ArrowForward
+                    )
+                }
             } else {
                 Step2BottomBar(
                     isLoading = uiState.isLoading,
@@ -210,13 +241,36 @@ fun CreatePaymentScreen(
                     onRetry = viewModel::loadPendingInvoices
                 )
             } else {
-                Step2Details(
-                    uiState = uiState,
-                    isImageSelected = isImageSelected,
-                    viewModel = viewModel,
-                    fieldFocus = fieldFocus,
-                    onUploadClick = { imagePickerLauncher() }
-                )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    PaymentPagerTabs(pagerState)
+                    HorizontalPager(
+                        state = pagerState,
+                        beyondViewportPageCount = 1,
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier.weight(1f)
+                    ) { page ->
+                        if (page == 0) {
+                            PayToAccountContent(
+                                uiState = uiState,
+                                onMethodChange = viewModel::onMethodChange,
+                                onRetryRate = viewModel::loadBcvRate,
+                                onRetryPaymentInfo = viewModel::retryPaymentInfo,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                            )
+                        } else {
+                            Step2Details(
+                                uiState = uiState,
+                                isImageSelected = isImageSelected,
+                                viewModel = viewModel,
+                                fieldFocus = fieldFocus,
+                                onUploadClick = { imagePickerLauncher() }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -363,9 +417,11 @@ private fun InvoiceCard(
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
                 Text(
-                    text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                    text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -880,6 +936,7 @@ private fun WidePaymentForm(
     isImageSelected: Boolean,
     viewModel: CreatePaymentViewModel,
     fieldFocus: PaymentFieldFocus,
+    pagerState: PagerState,
     onSubmit: () -> Unit,
     onUploadClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -895,80 +952,100 @@ private fun WidePaymentForm(
     ) {
         AdaptiveColumns(
             main = {
-                Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                    // Method + method-specific bank data
-                    WebCard {
-                        WideSectionTitle(stringResource(Res.string.payment_method))
-                        PaymentMethodDropdown(
-                            method = uiState.method,
-                            onMethodChange = viewModel::onMethodChange
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        WideMethodFields(uiState = uiState, viewModel = viewModel, fieldFocus = fieldFocus)
-                    }
-
-                    // Amount + date
-                    WebCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            // Comma or dot decimals ("150,50", "1.500,25"): parsed with parseAmount (A-01)
-                            LabeledOutlinedField(
-                                value = uiState.amount,
-                                onValueChange = viewModel::onAmountChange,
-                                label = stringResource(Res.string.payment_amount),
-                                placeholder = "0.00",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                isError = uiState.amountError != null,
-                                supportingText = uiState.amountError?.asString(),
-                                modifier = Modifier.weight(1f).focusRequester(fieldFocus.amount)
-                            )
-                            LabeledOutlinedField(
-                                value = formatDate(uiState.date, "dd/MM/yyyy"),
-                                onValueChange = {},
-                                label = stringResource(Res.string.payment_date),
-                                readOnly = true,
-                                trailingIcon = {
-                                    IconButton(
-                                        onClick = { showDatePicker = true },
-                                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.CalendarToday,
-                                            contentDescription = stringResource(Res.string.select_date),
-                                            tint = MaterialTheme.colorScheme.outline
-                                        )
-                                    }
-                                },
-                                modifier = Modifier.weight(1f)
+                PaymentPagerTabs(pagerState)
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalPager(
+                    state = pagerState,
+                    beyondViewportPageCount = 1,
+                    verticalAlignment = Alignment.Top,
+                    pageSpacing = 24.dp
+                ) { page ->
+                    if (page == 0) {
+                        WebCard {
+                            PayToAccountContent(
+                                uiState = uiState,
+                                onMethodChange = viewModel::onMethodChange,
+                                onRetryRate = viewModel::loadBcvRate,
+                                onRetryPaymentInfo = viewModel::retryPaymentInfo
                             )
                         }
-                    }
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                            // Method + method-specific bank data
+                            WebCard {
+                                WideSectionTitle(stringResource(Res.string.payment_method))
+                                PaymentMethodDropdown(
+                                    method = uiState.method,
+                                    onMethodChange = viewModel::onMethodChange
+                                )
+                                Spacer(modifier = Modifier.height(20.dp))
+                                WideMethodFields(uiState = uiState, viewModel = viewModel, fieldFocus = fieldFocus)
+                            }
 
-                    // Notes
-                    WebCard {
-                        LabeledOutlinedField(
-                            value = uiState.description,
-                            onValueChange = viewModel::onDescriptionChange,
-                            label = stringResource(Res.string.payment_description_label),
-                            placeholder = stringResource(Res.string.payment_description_placeholder),
-                            singleLine = false
-                        )
-                    }
+                            // Amount + date
+                            WebCard {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    // Comma or dot decimals ("150,50", "1.500,25"): parsed with parseAmount (A-01)
+                                    LabeledOutlinedField(
+                                        value = uiState.amount,
+                                        onValueChange = viewModel::onAmountChange,
+                                        label = stringResource(Res.string.payment_amount),
+                                        placeholder = "0.00",
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                        isError = uiState.amountError != null,
+                                        supportingText = uiState.amountError?.asString(),
+                                        modifier = Modifier.weight(1f).focusRequester(fieldFocus.amount)
+                                    )
+                                    LabeledOutlinedField(
+                                        value = formatDate(uiState.date, "dd/MM/yyyy"),
+                                        onValueChange = {},
+                                        label = stringResource(Res.string.payment_date),
+                                        readOnly = true,
+                                        trailingIcon = {
+                                            IconButton(
+                                                onClick = { showDatePicker = true },
+                                                modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.CalendarToday,
+                                                    contentDescription = stringResource(Res.string.select_date),
+                                                    tint = MaterialTheme.colorScheme.outline
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
 
-                    // Proof upload (wide drop zone)
-                    WebCard {
-                        WideSectionTitle(stringResource(Res.string.payment_proof))
-                        ProofUploadBox(
-                            isImageSelected = isImageSelected,
-                            isError = uiState.proofError != null,
-                            onUploadClick = onUploadClick,
-                            modifier = Modifier
-                                .heightIn(min = 220.dp)
-                                .pointerHoverIcon(PointerIcon.Hand)
-                        )
-                        uiState.proofError?.let { FieldErrorText(it) }
+                            // Notes
+                            WebCard {
+                                LabeledOutlinedField(
+                                    value = uiState.description,
+                                    onValueChange = viewModel::onDescriptionChange,
+                                    label = stringResource(Res.string.payment_description_label),
+                                    placeholder = stringResource(Res.string.payment_description_placeholder),
+                                    singleLine = false
+                                )
+                            }
+
+                            // Proof upload (wide drop zone)
+                            WebCard {
+                                WideSectionTitle(stringResource(Res.string.payment_proof))
+                                ProofUploadBox(
+                                    isImageSelected = isImageSelected,
+                                    isError = uiState.proofError != null,
+                                    onUploadClick = onUploadClick,
+                                    modifier = Modifier
+                                        .heightIn(min = 220.dp)
+                                        .pointerHoverIcon(PointerIcon.Hand)
+                                )
+                                uiState.proofError?.let { FieldErrorText(it) }
+                            }
+                        }
                     }
                 }
             },
@@ -1150,9 +1227,11 @@ private fun WideSummaryCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = invoice.description ?: stringResource(Res.string.default_invoice_desc),
+                        text = invoiceTitle(invoice.description) ?: stringResource(Res.string.default_invoice_desc),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Text(

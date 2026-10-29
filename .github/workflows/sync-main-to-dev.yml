@@ -1,0 +1,50 @@
+name: Sincronizar Main hacia Dev
+
+on:
+    push:
+        branches:
+            - main
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    back-merge:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout del repositorio completo
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # Necesario para ver el historial de ambas ramas
+
+            - name: Intentar merge directo o crear PR
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+
+                  git checkout dev
+
+                  # Intentamos hacer merge de main en dev sin fast-forward
+                  if git merge origin/main --no-edit; then
+                    echo "✅ Merge limpio. Subiendo cambios a dev..."
+                    git push origin dev
+                  else
+                    echo "⚠️ Conflicto detectado. Abortando merge directo y creando PR..."
+                    git merge --abort
+                    
+                    # Verificamos si ya existe un PR abierto de main a dev para no duplicar
+                    EXISTING_PR=$(gh pr list --base dev --head main --json number --jq '.[0].number')
+                    
+                    if [ -z "$EXISTING_PR" ]; then
+                      gh pr create \
+                        --base dev \
+                        --head main \
+                        --title "chore(sync): sincronizar cambios de main en dev" \
+                        --body "Se detectaron cambios en \`main\` (posible hotfix) que generan conflicto al intentar sincronizar automáticamente con \`dev\`. Por favor resuelve los conflictos y haz merge."
+                    else
+                      echo "Ya existe el PR #$EXISTING_PR abierto para esta sincronización."
+                    fi
+                  fi

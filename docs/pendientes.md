@@ -58,8 +58,9 @@ Hallazgos de la revisión de seguridad (2026-10-25).
 - APP-B1…B4: tráfico en claro permitido, `println`, logout solo local y segmento de ruta sin codificar.
 
 ## 6. Bugs y mejoras conocidas (fuera de los IDs)
-- Cartelera: el error de la lista muestra la excepción cruda.
-- Votaciones: la lista y el detalle no usan `ErrorState`.
+- Cartelera: el error de la lista muestra la excepción cruda (resuelto en `feature/offline-errorstate`).
+- Votaciones: la lista y el detalle no usan `ErrorState` (resuelto en `feature/offline-errorstate`).
+- `QrScannerViewModel.kt:58`: ante cualquier fallo no de red muestra `qr_invalid_code`, incluyendo errores 5xx del servidor (`ApiFailureException`). Debe alinearse con `RegisterViewModel` distinguiendo 404/400 (código inválido) de 5xx (`error_unknown` o error de servidor) en vez de asumir siempre código inválido.
 - Un pago rechazado se ve como «Aplicado». Puede venir así de la API: verificar.
 - Los montos no tienen separador de miles.
 - El título de la pestaña del navegador no se traduce.

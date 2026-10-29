@@ -47,6 +47,7 @@ import com.example.condominio.data.model.TallyDto
 import com.example.condominio.data.utils.rememberExternalViewerLauncher
 import com.example.condominio.ui.components.AdaptiveColumns
 import com.example.condominio.ui.components.DecisionStatusBadge
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.WebCard
 import com.example.condominio.ui.components.WebEmptyFrame
 import com.example.condominio.ui.components.isExpanded
@@ -140,29 +141,10 @@ fun DecisionDetailScreen(
                 LoadingState(modifier = Modifier.padding(paddingValues))
             }
 
-            uiState.error != null && detail == null && wide -> {
-                // Wide: compact card under the header, on the container's left edge.
-                Box(Modifier.padding(paddingValues)) {
-                    WebEmptyFrame {
-                        Text(
-                            text = uiState.error!!.asString(),
-                            color = AptoStatusError
-                        )
-                    }
-                }
-            }
-
             uiState.error != null && detail == null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = uiState.error!!.asString(),
-                        color = AptoStatusError
-                    )
+                // Wide: compact card under the header (WebEmptyFrame); Compact: full-screen ErrorState.
+                Box(Modifier.padding(paddingValues)) {
+                    WebEmptyFrame { ErrorState(title = uiState.error!!.asString(), onRetry = viewModel::refresh) }
                 }
             }
 

@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.model.User
 import com.example.condominio.data.repository.AuthRepository
+import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.ui.utils.AuthAction
 import com.example.condominio.ui.utils.UiText
 import com.example.condominio.ui.utils.authErrorText
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -23,17 +25,22 @@ class ProfileViewModel (
         loadUserData()
     }
 
-    private fun loadUserData() {
-        viewModelScope.launch {
-            // Fetch latest user data to trigger enrichment
-            authRepository.fetchCurrentUser()
+    private var loadJob: Job? = null
 
+    private fun loadUserData() {
+        loadJob = viewModelScope.launch {
+            // Fetch latest user data to trigger enrichment
+            val fetchFailed = try {
+                authRepository.fetchCurrentUser().isFailure
+            } catch (e: Throwable) {
+                e.rethrowIfCancellation()
+                true
+            }
             authRepository.currentUser.collect { user ->
                 _uiState.update {
-                    it.copy(
-                        user = user,
-                        isLoading = false
-                    )
+                    // A cached user stays on screen even if the refresh failed; the error only replaces "nothing".
+                    val shouldMarkFailed = fetchFailed && user == null && !it.isLoggingOut && !it.isDeleting && !it.isLoggedOut
+                    it.copy(user = user, isLoading = false, loadFailed = shouldMarkFailed)
                 }
             }
         }
@@ -66,6 +73,14 @@ class ProfileViewModel (
             }
         }
     }
+
+    /** Retry from the load error screen; ignored while loading. */
+    fun retry() {
+        if (_uiState.value.isLoading) return
+        loadJob?.cancel()
+        _uiState.update { it.copy(isLoading = true, loadFailed = false) }
+        loadUserData()
+    }
 }
 
 data class ProfileUiState(
@@ -74,5 +89,7 @@ data class ProfileUiState(
     val isLoggingOut: Boolean = false,
     val isLoggedOut: Boolean = false,
     val isDeleting: Boolean = false,
-    val deleteError: UiText? = null
+    val deleteError: UiText? = null,
+    /** No user to show and loading it failed: the screen shows ErrorState with Retry. */
+    val loadFailed: Boolean = false
 )

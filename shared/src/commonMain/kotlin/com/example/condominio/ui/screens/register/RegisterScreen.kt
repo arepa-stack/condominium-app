@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LabeledOutlinedField
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.PrimaryButton
@@ -131,6 +132,15 @@ fun RegisterScreen(
             }
         }
     ) { paddingValues ->
+        if (uiState.loadFailed) {
+            ErrorState(
+                title = stringResource(Res.string.error_loading_building),
+                onRetry = viewModel::retryLoad,
+                modifier = Modifier.padding(paddingValues)
+            )
+            return@Scaffold
+        }
+
         if (wide) {
             Column(
                 modifier = Modifier

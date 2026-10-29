@@ -3,6 +3,7 @@ package com.example.condominio.data.repository
 import com.example.condominio.data.remote.rethrowIfCancellation
 import com.example.condominio.data.model.*
 import com.example.condominio.data.remote.ApiService
+import com.example.condominio.data.remote.toFailure
 import com.example.condominio.ui.utils.formatDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -110,7 +111,8 @@ class RemotePaymentRepository(
             bank: String?,
             phone: String?,
             proofUrl: String?,
-            buildingId: String?
+            buildingId: String?,
+            amountBs: Double?
     ): Result<Payment> {
         return try {
             val allocationDtos =
@@ -131,7 +133,8 @@ class RemotePaymentRepository(
                         println("[CREATE_PAYMENT] multipart proofUrl=$proofUrl bytes.size=${bytes?.size} fileName=$fName")
 
                         apiService.createPaymentMultipart(
-                                amount = amount.toString(),
+                                amount = (amountBs ?: amount).toString(),
+                                currency = if (amountBs != null) "VES" else "USD",
                                 unitId = unitId,
                                 buildingId = buildingId,
                                 method = method.name,
@@ -149,8 +152,8 @@ class RemotePaymentRepository(
                                 com.example.condominio.data.model.CreatePaymentRequest(
                                         unitId = unitId,
                                         buildingId = buildingId,
-                                        amount = amount,
-                                        amountCurrency = "USD",
+                                        amount = amountBs ?: amount,
+                                        currency = if (amountBs != null) "VES" else "USD",
                                         date = dateStr,
                                         method = method.name,
                                         reference = reference,
@@ -193,6 +196,7 @@ class RemotePaymentRepository(
                                             amount = detail.amount,
                                             paid = detail.paid,
                                             remaining = detail.remaining,
+                                            description = detail.description,
                                             status = try {
                                                 when (detail.status.uppercase()) {
                                                     "PENDING" -> com.example.condominio.data.model.InvoiceStatus.PENDING
@@ -277,6 +281,32 @@ class RemotePaymentRepository(
             } else {
                 Result.failure(Exception("Failed to fetch invoice payments"))
             }
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getBcvRate(date: Long?): Result<ExchangeRateDto> {
+        return try {
+            val response = apiService.getExchangeRates(date?.let { formatDate(it, "yyyy-MM-dd") })
+            val rate = response.body()?.rates?.dolarOficial
+            when {
+                !response.isSuccessful -> Result.failure(response.toFailure())
+                rate == null -> Result.failure(IllegalStateException("No BCV rate published"))
+                else -> Result.success(rate)
+            }
+        } catch (e: Throwable) {
+            e.rethrowIfCancellation()
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getPaymentInfo(buildingId: String): Result<BuildingPaymentInfoDto> {
+        return try {
+            val response = apiService.getBuildingPaymentInfo(buildingId)
+            val body = response.body()
+            if (response.isSuccessful && body != null) Result.success(body) else Result.failure(response.toFailure())
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
             Result.failure(e)

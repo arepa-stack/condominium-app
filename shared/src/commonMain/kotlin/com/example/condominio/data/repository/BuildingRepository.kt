@@ -38,6 +38,6 @@ class RemoteBuildingRepository(
     override suspend fun getBuildingUnitsByCode(code: String): Result<List<UnitDto>> = try {
         val r = apiService.getBuildingUnitsByCode(code)
         if (r.isSuccessful && r.body() != null) Result.success(r.body()!!)
-        else Result.failure(Exception("Failed to fetch units for code: $code"))
+        else Result.failure(r.toFailure())
     } catch (e: Throwable) { e.rethrowIfCancellation(); Result.failure(e) }
 }

@@ -7,6 +7,19 @@ Guía para trabajar con la versión web de la app. La web **no es otro proyecto*
 - Navegadores soportados: Chrome 119+, Firefox 120+, **Safari/iOS 18.2+** (requiere WasmGC).
 - Público: residentes, detrás de login (sin requisitos de SEO).
 
+## Índice
+
+1. [Dónde está cada cosa](#1-dónde-está-cada-cosa)
+2. [Ambientes (DEV / PROD)](#2-ambientes-dev--prod)
+3. [Correr la web en local](#3-correr-la-web-en-local) · [Probar web y Android a la vez](#probar-web-y-android-a-la-vez)
+4. [Ramas, ambientes y deploy (Vercel)](#4-ramas-ambientes-y-deploy-vercel)
+5. [PWA y caches](#5-pwa-y-caches-importante)
+6. [Reglas de UI para web](#6-reglas-de-ui-para-web)
+7. [Versiones acopladas](#7-versiones-acopladas-no-bajar-sin-leer)
+8. [Limitaciones conocidas](#8-limitaciones-conocidas)
+9. [Problemas comunes](#9-problemas-comunes)
+10. [Checklist antes de publicar](#10-checklist-antes-de-publicar-un-cambio-web)
+
 ---
 
 ## 1. Dónde está cada cosa
@@ -75,6 +88,16 @@ python -m http.server 8080 -d shared/build/dist/wasmJs/productionExecutable
   DevTools → Application → *Clear site data*.
 - Alternativa sin cache: la configuración `web-dist` de `.claude/launch.json` (Python con `Cache-Control: no-store`).
 - Peso de producción: ~15 MB de wasm sin comprimir (~5 MB gzip); el hosting debe comprimir (brotli/gzip).
+
+### Probar web y Android a la vez
+
+Se puede: la regla es **un solo build de Gradle a la vez**, no una sola app abierta.
+
+1. Android primero: `./gradlew :androidApp:installDebug -PapiEnv=DEV` (al terminar, la app queda instalada y Gradle libre).
+2. Después la web: `./gradlew :shared:wasmJsBrowserDevelopmentRun --continuous -PapiEnv=DEV`.
+3. Para reinstalar Android, cortar antes la web con Ctrl+C: `--continuous` es un build activo que recompila al guardar.
+
+Si vas a reinstalar Android varias veces, sirve la web estática (build de producción, arriba) y Gradle queda libre.
 
 ### Si la pestaña queda "congelada"
 El navegador pausa el dibujado de Compose cuando la pestaña o la ventana están ocultas: la app queda detenida en el splash o
@@ -269,7 +292,9 @@ Gradle/build para wasm:
 
 - Sin escáner QR en web: se ingresa el código manualmente, o el QR codifica `https://<web>/?code=COND-XXXX` y la cámara
   nativa abre el registro directo.
-- "Descargar recibo/factura" y "Contactar soporte" no hacen nada en web.
+- "Descargar recibo/factura" abre el diálogo de impresión ("Guardar como PDF"); "Contactar soporte" no hace nada.
+- Navegadores sin WasmGC (p. ej. el de Huawei) ven "navegador no compatible"; sin WebGL, o si el arranque falla, la
+  página muestra el error y el user agent en vez de quedar en negro.
 - Sin cache offline de datos (solo el *shell*); sin web push (la API no tiene endpoints).
 - Primera carga pesada (~5 MB comprimidos); accesibilidad limitada (render en canvas).
 - La pestaña oculta pausa la app (ver §3).

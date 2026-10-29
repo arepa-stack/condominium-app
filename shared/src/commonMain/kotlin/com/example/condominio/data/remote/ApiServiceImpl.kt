@@ -22,9 +22,20 @@ import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.serialization.json.JsonElement
 
-class ApiServiceImpl(private val client: HttpClient) : ApiService {
+class ApiServiceImpl(private val client: HttpClient, private val sessionExpiry: SessionExpiry) : ApiService {
     
-    private suspend inline fun <reified T> safeRequest(block: () -> io.ktor.client.statement.HttpResponse): Response<T> {
+    /**
+     * Every request goes through here. [authenticated] is false for the endpoints where a 401 means
+     * "wrong credentials" (login, register…), not "session expired".
+     */
+    private suspend inline fun <reified T> safeRequest(
+        authenticated: Boolean = true,
+        block: () -> io.ktor.client.statement.HttpResponse
+    ): Response<T> {
+        // No token, or one the server would reject (malformed/expired): don't send it; the session ends right away.
+        val sentToken = if (authenticated) {
+            sessionExpiry.usableToken() ?: return Response.error(401, "Error from server: 401 Unauthorized")
+        } else null
         // The request itself failing (offline, DNS, `Fail to fetch` on wasm) is a network error, not an HTTP 500.
         val response = try {
             block()
@@ -37,6 +48,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
             if (response.status.isSuccess()) {
                 Response.success(response.body<T>())
             } else {
+                if (authenticated && response.status.value == 401) sessionExpiry.onUnauthorized(sentToken)
                 Response.error(response.status.value, "Error from server: ${response.status}")
             }
         } catch (e: Throwable) {
@@ -45,21 +57,21 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         }
     }
 
-    override suspend fun register(request: Map<String, String>): Response<RegisterResponse> = safeRequest {
+    override suspend fun register(request: Map<String, String>): Response<RegisterResponse> = safeRequest(authenticated = false) {
         client.post("auth/register") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
     }
 
-    override suspend fun login(credentials: Map<String, String>): Response<LoginResponse> = safeRequest {
+    override suspend fun login(credentials: Map<String, String>): Response<LoginResponse> = safeRequest(authenticated = false) {
         client.post("auth/login") {
             contentType(ContentType.Application.Json)
             setBody(credentials)
         }
     }
 
-    override suspend fun resetPassword(email: String): Response<SuccessDto> = safeRequest {
+    override suspend fun resetPassword(email: String): Response<SuccessDto> = safeRequest(authenticated = false) {
         client.post("auth/reset-password") {
             contentType(ContentType.Application.Json)
             setBody(mapOf("email" to email))
@@ -106,11 +118,11 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         client.get("api/v1/app/buildings/$id")
     }
 
-    override suspend fun getBuildingByCode(code: String): Response<Building> = safeRequest {
+    override suspend fun getBuildingByCode(code: String): Response<Building> = safeRequest(authenticated = false) {
         client.get("api/v1/app/buildings/by-code/$code")
     }
 
-    override suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>> = safeRequest {
+    override suspend fun getBuildingUnitsByCode(code: String): Response<List<UnitDto>> = safeRequest(authenticated = false) {
         client.get("api/v1/app/buildings/by-code/$code/units")
     }
 
@@ -118,7 +130,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         client.get("api/v1/app/buildings/$id/units")
     }
 
-    override suspend fun submitRegistrationRequest(body: RegistrationRequestBody): Response<RegistrationRequestResponse> = safeRequest {
+    override suspend fun submitRegistrationRequest(body: RegistrationRequestBody): Response<RegistrationRequestResponse> = safeRequest(authenticated = false) {
         client.post("registration-requests") {
             contentType(ContentType.Application.Json)
             setBody(body)
@@ -151,6 +163,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
         bank: String?,
         allocations: String?,
         proofImage: ByteArray?,
+        currency: String,
         fileName: String?
     ): Response<PaymentDto> = safeRequest {
         val basicParts = formData {
@@ -158,6 +171,7 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
             append("unit_id", unitId)
             append("method", method)
             append("date", date)
+            append("currency", currency)
             if (buildingId != null) append("building_id", buildingId)
             if (notes != null) append("notes", notes)
             if (reference != null) append("reference", reference)
@@ -218,6 +232,14 @@ class ApiServiceImpl(private val client: HttpClient) : ApiService {
 
     override suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto> = safeRequest {
         client.get("api/v1/app/petty-cash/funds/$buildingId")
+    }
+
+    override suspend fun getExchangeRates(date: String?): Response<RateSetDto> = safeRequest {
+        client.get("api/v1/app/exchange-rates") { if (date != null) parameter("date", date) }
+    }
+
+    override suspend fun getBuildingPaymentInfo(buildingId: String): Response<BuildingPaymentInfoDto> = safeRequest {
+        client.get("api/v1/app/buildings/$buildingId/payment-info")
     }
 
     override suspend fun listDecisions(
