@@ -57,7 +57,11 @@ data class Payment(
         val createdAt: Long? = null,
         val processedAt: Long? = null,
         val processorName: String? = null,
-        val userName: String? = null
+        val userName: String? = null,
+        /** What the resident actually transferred in Bs, and the rate/day applied; null for USD payments. */
+        val amountBs: Double? = null,
+        val exchangeRate: Double? = null,
+        val rateDate: String? = null
 )
 
 @Serializable
@@ -85,8 +89,25 @@ data class Invoice(
         val status: InvoiceStatus,
         val description: String? = null,
         val dueDate: Long? = null,
-        val type: InvoiceType = InvoiceType.COMMON
+        val type: InvoiceType = InvoiceType.COMMON,
+        /** Status of the latest payment reported for this invoice (set from the payments list, not the API). */
+        val lastPaymentStatus: PaymentStatus? = null
 )
+
+/**
+ * Applies the unit's payments to the invoice: remaining minus what payments still awaiting admin approval
+ * cover (so a reported payment hides "Pay now" instead of inviting a second one), plus the latest payment status.
+ */
+fun Invoice.withPayments(payments: List<Payment>): Invoice {
+        val mine = payments.filter { p -> p.allocations.any { it.invoiceId == id } }
+        if (mine.isEmpty()) return this
+        val inReview = mine.filter { it.status == PaymentStatus.PENDING }
+                .sumOf { p -> p.allocations.filter { it.invoiceId == id }.sumOf { it.amount } }
+        return copy(
+                remaining = (remaining - inReview).coerceAtLeast(0.0),
+                lastPaymentStatus = mine.maxBy { it.createdAt ?: it.date }.status
+        )
+}
 
 @Serializable
 enum class InvoiceStatus {

@@ -45,7 +45,7 @@ class FakeApiService : ApiService {
     override suspend fun submitRegistrationRequest(body: RegistrationRequestBody): Response<RegistrationRequestResponse> = registrationResponse
     override suspend fun getPayments(unitId: String?, year: Int?): Response<List<PaymentDto>> = TODO()
     override suspend fun getPayment(id: String): Response<PaymentDto> = TODO()
-    override suspend fun createPaymentMultipart(amount: String, unitId: String, buildingId: String?, method: String, date: String, notes: String?, reference: String?, bank: String?, allocations: String?, proofImage: ByteArray?, fileName: String?): Response<PaymentDto> = TODO()
+    override suspend fun createPaymentMultipart(amount: String, unitId: String, buildingId: String?, method: String, date: String, notes: String?, reference: String?, bank: String?, allocations: String?, proofImage: ByteArray?, currency: String, fileName: String?): Response<PaymentDto> = TODO()
     override suspend fun createPayment(request: CreatePaymentRequest): Response<PaymentDto> = TODO()
     override suspend fun getBalance(unitId: String): Response<BalanceDto> = TODO()
     override suspend fun getInvoices(unitId: String, status: String?): Response<List<InvoiceDto>> = TODO()
@@ -53,7 +53,7 @@ class FakeApiService : ApiService {
     override suspend fun getInvoicePayments(id: String): Response<List<PaymentDto>> = TODO()
     override suspend fun getCredits(unitId: String): Response<JsonElement> = TODO()
     override suspend fun getPettyCashBalance(buildingId: String): Response<PettyCashBalanceDto> = TODO()
-    override suspend fun getExchangeRates(): Response<RateSetDto> = TODO()
+    override suspend fun getExchangeRates(date: String?): Response<RateSetDto> = TODO()
     override suspend fun getBuildingPaymentInfo(buildingId: String): Response<BuildingPaymentInfoDto> = TODO()
     override suspend fun listDecisions(buildingId: String?, status: String?, search: String?, page: Int?, limit: Int?): Response<DecisionsPageDto> = TODO()
     override suspend fun getDecisionDetail(id: String): Response<DecisionDetailDto> = TODO()

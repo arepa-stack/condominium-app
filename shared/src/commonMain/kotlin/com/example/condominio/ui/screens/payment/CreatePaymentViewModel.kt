@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.model.BuildingPaymentInfoDto
 import com.example.condominio.data.model.PaymentMethod
+import com.example.condominio.data.repository.applyInvoicePayments
 import com.example.condominio.data.repository.PaymentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,13 +36,29 @@ class CreatePaymentViewModel (
         loadBcvRate()
     }
 
-    /** BCV rate for the Bs amount on the pay-to page; a failure only hides the conversion. */
+    private var rateJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * BCV rate of the payment date: the Bs amount on the pay-to page, and the rate the payment is registered
+     * with (the backend converts with that same day's rate). A failure only hides the conversion.
+     */
     fun loadBcvRate() {
-        viewModelScope.launch {
+        rateJob?.cancel()
+        rateJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoadingRate = true) }
-            val rate = paymentRepository.getBcvRate().getOrNull()
+            val rate = paymentRepository.getBcvRate(_uiState.value.date).getOrNull()
             _uiState.update { it.copy(isLoadingRate = false, bcvRate = rate?.bsPerUnit, bcvRateDate = rate?.rateDate) }
         }
+    }
+
+    /**
+     * Bs sent for Pago Móvil / transfer, so the payment keeps what was paid in Bs and the rate. Cash, or no
+     * rate for the chosen day (failed or still loading), goes as plain USD like before.
+     */
+    private fun amountInBs(amount: Double, state: CreatePaymentUiState): Double? {
+        if (state.method == PaymentMethod.CASH || state.isLoadingRate) return null
+        val rate = state.bcvRate ?: return null
+        return kotlin.math.round(amount * rate * 100) / 100
     }
 
     // Building whose payment details are shown; known once the user is loaded.
@@ -83,10 +100,13 @@ class CreatePaymentViewModel (
                 }
             } else {
                 paymentRepository.getBalance(unitId).onSuccess { balance ->
-                    availableInvoices = balance.pendingInvoices
+                    // Invoices fully covered by a payment awaiting approval can't be paid again
+                    val payable = paymentRepository.applyInvoicePayments(balance.pendingInvoices)
+                        .filter { it.remaining > 0 }
+                    availableInvoices = payable
                     _uiState.update {
                         it.copy(
-                            pendingInvoices = balance.pendingInvoices,
+                            pendingInvoices = payable,
                             isLoadingInvoices = false
                         )
                     }
@@ -112,7 +132,9 @@ class CreatePaymentViewModel (
     }
 
     fun onDateChange(date: Long) {
+        if (date == _uiState.value.date) return
         _uiState.update { it.copy(date = date) }
+        loadBcvRate()
     }
 
     fun onDescriptionChange(description: String) {
@@ -254,7 +276,8 @@ class CreatePaymentViewModel (
                 bank = state.bank.ifBlank { null },
                 phone = state.phone.ifBlank { null },
                 proofUrl = state.proofUrl,
-                buildingId = user?.currentUnit?.buildingId
+                buildingId = user?.currentUnit?.buildingId,
+                amountBs = amountInBs(amount, state)
             )
             _uiState.update { it.copy(isLoading = false) }
 
