@@ -125,6 +125,7 @@ aloja los archivos estáticos.
 - Push a `dev` → compila con `-PapiEnv=DEV` y publica en el proyecto Vercel de DEV.
 - Push a `main` → compila con `-PapiEnv=PROD` y publica en el proyecto Vercel de PROD.
 - También se puede lanzar a mano (Actions → *Deploy web* → *Run workflow*): la rama elegida decide el ambiente.
+- Los PR a `dev`/`main` pasan antes por `.github/workflows/ci.yml` (jobs `tests`, `android`, `web`; checks obligatorios).
 - El workflow verifica que el `ApiConfig` generado coincida con el ambiente antes de publicar.
 - Cabeceras: `shared/src/wasmJsMain/resources/vercel.json` (se copia al build): `sw.js` e `index.html` sin cache, `.wasm`
   con `application/wasm` y cache inmutable (nombres con hash). Las rutas usan hash (`/#dashboard`): no hay rewrites.

@@ -85,4 +85,5 @@ Hallazgos de la revisión de seguridad (2026-10-25).
 - `RemoteAuthRepositoryTest` › `creating the repository with a saved token does not call users me` espera 150 ms
   reales. Es el primer sospechoso si algún día falla al azar.
 - En el paso 8, el rojo de TDD fue por compilación (símbolos inexistentes), no por aserción.
-- No hay CI que corra `:shared:testDebugUnitTest`.
+- CI (`.github/workflows/ci.yml`) corre los tests y los builds de Android y web en cada PR a `dev`/`main`; sus checks
+  `tests`, `android` y `web` son obligatorios en los rulesets de `dev` y `main`.

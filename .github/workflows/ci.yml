@@ -1,0 +1,76 @@
+# Runs on every PR to `dev` / `main`: unit tests, Android debug build and web (wasmJs) build.
+# Its jobs (`tests`, `android`, `web`) are required checks in the `dev` and `main` rulesets, so this workflow has no
+# `paths-ignore`: a required check that does not run leaves the PR blocked in "pending".
+# Builds use the DEV API URL (public); no secrets and no GitHub Environment (so no deployments are created).
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  DEV_API_URL: https://condominium-api-beta.nibs-tech.com/
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04 # pinned: ubuntu-latest moves to 26 on 2026-10-19
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains # gradle/gradle-daemon-jvm.properties pins a JetBrains JDK 21
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Unit tests
+        run: ./gradlew :shared:testDebugUnitTest -PapiEnv=DEV --no-configuration-cache
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: shared/build/reports/tests/
+          if-no-files-found: ignore
+
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Build Android debug
+        run: ./gradlew :androidApp:assembleDebug -PapiEnv=DEV --no-configuration-cache
+
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Build web distribution
+        run: ./gradlew :shared:wasmJsBrowserDistribution -PapiEnv=DEV --no-configuration-cache
