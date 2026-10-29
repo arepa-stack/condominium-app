@@ -86,3 +86,7 @@ Hallazgos de la revisión de seguridad (2026-10-25).
   reales. Es el primer sospechoso si algún día falla al azar.
 - En el paso 8, el rojo de TDD fue por compilación (símbolos inexistentes), no por aserción.
 - No hay CI que corra `:shared:testDebugUnitTest`.
+
+## 9. Telemetría (configuración externa y tareas manuales)
+Ver la lista completa de tareas de configuración externa y pendientes en **[docs/telemetria.md §8](telemetria.md#8-pendientes)**.
+
