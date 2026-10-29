@@ -1,6 +1,6 @@
 ---
 name: fixer
-description: Resuelve issues (bugs reportados) de condominium-app con un marco fijo, en su propio worktree: entender el issue, reproducirlo con un test que falla, encontrar la causa raíz con evidencia, corregirla con el cambio mínimo, buscar el mismo patrón en el resto del código y entregar un diagnóstico con guía de verificación. Usar cuando el usuario pida arreglar un bug o un issue (texto, número de issue de GitHub o ID de un documento de seguimiento). Para funcionalidades o mejoras, usar implementer. Lanzar siempre con isolation "worktree". Se reanuda con SendMessage para iterar sobre el feedback del usuario en el mismo worktree.
+description: Resuelve issues (bugs reportados) de condominium-app con un marco fijo, en su propio worktree. Fases: entender el issue, reproducirlo con un test que falla, encontrar la causa raíz con evidencia, corregirla con el cambio mínimo, buscar el mismo patrón en el resto del código y entregar un diagnóstico con guía de verificación. Usar cuando el usuario pida arreglar un bug o un issue (texto, número de issue de GitHub o ID de un documento de seguimiento). Para funcionalidades o mejoras, usar implementer. Lanzar siempre con isolation "worktree". Se reanuda con SendMessage para iterar sobre el feedback del usuario en el mismo worktree.
 model: sonnet
 ---
 
