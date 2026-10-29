@@ -404,7 +404,6 @@ fun CondominioNavGraph(
             InvoiceDetailScreen(
                     onBackClick = { navController.popBackStack() },
                     onSeeAllPaymentsClick = { navController.navigate("payment_history") },
-                    onDownloadClick = { /* TODO: implementar descarga de factura */ },
                     onPayRemainderClick = { invoiceId ->
                         navController.navigate("create_payment?invoiceId=$invoiceId")
                     },

@@ -3,6 +3,7 @@ package com.example.condominio.ui.screens.billing
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.condominio.data.model.Invoice
+import com.example.condominio.data.repository.applyInvoicePayments
 import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.data.repository.PaymentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,13 @@ class InvoiceListViewModel (
         loadInvoices()
     }
 
+    private var entered = false
+
+    /** Every re-entry reloads (back from the detail, a payment or another tab); the first one `init` loaded. */
+    fun onScreenReturn() {
+        if (entered) refresh() else entered = true
+    }
+
     private fun loadInvoices() {
         viewModelScope.launch {
             // Clear the previous error so a successful refresh doesn't keep showing it (A-08)
@@ -35,9 +43,10 @@ class InvoiceListViewModel (
             if (!unitId.isNullOrEmpty()) {
                 val result = paymentRepository.getInvoices(unitId)
                 result.onSuccess { invoices ->
+                    val withPayments = paymentRepository.applyInvoicePayments(invoices)
                     _uiState.update {
                         it.copy(
-                            invoices = invoices,
+                            invoices = withPayments,
                             isLoading = false
                         )
                     }

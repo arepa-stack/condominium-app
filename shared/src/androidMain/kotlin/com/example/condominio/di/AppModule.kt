@@ -24,7 +24,6 @@ val appModule = module {
     }
     single<TokenManager> { DataStoreTokenManager(get()) }
     single<PlatformFileReader> { AndroidFileReader(androidContext()) }
-    single<PdfService> { PdfServiceImpl(get()) }
 
     single<HttpClientEngine> {
         OkHttp.create {
