@@ -16,3 +16,10 @@ PROD_API_URL=https://condominium-api.nibs-tech.com/
 
 # HTTP body logging on Android (OkHttp). Keep false for release builds.
 ENABLE_NETWORK_LOGS=true
+
+# Telemetry (optional; see docs/telemetria.md).
+# Web (GA4 + Sentry Loader): leave blank locally for no-op, or set the DEV keys to test web telemetry.
+# Android (Firebase Analytics + Crashlytics): place `androidApp/firebase/dev/google-services.json` and
+# `androidApp/firebase/prod/google-services.json` (git-ignored); debug builds only send when API_ENV=DEV.
+GA_MEASUREMENT_ID=
+SENTRY_DSN=

@@ -8,6 +8,8 @@
 #   secrets.VERCEL_ORG_ID      from .vercel/project.json after `vercel link`
 #   secrets.VERCEL_PROJECT_ID  one Vercel project per environment (e.g. condominium-app-dev-test / PROD)
 #   vars.API_URL               DEV: https://condominium-api-beta.nibs-tech.com/  PROD: https://condominium-api.nibs-tech.com/
+#   vars.GA_MEASUREMENT_ID     GA4 Measurement ID (G-...) for that environment's Firebase project
+#   vars.SENTRY_DSN            Sentry DSN (https://...) for that environment's Sentry project
 name: Deploy web
 
 on:
@@ -40,12 +42,15 @@ jobs:
         env:
           DEV_API_URL: ${{ vars.API_URL }}
           PROD_API_URL: ${{ vars.API_URL }}
+          GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
+          SENTRY_DSN: ${{ vars.SENTRY_DSN }}
         run: ./gradlew :shared:wasmJsBrowserDistribution -PapiEnv=${{ env.API_ENV }} --no-configuration-cache
 
       - name: Verify API target
         run: |
           cat shared/build/generated/apiConfig/com/example/condominio/ApiConfig.kt
           grep -q "ENV = \"${API_ENV}\"" shared/build/generated/apiConfig/com/example/condominio/ApiConfig.kt
+          ! grep -q '%GA_MEASUREMENT_ID%\|%SENTRY_DSN%\|%APP_ENV%' shared/build/dist/wasmJs/productionExecutable/index.html
 
       - name: Deploy to Vercel
         env:

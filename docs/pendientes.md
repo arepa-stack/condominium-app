@@ -87,3 +87,6 @@ Hallazgos de la revisión de seguridad (2026-10-25).
 - En el paso 8, el rojo de TDD fue por compilación (símbolos inexistentes), no por aserción.
 - CI (`.github/workflows/ci.yml`) corre los tests y los builds de Android y web en cada PR a `dev`/`main`; sus checks
   `tests`, `android` y `web` son obligatorios en los rulesets de `dev` y `main`.
+
+## 9. Telemetría (configuración externa y tareas manuales)
+Ver la lista completa de tareas de configuración externa y pendientes en **[docs/telemetria.md §8](telemetria.md#8-pendientes)**.

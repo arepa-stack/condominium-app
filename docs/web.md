@@ -19,6 +19,7 @@ Guía para trabajar con la versión web de la app. La web **no es otro proyecto*
 8. [Limitaciones conocidas](#8-limitaciones-conocidas)
 9. [Problemas comunes](#9-problemas-comunes)
 10. [Checklist antes de publicar](#10-checklist-antes-de-publicar-un-cambio-web)
+11. [Telemetría (analítica y errores)](#11-telemetría-analítica-y-errores)
 
 ---
 
@@ -34,6 +35,7 @@ Guía para trabajar con la versión web de la app. La web **no es otro proyecto*
 | Layout adaptable (web/tablet) | `shared/src/commonMain/kotlin/com/example/condominio/ui/components/WebLayout.kt`, `AppShell.kt`, `TopBarWithBack.kt` |
 | Armazón y anchos por ruta | `ui/navigation/CondominioNavGraph.kt` |
 | Configuración de API por ambiente | generada en build: `shared/build/generated/apiConfig/.../ApiConfig.kt` (ver §2) |
+| Telemetría (analítica + errores) | contrato y rutas en `commonMain/telemetry/Telemetry.kt`, plugin Ktor en `commonMain/data/remote/ApiTelemetry.kt`, Android en `androidApp/.../FirebaseTelemetry.kt`, web en `wasmJsMain/telemetry/WebTelemetry.kt` + `index.html` (ver [docs/telemetria.md](telemetria.md)) |
 
 ---
 
@@ -193,6 +195,8 @@ Se hizo así para DEV; PROD se repite igual con `-PapiEnv=PROD`, otro proyecto y
    | Secret | `VERCEL_ORG_ID` | `orgId` de `.vercel/project.json` |
    | Secret | `VERCEL_PROJECT_ID` | `projectId` del proyecto de ese ambiente |
    | Variable | `API_URL` | DEV: `https://condominium-api-beta.nibs-tech.com/` · PROD: `https://condominium-api.nibs-tech.com/` |
+   | Variable | `GA_MEASUREMENT_ID` | ID de medición GA4 (`G-...`) del proyecto Firebase del ambiente (`condominium-app-dev` / `condominium-app-prod`) |
+   | Variable | `SENTRY_DSN` | DSN público (`https://...`) del proyecto Sentry web del ambiente (`condominium-app-web-dev` / `condominium-app-web-prod`) |
 
    Recomendado: *Deployment branches* limitado a `dev` / `main`; en `prod`, *Required reviewers*.
    Alternativa por CLI (cada `secret set` sin `--body` pide el valor):
@@ -201,6 +205,8 @@ Se hizo así para DEV; PROD se repite igual con `-PapiEnv=PROD`, otro proyecto y
    gh secret set VERCEL_ORG_ID --env dev --repo arepa-stack/condominium-app
    gh secret set VERCEL_PROJECT_ID --env dev --repo arepa-stack/condominium-app
    gh variable set API_URL --env dev --repo arepa-stack/condominium-app --body https://condominium-api-beta.nibs-tech.com/
+   gh variable set GA_MEASUREMENT_ID --env dev --repo arepa-stack/condominium-app --body G-XXXXXXXXXX
+   gh variable set SENTRY_DSN --env dev --repo arepa-stack/condominium-app --body https://xxxx@o0.ingest.sentry.io/0
    ```
 3. Primer deploy: push a `dev` (o *Run workflow* sobre `dev`). Tarda ~8 min (el primero algo más, sin cache de Gradle).
 
@@ -339,3 +345,13 @@ El nombre del wasm de la app es un hash del contenido: si cambia el ambiente, el
 5. Build de release con `-PapiEnv=PROD`.
 
 Historial de decisiones de la migración: `docs/web-pwa-handoff.md`.
+
+---
+
+## 11. Telemetría (analítica y errores)
+
+Toda la documentación de arquitectura, configuración por ambiente (DEV/PROD), eventos medidos, reglas de privacidad y guías de prueba de telemetría (Web y Android) se encuentran centralizadas en:
+
+➡️ **[docs/telemetria.md](telemetria.md)**
+
+

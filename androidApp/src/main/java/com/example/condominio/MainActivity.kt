@@ -12,6 +12,5 @@ class MainActivity : ComponentActivity() {
         setContent {
             App()
         }
-        AppOpenAdManager.loadAndShowOnce(this)
     }
 }
