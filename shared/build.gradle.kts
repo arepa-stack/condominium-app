@@ -133,13 +133,16 @@ val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 val apiEnv = ((findProperty("apiEnv") as String?) ?: localProps.getProperty("API_ENV") ?: System.getenv("API_ENV") ?: "DEV").uppercase()
-// URL lookup: local.properties → Gradle property (-PDEV_API_URL=...) → environment variable (CI).
+// URL/setting lookup: local.properties → Gradle property (-PKEY=...) → environment variable (CI).
+// Blank values are ignored (CI passes "" when a repository variable is missing).
+fun setting(key: String): String? =
+    localProps.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: providers.gradleProperty(key).orNull?.takeIf { it.isNotBlank() }
+        ?: providers.environmentVariable(key).orNull?.takeIf { it.isNotBlank() }
+
 // Only PROD has a built-in fallback; any other env without a URL fails instead of silently hitting production.
 val apiUrlKey = "${apiEnv}_API_URL"
-// Blank values are ignored (CI passes "" when a repository variable is missing).
-val apiBaseUrl = localProps.getProperty(apiUrlKey)?.takeIf { it.isNotBlank() }
-    ?: providers.gradleProperty(apiUrlKey).orNull?.takeIf { it.isNotBlank() }
-    ?: providers.environmentVariable(apiUrlKey).orNull?.takeIf { it.isNotBlank() }
+val apiBaseUrl = setting(apiUrlKey)
     ?: if (apiEnv == "PROD") "https://condominium-api.nibs-tech.com/"
        else error("Missing $apiUrlKey: set it in local.properties, -P$apiUrlKey=... or the $apiUrlKey environment variable")
 val networkLogs = localProps.getProperty("ENABLE_NETWORK_LOGS")?.toBoolean() ?: false
@@ -168,6 +171,21 @@ val generateApiConfig by tasks.registering {
     }
 }
 kotlin.sourceSets.commonMain { kotlin.srcDir(generateApiConfig) }
+
+val gaId = setting("GA_MEASUREMENT_ID") ?: ""
+val sentryDsn = setting("SENTRY_DSN") ?: ""
+tasks.named<org.gradle.language.jvm.tasks.ProcessResources>("wasmJsProcessResources") {
+    inputs.property("ga", gaId)
+    inputs.property("sentry", sentryDsn)
+    inputs.property("env", apiEnv)
+    filesMatching("index.html") {
+        filter { line ->
+            line.replace("%GA_MEASUREMENT_ID%", gaId)
+                .replace("%SENTRY_DSN%", sentryDsn)
+                .replace("%APP_ENV%", apiEnv)
+        }
+    }
+}
 
 // Development and production web builds sync into the same build/wasm/packages dir. Without this, running
 // wasmJsBrowserDevelopmentRun and then wasmJsBrowserDistribution ships the unoptimized dev wasm (~38 MB vs ~8 MB).

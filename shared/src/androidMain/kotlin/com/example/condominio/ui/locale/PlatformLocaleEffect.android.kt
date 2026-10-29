@@ -13,8 +13,8 @@ import java.util.Locale
 
 /**
  * Android 13+: per-app language (the system treats the app as [languageCode]; survives configuration
- * changes, e.g. returning from the AdMob interstitial, which otherwise resets the process locale to the
- * system language). Changing it recreates the activity once. Older versions only get the process defaults.
+ * changes and external activities, which otherwise reset the process locale to the system language).
+ * Changing it recreates the activity once. Older versions only get the process defaults.
  */
 private fun applyAppLocale(context: Context, languageCode: String) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
