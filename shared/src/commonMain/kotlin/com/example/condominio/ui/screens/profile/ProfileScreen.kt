@@ -32,6 +32,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import com.example.condominio.data.model.User
 import com.example.condominio.ui.components.AdaptiveColumns
+import com.example.condominio.ui.components.ErrorState
 import com.example.condominio.ui.components.LoadingState
 import com.example.condominio.ui.components.TopBarWithBack
 import com.example.condominio.ui.components.WebCard
@@ -120,6 +121,15 @@ fun ProfileScreen(
     ) { paddingValues ->
         if (uiState.isLoading && uiState.user == null) {
             LoadingState(modifier = Modifier.padding(paddingValues))
+            return@Scaffold
+        }
+
+        if (uiState.loadFailed) {
+            ErrorState(
+                title = stringResource(Res.string.error_loading_profile),
+                onRetry = viewModel::retry,
+                modifier = Modifier.padding(paddingValues)
+            )
             return@Scaffold
         }
 

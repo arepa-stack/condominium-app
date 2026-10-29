@@ -51,4 +51,12 @@ class TypedFailuresTest {
         api.buildingByCodeResponse = Response.networkError("down")
         assertIs<NetworkFailureException>(buildings.getBuildingByCode("X").exceptionOrNull())
     }
+
+    @Test fun `building units lookup by code distinguishes error from no network`() = runTest {
+        val buildings = RemoteBuildingRepository(api)
+        api.buildingUnitsByCodeResponse = Response.error(500, "err")
+        assertEquals(500, assertIs<ApiFailureException>(buildings.getBuildingUnitsByCode("X").exceptionOrNull()).code)
+        api.buildingUnitsByCodeResponse = Response.networkError("down")
+        assertIs<NetworkFailureException>(buildings.getBuildingUnitsByCode("X").exceptionOrNull())
+    }
 }
