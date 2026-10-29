@@ -5,8 +5,10 @@ import com.example.condominio.data.local.TokenManager
 import com.example.condominio.data.remote.ApiService
 import com.example.condominio.data.remote.ApiServiceImpl
 import com.example.condominio.data.remote.SessionExpiry
+import com.example.condominio.data.remote.apiTelemetry
 import com.example.condominio.data.repository.*
 import com.example.condominio.domain.usecase.billboard.GetUnreadAnnouncementsCountUseCase
+import com.example.condominio.telemetry.Telemetry
 import com.example.condominio.ui.screens.UnitSelectionViewModel
 import com.example.condominio.ui.screens.billboard.BillboardDetailViewModel
 import com.example.condominio.ui.screens.billboard.BillboardListViewModel
@@ -31,12 +33,13 @@ import org.koin.dsl.module
 
 /**
  * Platform-agnostic graph. Each platform adds a module providing:
- * [HttpClientEngine], [TokenManager] and PlatformFileReader.
+ * [HttpClientEngine], [TokenManager], [Telemetry] and PlatformFileReader.
  */
 val sharedModule = module {
     single {
         val tokenManager = get<TokenManager>()
         HttpClient(get<HttpClientEngine>()) {
+            install(apiTelemetry(get()))
             install(createClientPlugin("BearerAuth") {
                 onRequest { request, _ ->
                     tokenManager.getToken()?.let { request.headers.append(HttpHeaders.Authorization, "Bearer $it") }

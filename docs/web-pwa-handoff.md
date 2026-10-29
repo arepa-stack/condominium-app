@@ -176,7 +176,6 @@ Checklist (decide go/no-go de la web): teclado no tapa campos, autocompletar con
 | Registro escaneando QR real | ML Kit (no tocado) + ruta `register_form/{buildingId}` |
 | Cambio de idioma | Sin cambios esperados |
 | Tablet u horizontal | Contenido limitado a 600dp (cambio visual nuevo) |
-| AdMob al abrir | AGP/activity nuevos |
 | Revisión visual general | Salto Compose 1.7 → 1.10 puede alterar Material3/insets |
 | `./gradlew :androidApp:assembleRelease` | Build firmado no probado |
 

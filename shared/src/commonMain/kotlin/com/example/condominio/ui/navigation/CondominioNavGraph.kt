@@ -19,6 +19,8 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import com.example.condominio.data.remote.SessionExpiry
 import com.example.condominio.data.repository.AuthRepository
+import com.example.condominio.telemetry.Telemetry
+import com.example.condominio.telemetry.screenName
 import org.koin.compose.koinInject
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
@@ -159,6 +161,8 @@ fun CondominioNavGraph(
     // and go to login from wherever the user is, clearing the back stack. splash/login handle it on their own.
     val sessionExpiry: SessionExpiry = koinInject()
     val authRepository: AuthRepository = koinInject()
+    val telemetry: Telemetry = koinInject()
+    LaunchedEffect(backStackEntry) { screenName(currentRoute)?.let(telemetry::screen) }
     // Expiry redirect: login replaces the screen at once, without the fade (reset once the user leaves login).
     var expiredRedirect by remember { mutableStateOf(false) }
     LaunchedEffect(currentRoute) { if (currentRoute != "login") expiredRedirect = false }

@@ -39,6 +39,23 @@
 
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
+    // Telemetry (docs/web.md §11): filled at build time; empty → nothing loads. No ids: the #route and ?code= never leave.
+    (function () {
+        var env = '%APP_ENV%', ga = '%GA_MEASUREMENT_ID%', dsn = '%SENTRY_DSN%', clean = location.origin + location.pathname;
+        if (/^G-/.test(ga)) {
+            window.dataLayer = window.dataLayer || []; window.gtag = function () { dataLayer.push(arguments); };
+            gtag('js', new Date()); gtag('set', 'user_properties', { app_env: env });
+            gtag('config', ga, { send_page_view: false, page_location: clean, allow_google_signals: false, allow_ad_personalization_signals: false });
+            var g = document.createElement('script'); g.async = true; g.src = 'https://www.googletagmanager.com/gtag/js?id=' + ga; document.head.appendChild(g);
+        }
+        if (/^https:\/\//.test(dsn)) {
+            window.sentryOnLoad = function () { Sentry.init({ dsn: dsn, environment: env, sendDefaultPii: false,
+                beforeBreadcrumb: function () { return null; },
+                beforeSend: function (e) { if (e.request) { e.request.url = clean; delete e.request.query_string; delete e.request.headers; } return e; } }); };
+            var s = document.createElement('script'); s.crossOrigin = 'anonymous'; s.src = 'https://js.sentry-cdn.com/' + new URL(dsn).username + '.min.js'; document.head.appendChild(s);
+        }
+    })();
+
     // Compose for Web types into a hidden <input> it creates per focused field. For password fields it only sets
     // inputmode="password" (ignored by browsers) and autocorrect="on", so mobile keyboards treat the password as
     // plain text: they suggest it and may learn it. Make that backing input a real password input.

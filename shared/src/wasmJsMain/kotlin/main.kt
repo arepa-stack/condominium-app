@@ -8,6 +8,8 @@ import com.example.condominio.data.local.TokenManager
 import com.example.condominio.data.utils.PlatformFileReader
 import com.example.condominio.data.utils.WebFileReader
 import com.example.condominio.di.sharedModule
+import com.example.condominio.telemetry.Telemetry
+import com.example.condominio.telemetry.WebTelemetry
 import com.example.condominio.ui.screens.register.extractBuildingCode
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.js.Js
@@ -21,6 +23,7 @@ private val webModule = module {
     single<HttpClientEngine> { Js.create() }
     single<TokenManager> { LocalStorageTokenManager() }
     single<PlatformFileReader> { WebFileReader() }
+    single<Telemetry> { WebTelemetry }
 }
 
 // Browser tab titles per route prefix.

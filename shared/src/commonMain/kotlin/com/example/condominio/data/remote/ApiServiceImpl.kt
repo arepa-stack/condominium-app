@@ -3,6 +3,8 @@ package com.example.condominio.data.remote
 import com.example.condominio.data.model.*
 import com.example.condominio.data.model.RegistrationRequestBody
 import com.example.condominio.data.model.RegistrationRequestResponse
+import com.example.condominio.telemetry.NoTelemetry
+import com.example.condominio.telemetry.Telemetry
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -13,16 +15,22 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.request
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.content.PartData
 import io.ktor.http.contentType
+import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.serialization.json.JsonElement
 
-class ApiServiceImpl(private val client: HttpClient, private val sessionExpiry: SessionExpiry) : ApiService {
+class ApiServiceImpl(
+    private val client: HttpClient,
+    private val sessionExpiry: SessionExpiry,
+    private val telemetry: Telemetry = NoTelemetry,
+) : ApiService {
     
     /**
      * Every request goes through here. [authenticated] is false for the endpoints where a 401 means
@@ -53,6 +61,10 @@ class ApiServiceImpl(private val client: HttpClient, private val sessionExpiry: 
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
+            try {
+                val safeMsg = e.message?.substringBefore("JSON input")?.trim() ?: (e::class.simpleName ?: "DecodeError")
+                telemetry.recordError(Exception(safeMsg), "${response.request.method.value} ${endpointTemplate(response.request.url.encodedPath)}")
+            } catch (_: Throwable) {}
             Response.error(500, e.message ?: "Unknown error")
         }
     }

@@ -7,9 +7,10 @@ Guía rápida para agentes (y personas) que trabajan en este repositorio.
 App de condominio (residentes) en **Kotlin Multiplatform + Compose Multiplatform**.
 
 - `shared/` — UI, ViewModels, red (Ktor), DI (Koin) compartidos. Targets: Android, iOS y **web (`wasmJs`)**.
-- `androidApp/` — app Android (entrada, AdMob).
+- `androidApp/` — app Android (entrada, Firebase Analytics + Crashlytics).
 - Configuración local: copiar `local.properties.example` a `local.properties` (no versionado).
 - API: URL por ambiente desde `local.properties` (`API_ENV`, `<ENV>_API_URL`); ver `docs/web.md` §2.
+- Telemetría: Firebase Analytics + Crashlytics en Android (`androidApp/firebase/<env>/google-services.json`) y GA4 + Sentry Loader en web (`GA_MEASUREMENT_ID`, `SENTRY_DSN`), con proyectos separados para DEV y PROD; ver `docs/telemetria.md`.
 
 ## Ramas
 
@@ -59,11 +60,14 @@ Cómo usarlos:
   worktree. Recién cuando lo apruebas: commit, merge a tu rama `feature/*` y PR a `dev`.
 - TDD: un test existente que falla significa que cambió un comportamiento; solo se actualiza si el cambio se pidió
   explícitamente. Tests en `shared/src/commonTest`: `./gradlew :shared:testDebugUnitTest -PapiEnv=DEV`.
-- Antes de un PR, los tests en verde son obligatorios.
+- Antes de un PR, los tests en verde son obligatorios. CI (`.github/workflows/ci.yml`) corre tests, build Android y
+  build web en cada PR a `dev`/`main`; sus checks (`tests`, `android`, `web`) son obligatorios para mergear a `main`
+  (en `dev` solo informan: GitHub Actions no puede saltarse un ruleset y `sync-main-to-dev.yml` hace push directo).
 
 ## Otros documentos
 
 - `docs/condominium_app_documentation.md` — documentación general de la app.
+- `docs/telemetria.md` — telemetría (analítica y errores) web y Android.
 - `docs/web-pwa-handoff.md` — historial de decisiones de la migración a web/PWA.
 - `docs/ui-audit.md` — auditoría de UI con estado por hallazgo (actualizar el estado al corregir).
 - `docs/pendientes.md` — pendientes abiertos (bugs, falta de backend, seguridad).
