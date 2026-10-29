@@ -1,5 +1,5 @@
 # Runs on every PR to `dev` / `main`: unit tests, Android debug build and web (wasmJs) build.
-# Its jobs (`tests`, `android`, `web`) are required checks in the `dev` and `main` rulesets, so this workflow has no
+# Its jobs (`tests`, `android`, `web`) are required checks in the `main` ruleset, so this workflow has no
 # `paths-ignore`: a required check that does not run leaves the PR blocked in "pending".
 # Builds use the DEV API URL (public); no secrets and no GitHub Environment (so no deployments are created).
 name: CI
