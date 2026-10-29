@@ -125,13 +125,13 @@ class FakePaymentRepository : PaymentRepository {
     override suspend fun getPayments(unitId: String?) = TODO()
     override suspend fun getPayment(id: String) = TODO()
     override suspend fun fetchPayment(id: String) = TODO()
-    override suspend fun createPayment(amount: Double, date: Long, description: String, method: PaymentMethod, unitId: String, allocations: List<PaymentAllocation>, reference: String?, bank: String?, phone: String?, proofUrl: String?, buildingId: String?) = TODO()
+    override suspend fun createPayment(amount: Double, date: Long, description: String, method: PaymentMethod, unitId: String, allocations: List<PaymentAllocation>, reference: String?, bank: String?, phone: String?, proofUrl: String?, buildingId: String?, amountBs: Double?) = TODO()
     override suspend fun getInvoices(unitId: String, status: String?) = TODO()
     override suspend fun getInvoice(id: String) = TODO()
     override suspend fun getInvoicePayments(invoiceId: String) = TODO()
     var bcvRateResult: Result<ExchangeRateDto> = Result.success(ExchangeRateDto(rateDate = "2026-10-27", bsPerUnit = 216.37))
     var bcvRateCount = 0
-    override suspend fun getBcvRate(): Result<ExchangeRateDto> {
+    override suspend fun getBcvRate(date: Long?): Result<ExchangeRateDto> {
         bcvRateCount++
         return bcvRateResult
     }

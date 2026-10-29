@@ -111,7 +111,8 @@ class RemotePaymentRepository(
             bank: String?,
             phone: String?,
             proofUrl: String?,
-            buildingId: String?
+            buildingId: String?,
+            amountBs: Double?
     ): Result<Payment> {
         return try {
             val allocationDtos =
@@ -132,7 +133,8 @@ class RemotePaymentRepository(
                         println("[CREATE_PAYMENT] multipart proofUrl=$proofUrl bytes.size=${bytes?.size} fileName=$fName")
 
                         apiService.createPaymentMultipart(
-                                amount = amount.toString(),
+                                amount = (amountBs ?: amount).toString(),
+                                currency = if (amountBs != null) "VES" else "USD",
                                 unitId = unitId,
                                 buildingId = buildingId,
                                 method = method.name,
@@ -150,8 +152,8 @@ class RemotePaymentRepository(
                                 com.example.condominio.data.model.CreatePaymentRequest(
                                         unitId = unitId,
                                         buildingId = buildingId,
-                                        amount = amount,
-                                        amountCurrency = "USD",
+                                        amount = amountBs ?: amount,
+                                        currency = if (amountBs != null) "VES" else "USD",
                                         date = dateStr,
                                         method = method.name,
                                         reference = reference,
@@ -285,9 +287,9 @@ class RemotePaymentRepository(
         }
     }
 
-    override suspend fun getBcvRate(): Result<ExchangeRateDto> {
+    override suspend fun getBcvRate(date: Long?): Result<ExchangeRateDto> {
         return try {
-            val response = apiService.getExchangeRates()
+            val response = apiService.getExchangeRates(date?.let { formatDate(it, "yyyy-MM-dd") })
             val rate = response.body()?.rates?.dolarOficial
             when {
                 !response.isSuccessful -> Result.failure(response.toFailure())
