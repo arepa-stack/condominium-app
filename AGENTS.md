@@ -60,7 +60,9 @@ Cómo usarlos:
   worktree. Recién cuando lo apruebas: commit, merge a tu rama `feature/*` y PR a `dev`.
 - TDD: un test existente que falla significa que cambió un comportamiento; solo se actualiza si el cambio se pidió
   explícitamente. Tests en `shared/src/commonTest`: `./gradlew :shared:testDebugUnitTest -PapiEnv=DEV`.
-- Antes de un PR, los tests en verde son obligatorios.
+- Antes de un PR, los tests en verde son obligatorios. CI (`.github/workflows/ci.yml`) corre tests, build Android y
+  build web en cada PR a `dev`/`main`; sus checks (`tests`, `android`, `web`) son obligatorios para mergear a `main`
+  (en `dev` solo informan: GitHub Actions no puede saltarse un ruleset y `sync-main-to-dev.yml` hace push directo).
 
 ## Otros documentos
 
