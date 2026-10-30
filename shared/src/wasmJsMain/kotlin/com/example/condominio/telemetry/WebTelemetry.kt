@@ -15,6 +15,14 @@ private fun sentryError(message: String, where: String) {
     js("try { if (window.Sentry) window.Sentry.captureException(new Error(message), { tags: { where: where }, fingerprint: [where, message] }); } catch (e) {}")
 }
 
+private fun gtagSetTenant(buildingId: String) {
+    js("try { window.__tenant = buildingId; if (window.gtag) window.gtag('set', 'user_properties', { building_id: buildingId }); } catch (e) {}")
+}
+
+private fun gtagClearTenant() {
+    js("try { window.__tenant = null; if (window.gtag) window.gtag('set', 'user_properties', { building_id: null }); } catch (e) {}")
+}
+
 object WebTelemetry : Telemetry {
     override fun screen(name: String) {
         try { gtagScreen(name) } catch (_: Throwable) {}
@@ -39,6 +47,16 @@ object WebTelemetry : Telemetry {
         try {
             val msg = "${throwable::class.simpleName ?: "Throwable"}: ${throwable.message ?: ""}"
             sentryError(msg, where)
+        } catch (_: Throwable) {}
+    }
+
+    override fun setTenant(buildingId: String?) {
+        try {
+            if (buildingId != null) {
+                gtagSetTenant(buildingId)
+            } else {
+                gtagClearTenant()
+            }
         } catch (_: Throwable) {}
     }
 }

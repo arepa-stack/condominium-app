@@ -32,6 +32,8 @@ internal val businessEvents: Map<String, String> = mapOf(
     "POST payments" to "payment_reported",
     "POST decisions/decisions/{id}/votes" to "vote_cast",
     "POST decisions/decisions/{id}/quotes" to "quote_uploaded",
+    "DELETE decisions/decisions/{id}/quotes/{id}" to "quote_deleted",
+    "POST information-center/announcements/{id}/read" to "announcement_read",
     "POST information-center/announcements/{id}/reaction" to "announcement_reaction",
 )
 
