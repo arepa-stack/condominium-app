@@ -126,6 +126,8 @@ class ApiTelemetryTest {
             "quote_uploaded" to {
                 api.uploadDecisionQuote("dec-1", "u1", "Prov", "100", null, byteArrayOf(1), "q.pdf", "application/pdf")
             },
+            "quote_deleted" to { api.deleteDecisionQuote("dec-1", "q-1") },
+            "announcement_read" to { api.markAnnouncementRead("ann-1") },
             "announcement_reaction" to { api.toggleAnnouncementReaction("ann-1") },
         )
         for ((expectedEvent, call) in cases) {

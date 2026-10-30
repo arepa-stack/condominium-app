@@ -36,6 +36,7 @@ class FirebaseTelemetry(context: Context) : Telemetry {
                         is Int -> putLong(k, v.toLong())
                         is Long -> putLong(k, v)
                         is Double -> putDouble(k, v)
+                        is Boolean -> putString(k, v.toString())
                     }
                 }
             }
@@ -47,6 +48,13 @@ class FirebaseTelemetry(context: Context) : Telemetry {
         try {
             crashlytics.setCustomKey("where", where)
             crashlytics.recordException(throwable)
+        } catch (_: Throwable) {}
+    }
+
+    override fun setTenant(buildingId: String?) {
+        try {
+            analytics.setUserProperty("building_id", buildingId)
+            crashlytics.setCustomKey("building_id", buildingId ?: "")
         } catch (_: Throwable) {}
     }
 }

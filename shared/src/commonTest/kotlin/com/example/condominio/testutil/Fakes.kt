@@ -98,7 +98,11 @@ class FakeAuthRepository(var user: User = testUser) : AuthRepository {
         }
         return deleteResult
     }
-    override fun setCurrentUnit(unit: UserUnit) {}
+    override fun setCurrentUnit(unit: UserUnit) {
+        val updated = currentUserFlow.value?.copy(currentUnit = unit)
+        currentUserFlow.value = updated
+        if (updated != null) user = updated
+    }
     override suspend fun hasValidSession() = hasSession
 }
 

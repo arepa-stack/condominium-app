@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import com.example.condominio.data.remote.SessionExpiry
 import com.example.condominio.data.repository.AuthRepository
 import com.example.condominio.telemetry.Telemetry
+import com.example.condominio.telemetry.activeBuildingId
 import com.example.condominio.telemetry.screenName
 import org.koin.compose.koinInject
 import androidx.compose.runtime.getValue
@@ -163,6 +164,7 @@ fun CondominioNavGraph(
     val authRepository: AuthRepository = koinInject()
     val telemetry: Telemetry = koinInject()
     LaunchedEffect(backStackEntry) { screenName(currentRoute)?.let(telemetry::screen) }
+    LaunchedEffect(Unit) { authRepository.activeBuildingId().collect(telemetry::setTenant) }
     // Expiry redirect: login replaces the screen at once, without the fade (reset once the user leaves login).
     var expiredRedirect by remember { mutableStateOf(false) }
     LaunchedEffect(currentRoute) { if (currentRoute != "login") expiredRedirect = false }

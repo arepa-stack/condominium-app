@@ -51,7 +51,7 @@
         if (/^https:\/\//.test(dsn)) {
             window.sentryOnLoad = function () { Sentry.init({ dsn: dsn, environment: env, sendDefaultPii: false,
                 beforeBreadcrumb: function () { return null; },
-                beforeSend: function (e) { if (e.request) { e.request.url = clean; delete e.request.query_string; delete e.request.headers; } return e; } }); };
+                beforeSend: function (e) { if (e.request) { e.request.url = clean; delete e.request.query_string; delete e.request.headers; } if (window.__tenant) { e.tags = e.tags || {}; e.tags.building_id = window.__tenant; } return e; } }); };
             var s = document.createElement('script'); s.crossOrigin = 'anonymous'; s.src = 'https://js.sentry-cdn.com/' + new URL(dsn).username + '.min.js'; document.head.appendChild(s);
         }
     })();

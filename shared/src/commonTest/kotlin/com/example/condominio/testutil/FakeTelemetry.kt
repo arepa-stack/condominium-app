@@ -6,6 +6,7 @@ class FakeTelemetry(var throwOnCall: Boolean = false) : Telemetry {
     val screens = mutableListOf<String>()
     val events = mutableListOf<Pair<String, Map<String, Any>>>()
     val errors = mutableListOf<Pair<Throwable, String>>()
+    val tenants = mutableListOf<String?>()
 
     override fun screen(name: String) {
         if (throwOnCall) error("telemetry failed")
@@ -20,5 +21,9 @@ class FakeTelemetry(var throwOnCall: Boolean = false) : Telemetry {
     override fun recordError(throwable: Throwable, where: String) {
         if (throwOnCall) error("telemetry failed")
         errors += throwable to where
+    }
+
+    override fun setTenant(buildingId: String?) {
+        tenants += buildingId
     }
 }
