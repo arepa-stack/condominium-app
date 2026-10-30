@@ -62,7 +62,6 @@ class RemotePaymentRepository(
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
-            println("Error fetching payments: ${e.message}")
             Result.failure(e)
         }
     }
@@ -77,7 +76,6 @@ class RemotePaymentRepository(
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
-            println("Error fetching payments stream: ${e.message}")
             emit(emptyList())
         }
     }
@@ -95,7 +93,6 @@ class RemotePaymentRepository(
             }
         } catch (e: Throwable) {
             e.rethrowIfCancellation()
-            println("Error fetching payment $id: ${e.message}")
             Result.failure(e)
         }
     }
@@ -130,7 +127,6 @@ class RemotePaymentRepository(
                         // Multipart Flow
                         val bytes = fileReader.readBytes(proofUrl)
                         val fName = fileReader.getFileName(proofUrl)
-                        println("[CREATE_PAYMENT] multipart proofUrl=$proofUrl bytes.size=${bytes?.size} fileName=$fName")
 
                         apiService.createPaymentMultipart(
                                 amount = (amountBs ?: amount).toString(),

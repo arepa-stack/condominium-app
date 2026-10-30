@@ -39,12 +39,10 @@ class RemoteAuthRepository
 
     override suspend fun login(email: String, password: String): Result<User> {
         return try {
-                println("RemoteAuthRepo: Attempting login for: $email")
             val response = apiService.login(mapOf("email" to email, "password" to password))
 
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
-                println("RemoteAuthRepo: Login successful, token: ${loginResponse.accessToken.take(20)}...")
                 tokenManager.saveToken(loginResponse.accessToken)
 
                 var user = loginResponse.user.toDomain()

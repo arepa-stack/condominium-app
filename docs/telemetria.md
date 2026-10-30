@@ -63,6 +63,7 @@ Permite saber qué funciones se utilizan y corregir errores antes de que afecten
 | Loader Script | Script optimizado de Sentry que carga el SDK completo solo cuando ocurre un error. |
 | DebugView | Vista en tiempo real de Firebase para depurar eventos en Android al instante. |
 | `app_env` | Propiedad de usuario (`DEV` o `PROD`) para segmentar analítica y reportes de errores. |
+| `building_id` | Identificador único (UUID) del edificio (tenant) activo. Propiedad de usuario en GA4/Firebase, custom key en Crashlytics y tag en Sentry para segmentar métricas global y por edificio. |
 | Medición optimizada | Función automática de GA4 que mide clics y scroll; debe estar **desactivada**. |
 
 ---
@@ -102,6 +103,8 @@ Regla obligatoria: todo cambio se valida primero en DEV. **Nunca** se colocan cl
 | `payment_reported` | `POST payments` |
 | `vote_cast` | `POST decisions/decisions/{id}/votes` |
 | `quote_uploaded` | `POST decisions/decisions/{id}/quotes` |
+| `quote_deleted` | `DELETE decisions/decisions/{id}/quotes/{id}` |
+| `announcement_read` | `POST information-center/announcements/{id}/read` |
 | `announcement_reaction` | `POST information-center/announcements/{id}/reaction` |
 
 - **Errores de API**: ante respuestas HTTP `>= 400` o desconexión de red se emite `api_error` con `{endpoint, status, duration_ms}` (`status = 0` indica fallo de red/offline).
@@ -110,7 +113,7 @@ Regla obligatoria: todo cambio se valida primero en DEV. **Nunca** se colocan cl
 ### 3.2 Privacidad y PII
 
 - **Sin identificadores de usuario**: no se ejecuta `setUserId`; los usuarios son anónimos mediante identificadores de instancia rotables de Firebase y cookies de primer origen (`_ga`).
-- **Cero información personal (PII)**: jamás se envían nombres, correos, teléfonos, montos en dinero, bancos, referencias, UUIDs ni códigos de edificio.
+- **Cero información personal (PII)**: jamás se envían nombres, correos, teléfonos, montos en dinero, bancos, referencias ni códigos de edificio (`building_code`, funciona como credencial). Tampoco identificadores de usuario ni de unidad (`unit_id`). La única excepción a la regla de no UUIDs es `building_id` (identificador del tenant/edificio, persona jurídica con RIF y baja cardinalidad), enviado como propiedad de usuario para métricas por edificio.
 - **Rutas anonimizadas**: `endpointTemplate` reemplaza cualquier ID numérico, UUID o código tras `by-code` por `{id}`.
 - **Web limpia**: `page_location` reporta solo `origin + pathname`. El hash (`#dashboard`) y tokens de consulta (`?code=...`) nunca se envían a Sentry ni a GA4.
 - **Sin identificadores de anuncios**: AdMob fue eliminado por completo, la recolección de AdID está desactivada y el permiso `com.google.android.gms.permission.AD_ID` fue removido del manifest.
@@ -178,7 +181,7 @@ Existe una sola propiedad de GA4 por ambiente que reúne dos flujos de datos (An
 2. En cada ambiente (`dev` y `prod`), crea las siguientes **Environment variables** (no secrets):
    - `GA_MEASUREMENT_ID`: identificador GA4 correspondiente (`G-...`).
    - `SENTRY_DSN`: DSN público del proyecto correspondiente (`https://...`).
-3. El workflow `.github/workflows/deploy-web.yml` inyecta estas variables según la rama: `main` usa `prod`, y cualquier otra rama que no sea `main` usa `dev`.
+3. El workflow `.github/workflows/deploy-web.yml` inyecta estas variables según la rama: `main` usa `prod`, y cualquier otra rama que no sea `main` usa `dev`. El paso "Verify API target" hace fallar el deploy si el `index.html` generado no trae `ga = 'G-...'` ni `dsn = 'https://...'`, es decir, si falta alguna de las dos variables o tiene un formato inválido.
 4. Para verificar la inyección en el deploy, abre **Ver código fuente de la página** (view-source) en el navegador y comprueba que el `G-...` y el DSN correspondan al ambiente; si ves un valor viejo o desactualizado, ve a DevTools → Application → Service workers → Unregister ([§7](#7-problemas-frecuentes-adblock-debugview-vacío-builds)).
 
 ### 5.3 Consolas (Firebase, GA4, Crashlytics y Sentry)
@@ -191,6 +194,7 @@ Existe una sola propiedad de GA4 por ambiente que reúne dos flujos de datos (An
   1. **Administrar → Propiedad → Visualización de datos → Definiciones personalizadas** (no es retroactivo: crearlas antes de subir a PROD; para PROD repetir en la propiedad PROD):
      - Dimensión de evento: `endpoint`
      - Dimensión de usuario: `app_env`
+      - Dimensión de usuario: `building_id` (dimensión de USUARIO, crear antes del deploy)
      - Dimensión de evento: `status` (opcional)
      - Métrica de evento: `duration_ms` (Tipo: Tiempo → Milisegundos)
   2. **Administrar → Recopilación y modificación de datos → Flujos de datos → Web → Medición optimizada**: **APAGAR** (evita duplicar vistas de página y lectura de URLs completas).
@@ -220,7 +224,7 @@ Existe una sola propiedad de GA4 por ambiente que reúne dos flujos de datos (An
      - ID de dispositivo u otros.
      - Ubicación aproximada (opcional, GA la deriva de la IP).
      - Para todos: recopilado sí, compartido no (Firebase es proveedor de servicios), obligatorio, propósito Estadísticas; cifrado en tránsito sí.
-  4. **Política de privacidad** (obligatoria, URL en Contenido de la app): apartado con servicios (Firebase Analytics, Crashlytics, GA4 con cookie `_ga`, Sentry), qué se recoge, qué NO (nombre, correo, teléfono, montos, referencias bancarias, IDs internos; sin publicidad) y para qué (estadísticas y estabilidad).
+  4. **Política de privacidad** (obligatoria, URL en Contenido de la app): apartado con servicios (Firebase Analytics, Crashlytics, GA4 con cookie `_ga`, Sentry), qué se recoge (métricas de uso, caídas del sistema, identificador del edificio activo), qué NO (nombre, correo, teléfono, montos, referencias bancarias, unidad, IDs de usuario ni códigos de edificio; sin publicidad) y para qué (estadísticas y estabilidad).
 
 ---
 
@@ -239,9 +243,9 @@ Desde la raíz del repo (o del worktree en el que trabajes):
 | Prueba | Qué hacer | Qué esperar |
 |---|---|---|
 | SDKs cargados | En Consola (`F12`): `typeof gtag` y `typeof Sentry` | Responden `"function"` y `"object"`. |
-| Visitas de página | Pestaña Network, filtrar por `collect` | Requests `g/collect` con `tid=G-...`, `en=page_view`, `up.app_env=DEV` y ruta limpia sin UUIDs. |
+| Visitas de página | Pestaña Network, filtrar por `collect` | Requests `g/collect` con `tid=G-...`, `en=page_view`, `up.app_env=DEV`, `up.building_id=<uuid>` (tras iniciar sesión) y ruta limpia sin UUIDs. |
 | Error de API | Clic derecho en un request de API en Network → **Block request URL** → reintentar | Emite `en=api_error` con `status=0`. (No usar modo Offline de Chrome porque bloquea GA). |
-| Error en Sentry | En Consola (`F12`): `Sentry.captureException(new Error("prueba"))` | Petición `200 OK` al endpoint `/envelope/`. Aparece en Sentry DEV en 1–2 min. |
+| Error en Sentry | En Consola (`F12`): `Sentry.captureException(new Error("prueba"))` | Petición `200 OK` al endpoint `/envelope/`. Aparece en Sentry DEV en 1–2 min con el tag `building_id` (si hay sesión activa con edificio). |
 | Vista en vivo | En Google Analytics → **Informes → Tiempo real** | Aparecen los usuarios y eventos activos en tiempo real. |
 
 *(Nota: el Loader de Sentry descarga el bundle completo únicamente cuando ocurre el primer error).*
@@ -272,7 +276,7 @@ adb logcat -s FA FA-SVC
 
 *(Líneas de ruido ignorables: `Connection attempt already in progress`, `TCF`, `Tag Manager is not found`, `Install Referrer`).*
 
-- **DebugView**: Firebase Console DEV → **Analytics → DebugView** → seleccionar dispositivo en la esquina superior izquierda.
+- **DebugView**: Firebase Console DEV → **Analytics → DebugView** → seleccionar dispositivo en la esquina superior izquierda. En la pestaña de propiedades de usuario (User Properties), comprobar que `building_id` refleje el UUID del edificio activo tras iniciar sesión (o se limpie al cerrar sesión).
 - **Probar `api_error`**: activar Modo Avión en el teléfono → intentar recargar datos → quitar Modo Avión (Firebase encola y envía).
 - **Probar Crashlytics**: provocar un crash, **reabrir la app** (Crashlytics envía al inicio siguiente) y esperar ~5 min:
   ```powershell
@@ -316,7 +320,7 @@ adb logcat -s FA FA-SVC
 - [ ] Crear proyecto Firebase PROD (`condominium-app-prod`), definiciones personalizadas en GA4 PROD y proyecto Sentry PROD (`condominium-app-web-prod`).
 - [ ] Sentry: tras el trial, revisar que el plan gratuito alcance.
 - [ ] Al publicar en Play: declaraciones de Contenido de la app y política de privacidad ([§5.3](#53-consolas-firebase-ga4-crashlytics-y-sentry)).
-- [ ] Ajustar `.github/workflows/deploy-web.yml`: validar que el paso "Verify API target" falle si las claves web están vacías en `prod`.
 - [ ] Evaluar túnel propio para Sentry si se requiere capturar errores en clientes con adblock estricto en escritorio.
 - [ ] Evaluar banner de cookies únicamente si cambia la jurisdicción o se incorporan servicios publicitarios/seguimiento cruzado.
+- [ ] Métricas por unidad: resolver desde el backend o base de datos (fuente de verdad); evaluar alias HMAC (`analytics_unit_key`) solo si producto requiere telemetría de uso por unidad.
 - [ ] iOS: sin telemetría hasta que exista la aplicación nativa en el repositorio.
