@@ -16,6 +16,7 @@ import kotlin.test.assertEquals
 class TenantTelemetryTest {
     private val unitA = UserUnit(unitId = "unit-1", buildingId = "b-uuid-a", unitName = "1A", buildingName = "Edificio A")
     private val unitB = UserUnit(unitId = "unit-2", buildingId = "b-uuid-b", unitName = "2B", buildingName = "Edificio B")
+    private val unitA2 = UserUnit(unitId = "unit-3", buildingId = "b-uuid-a", unitName = "1B", buildingName = "Edificio A")
     private val userA = User(id = "user-1", name = "Ana", email = "ana@test.com", units = listOf(unitA, unitB), currentUnit = unitA)
 
     /** Collects [activeBuildingId] into [telemetry] like CondominioNavGraph does. */
@@ -56,6 +57,17 @@ class TenantTelemetryTest {
         // A refresh publishes a different User (e.g. edited name) that keeps the same building.
         authRepository.user = userA.copy(name = "Ana María")
         authRepository.fetchCurrentUser()
+
+        assertEquals(listOf<String?>("b-uuid-a"), telemetry.tenants)
+    }
+
+    @Test
+    fun `switching to another unit of the same building does not emit the tenant again`() = runTest {
+        val authRepository = FakeAuthRepository(user = userA.copy(units = listOf(unitA, unitA2)))
+        val telemetry = FakeTelemetry()
+        collectTenant(authRepository, telemetry)
+
+        authRepository.setCurrentUnit(unitA2)
 
         assertEquals(listOf<String?>("b-uuid-a"), telemetry.tenants)
     }

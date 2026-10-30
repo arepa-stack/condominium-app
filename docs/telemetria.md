@@ -181,7 +181,7 @@ Existe una sola propiedad de GA4 por ambiente que reúne dos flujos de datos (An
 2. En cada ambiente (`dev` y `prod`), crea las siguientes **Environment variables** (no secrets):
    - `GA_MEASUREMENT_ID`: identificador GA4 correspondiente (`G-...`).
    - `SENTRY_DSN`: DSN público del proyecto correspondiente (`https://...`).
-3. El workflow `.github/workflows/deploy-web.yml` inyecta estas variables según la rama: `main` usa `prod`, y cualquier otra rama que no sea `main` usa `dev`.
+3. El workflow `.github/workflows/deploy-web.yml` inyecta estas variables según la rama: `main` usa `prod`, y cualquier otra rama que no sea `main` usa `dev`. El paso "Verify API target" hace fallar el deploy si el `index.html` generado no trae `ga = 'G-...'` ni `dsn = 'https://...'`, es decir, si falta alguna de las dos variables o tiene un formato inválido.
 4. Para verificar la inyección en el deploy, abre **Ver código fuente de la página** (view-source) en el navegador y comprueba que el `G-...` y el DSN correspondan al ambiente; si ves un valor viejo o desactualizado, ve a DevTools → Application → Service workers → Unregister ([§7](#7-problemas-frecuentes-adblock-debugview-vacío-builds)).
 
 ### 5.3 Consolas (Firebase, GA4, Crashlytics y Sentry)
@@ -320,7 +320,6 @@ adb logcat -s FA FA-SVC
 - [ ] Crear proyecto Firebase PROD (`condominium-app-prod`), definiciones personalizadas en GA4 PROD y proyecto Sentry PROD (`condominium-app-web-prod`).
 - [ ] Sentry: tras el trial, revisar que el plan gratuito alcance.
 - [ ] Al publicar en Play: declaraciones de Contenido de la app y política de privacidad ([§5.3](#53-consolas-firebase-ga4-crashlytics-y-sentry)).
-- [ ] Ajustar `.github/workflows/deploy-web.yml`: validar que el paso "Verify API target" falle si las claves web están vacías en `prod`.
 - [ ] Evaluar túnel propio para Sentry si se requiere capturar errores en clientes con adblock estricto en escritorio.
 - [ ] Evaluar banner de cookies únicamente si cambia la jurisdicción o se incorporan servicios publicitarios/seguimiento cruzado.
 - [ ] Métricas por unidad: resolver desde el backend o base de datos (fuente de verdad); evaluar alias HMAC (`analytics_unit_key`) solo si producto requiere telemetría de uso por unidad.

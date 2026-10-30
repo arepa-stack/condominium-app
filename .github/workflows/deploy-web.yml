@@ -52,6 +52,7 @@ jobs:
           grep -q "ENV = \"${API_ENV}\"" shared/build/generated/apiConfig/com/example/condominio/ApiConfig.kt
           ! grep -q '%GA_MEASUREMENT_ID%\|%SENTRY_DSN%\|%APP_ENV%' shared/build/dist/wasmJs/productionExecutable/index.html
           grep -q "ga = 'G-" shared/build/dist/wasmJs/productionExecutable/index.html
+          grep -q "dsn = 'https://" shared/build/dist/wasmJs/productionExecutable/index.html
 
       - name: Deploy to Vercel
         env:
